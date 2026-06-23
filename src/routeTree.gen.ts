@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppsRouteImport } from './routes/apps'
-import { Route as AiVideosRouteImport } from './routes/ai-videos'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSlugRouteImport } from './routes/app.$slug'
@@ -35,11 +34,6 @@ const AuthRoute = AuthRouteImport.update({
 const AppsRoute = AppsRouteImport.update({
   id: '/apps',
   path: '/apps',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AiVideosRoute = AiVideosRouteImport.update({
-  id: '/ai-videos',
-  path: '/ai-videos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -86,7 +80,6 @@ const ApiPublicPaystackWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/ai-videos': typeof AiVideosRoute
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
   '/games': typeof GamesRoute
@@ -99,7 +92,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/ai-videos': typeof AiVideosRoute
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
   '/games': typeof GamesRoute
@@ -114,7 +106,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/ai-videos': typeof AiVideosRoute
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
   '/games': typeof GamesRoute
@@ -129,7 +120,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/ai-videos'
     | '/apps'
     | '/auth'
     | '/games'
@@ -142,7 +132,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/ai-videos'
     | '/apps'
     | '/auth'
     | '/games'
@@ -156,7 +145,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/ai-videos'
     | '/apps'
     | '/auth'
     | '/games'
@@ -171,7 +159,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AiVideosRoute: typeof AiVideosRoute
   AppsRoute: typeof AppsRoute
   AuthRoute: typeof AuthRoute
   GamesRoute: typeof GamesRoute
@@ -200,13 +187,6 @@ declare module '@tanstack/react-router' {
       path: '/apps'
       fullPath: '/apps'
       preLoaderRoute: typeof AppsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ai-videos': {
-      id: '/ai-videos'
-      path: '/ai-videos'
-      fullPath: '/ai-videos'
-      preLoaderRoute: typeof AiVideosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -288,7 +268,6 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AiVideosRoute: AiVideosRoute,
   AppsRoute: AppsRoute,
   AuthRoute: AuthRoute,
   GamesRoute: GamesRoute,

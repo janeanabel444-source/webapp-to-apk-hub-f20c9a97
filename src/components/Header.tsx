@@ -15,8 +15,7 @@ const navItems = [
   { to: "/", label: "Home", exact: true },
   { to: "/apps", label: "Apps" },
   { to: "/games", label: "Games" },
-  { to: "/ai-videos", label: "AI Videos" },
-  { to: "/ai-image", label: "AI Image" },
+  { to: "/ai-image", label: "Create AI Image" },
 ];
 
 export function Header() {
