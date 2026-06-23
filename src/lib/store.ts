@@ -45,11 +45,18 @@ export async function fetchApp(slug: string) {
 export async function fetchReviews(appId: string) {
   const { data, error } = await supabase
     .from("reviews")
-    .select("*, profile:profiles(display_name, avatar_url)")
+    .select("*")
     .eq("app_id", appId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  if (!data || data.length === 0) return [];
+  const userIds = Array.from(new Set(data.map((r) => r.user_id)));
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, display_name, avatar_url")
+    .in("id", userIds);
+  const map = new Map((profiles ?? []).map((p) => [p.id, p]));
+  return data.map((r) => ({ ...r, profile: map.get(r.user_id) ?? null }));
 }
 
 export async function isInstalled(userId: string, appId: string) {

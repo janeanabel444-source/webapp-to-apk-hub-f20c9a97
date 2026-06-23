@@ -9,38 +9,162 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as GamesRouteImport } from './routes/games'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppsRouteImport } from './routes/apps'
+import { Route as AiVideosRouteImport } from './routes/ai-videos'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSlugRouteImport } from './routes/app.$slug'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 
+const GamesRoute = GamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppsRoute = AppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiVideosRoute = AiVideosRouteImport.update({
+  id: '/ai-videos',
+  path: '/ai-videos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSlugRoute = AppSlugRouteImport.update({
+  id: '/app/$slug',
+  path: '/app/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai-videos': typeof AiVideosRoute
+  '/apps': typeof AppsRoute
+  '/auth': typeof AuthRoute
+  '/games': typeof GamesRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/app/$slug': typeof AppSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai-videos': typeof AiVideosRoute
+  '/apps': typeof AppsRoute
+  '/auth': typeof AuthRoute
+  '/games': typeof GamesRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/app/$slug': typeof AppSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/ai-videos': typeof AiVideosRoute
+  '/apps': typeof AppsRoute
+  '/auth': typeof AuthRoute
+  '/games': typeof GamesRoute
+  '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/app/$slug': typeof AppSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/ai-videos'
+    | '/apps'
+    | '/auth'
+    | '/games'
+    | '/library'
+    | '/app/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/ai-videos'
+    | '/apps'
+    | '/auth'
+    | '/games'
+    | '/library'
+    | '/app/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/ai-videos'
+    | '/apps'
+    | '/auth'
+    | '/games'
+    | '/_authenticated/library'
+    | '/app/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AiVideosRoute: typeof AiVideosRoute
+  AppsRoute: typeof AppsRoute
+  AuthRoute: typeof AuthRoute
+  GamesRoute: typeof GamesRoute
+  AppSlugRoute: typeof AppSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/games': {
+      id: '/games'
+      path: '/games'
+      fullPath: '/games'
+      preLoaderRoute: typeof GamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apps': {
+      id: '/apps'
+      path: '/apps'
+      fullPath: '/apps'
+      preLoaderRoute: typeof AppsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-videos': {
+      id: '/ai-videos'
+      path: '/ai-videos'
+      fullPath: '/ai-videos'
+      preLoaderRoute: typeof AiVideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +172,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/$slug': {
+      id: '/app/$slug'
+      path: '/app/$slug'
+      fullPath: '/app/$slug'
+      preLoaderRoute: typeof AppSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AiVideosRoute: AiVideosRoute,
+  AppsRoute: AppsRoute,
+  AuthRoute: AuthRoute,
+  GamesRoute: GamesRoute,
+  AppSlugRoute: AppSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
