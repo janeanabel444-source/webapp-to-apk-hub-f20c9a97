@@ -65,18 +65,35 @@ function Home() {
             A friendlier place to find <span style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>apps you'll love</span>.
           </h1>
           <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Hand-picked apps, games, and AI videos. Install instantly, organize your library, and keep your reviews in one place.
+            Hand-picked apps and games, plus AI image generation for premium members. Install instantly, organize your library, and keep your reviews in one place.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Link to="/apps" className="rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90">Browse apps</Link>
             <Link to="/games" className="rounded-full border border-border bg-background/60 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-background">Explore games</Link>
+            <Link to="/ai-image" className="rounded-full border border-border bg-background/60 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-background inline-flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Create AI Image</Link>
           </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 shadow-sm" style={{ backgroundImage: "var(--gradient-primary)" }}>
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-primary-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full bg-background/20 px-3 py-1 text-xs font-medium backdrop-blur">
+              <Crown className="h-3 w-3" /> Premium
+            </span>
+            <h2 className="mt-3 font-display text-2xl font-bold sm:text-3xl">Create AI Images</h2>
+            <p className="mt-1 max-w-lg text-sm opacity-90">
+              Turn a prompt into a stunning image with Stability AI. Premium members only.
+            </p>
+          </div>
+          <Link to="/ai-image" className="rounded-full bg-background px-5 py-2.5 text-sm font-semibold text-foreground hover:opacity-90 inline-flex items-center gap-1.5 self-start">
+            <Sparkles className="h-4 w-4" /> Create AI Image
+          </Link>
         </div>
       </section>
 
       <Section title="Top apps" to="/apps" icon={LayoutGrid} category="app" />
       <Section title="Popular games" to="/games" icon={Gamepad2} category="game" />
-      <Section title="AI videos" to="/ai-videos" icon={Film} category="ai_video" />
     </div>
   );
 }
