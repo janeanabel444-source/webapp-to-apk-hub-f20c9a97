@@ -4,11 +4,13 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { redeemPromoCode } from "@/lib/promo.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Gift } from "lucide-react";
 
 const searchSchema = z.object({ redirect: z.string().optional() });
 
@@ -18,22 +20,49 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const PENDING_PROMO_KEY = "nova_pending_promo";
+
 function AuthPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { redirect } = useSearch({ from: "/auth" });
+  const redeem = useServerFn(redeemPromoCode);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [promo, setPromo] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (user) navigate({ to: redirect ?? "/", replace: true });
-  }, [user, navigate, redirect]);
+    if (!user) return;
+    const pending = typeof window !== "undefined" ? window.localStorage.getItem(PENDING_PROMO_KEY) : null;
+    if (pending) {
+      window.localStorage.removeItem(PENDING_PROMO_KEY);
+      redeem({ data: { code: pending } })
+        .then((r) => {
+          if (r.granted === "premium") toast.success("Promo redeemed — Premium activated!");
+          else toast.success("Promo redeemed — Premium trial activated!");
+        })
+        .catch((e) => toast.error(e?.message ?? "Promo code couldn't be applied"))
+        .finally(() => navigate({ to: redirect ?? "/", replace: true }));
+    } else {
+      navigate({ to: redirect ?? "/", replace: true });
+    }
+  }, [user, navigate, redirect, redeem]);
+
+  function stashPromo() {
+    const trimmed = promo.trim();
+    if (trimmed && typeof window !== "undefined") {
+      window.localStorage.setItem(PENDING_PROMO_KEY, trimmed);
+    } else if (typeof window !== "undefined") {
+      window.localStorage.removeItem(PENDING_PROMO_KEY);
+    }
+  }
 
   async function handleGoogle() {
     setBusy(true);
+    stashPromo();
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
@@ -43,13 +72,14 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: redirect ?? "/", replace: true });
+    // session set in iframe — effect will pick it up
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
+      stashPromo();
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -83,7 +113,7 @@ function AuthPage() {
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {mode === "signin" ? "Sign in to install apps and write reviews." : "Join Nova to install apps, rate, and review."}
+          {mode === "signin" ? "Sign in to install apps and generate AI images." : "Join Nova to install apps and generate AI images."}
         </p>
 
         <Button
@@ -117,6 +147,21 @@ function AuthPage() {
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} maxLength={72} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="promo" className="flex items-center gap-1.5">
+              <Gift className="h-3.5 w-3.5 text-primary" />
+              Promo code <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="promo"
+              value={promo}
+              onChange={(e) => setPromo(e.target.value)}
+              placeholder="e.g. JASPER AI"
+              maxLength={64}
+              autoCapitalize="characters"
+            />
+            <p className="text-xs text-muted-foreground">Enter a valid code to unlock Premium on sign-in.</p>
           </div>
           <Button type="submit" className="h-11 w-full rounded-full font-semibold" disabled={busy}>
             {mode === "signin" ? "Sign in" : "Create account"}
