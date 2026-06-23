@@ -16,7 +16,11 @@ import { Route as AiVideosRouteImport } from './routes/ai-videos'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSlugRouteImport } from './routes/app.$slug'
+import { Route as AuthenticatedPremiumRouteImport } from './routes/_authenticated/premium'
+import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedAiImageRouteImport } from './routes/_authenticated/ai-image'
+import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 
 const GamesRoute = GamesRouteImport.update({
   id: '/games',
@@ -52,11 +56,33 @@ const AppSlugRoute = AppSlugRouteImport.update({
   path: '/app/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPremiumRoute = AuthenticatedPremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPaymentCallbackRoute =
+  AuthenticatedPaymentCallbackRouteImport.update({
+    id: '/payment-callback',
+    path: '/payment-callback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
   id: '/library',
   path: '/library',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAiImageRoute = AuthenticatedAiImageRouteImport.update({
+  id: '/ai-image',
+  path: '/ai-image',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicPaystackWebhookRoute =
+  ApiPublicPaystackWebhookRouteImport.update({
+    id: '/api/public/paystack-webhook',
+    path: '/api/public/paystack-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -64,8 +90,12 @@ export interface FileRoutesByFullPath {
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
   '/games': typeof GamesRoute
+  '/ai-image': typeof AuthenticatedAiImageRoute
   '/library': typeof AuthenticatedLibraryRoute
+  '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
+  '/premium': typeof AuthenticatedPremiumRoute
   '/app/$slug': typeof AppSlugRoute
+  '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -73,8 +103,12 @@ export interface FileRoutesByTo {
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
   '/games': typeof GamesRoute
+  '/ai-image': typeof AuthenticatedAiImageRoute
   '/library': typeof AuthenticatedLibraryRoute
+  '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
+  '/premium': typeof AuthenticatedPremiumRoute
   '/app/$slug': typeof AppSlugRoute
+  '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -84,8 +118,12 @@ export interface FileRoutesById {
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
   '/games': typeof GamesRoute
+  '/_authenticated/ai-image': typeof AuthenticatedAiImageRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
+  '/_authenticated/premium': typeof AuthenticatedPremiumRoute
   '/app/$slug': typeof AppSlugRoute
+  '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -95,8 +133,12 @@ export interface FileRouteTypes {
     | '/apps'
     | '/auth'
     | '/games'
+    | '/ai-image'
     | '/library'
+    | '/payment-callback'
+    | '/premium'
     | '/app/$slug'
+    | '/api/public/paystack-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -104,8 +146,12 @@ export interface FileRouteTypes {
     | '/apps'
     | '/auth'
     | '/games'
+    | '/ai-image'
     | '/library'
+    | '/payment-callback'
+    | '/premium'
     | '/app/$slug'
+    | '/api/public/paystack-webhook'
   id:
     | '__root__'
     | '/'
@@ -114,8 +160,12 @@ export interface FileRouteTypes {
     | '/apps'
     | '/auth'
     | '/games'
+    | '/_authenticated/ai-image'
     | '/_authenticated/library'
+    | '/_authenticated/payment-callback'
+    | '/_authenticated/premium'
     | '/app/$slug'
+    | '/api/public/paystack-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -126,6 +176,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   GamesRoute: typeof GamesRoute
   AppSlugRoute: typeof AppSlugRoute
+  ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -179,6 +230,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/premium': {
+      id: '/_authenticated/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof AuthenticatedPremiumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payment-callback': {
+      id: '/_authenticated/payment-callback'
+      path: '/payment-callback'
+      fullPath: '/payment-callback'
+      preLoaderRoute: typeof AuthenticatedPaymentCallbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/library': {
       id: '/_authenticated/library'
       path: '/library'
@@ -186,15 +251,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ai-image': {
+      id: '/_authenticated/ai-image'
+      path: '/ai-image'
+      fullPath: '/ai-image'
+      preLoaderRoute: typeof AuthenticatedAiImageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/paystack-webhook': {
+      id: '/api/public/paystack-webhook'
+      path: '/api/public/paystack-webhook'
+      fullPath: '/api/public/paystack-webhook'
+      preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAiImageRoute: typeof AuthenticatedAiImageRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+  AuthenticatedPaymentCallbackRoute: typeof AuthenticatedPaymentCallbackRoute
+  AuthenticatedPremiumRoute: typeof AuthenticatedPremiumRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAiImageRoute: AuthenticatedAiImageRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+  AuthenticatedPaymentCallbackRoute: AuthenticatedPaymentCallbackRoute,
+  AuthenticatedPremiumRoute: AuthenticatedPremiumRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -208,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   GamesRoute: GamesRoute,
   AppSlugRoute: AppSlugRoute,
+  ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
