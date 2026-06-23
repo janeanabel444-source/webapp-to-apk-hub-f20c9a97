@@ -14,16 +14,185 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      apps: {
+        Row: {
+          category: Database["public"]["Enums"]["app_category"]
+          created_at: string
+          description: string | null
+          developer_id: string | null
+          icon_url: string | null
+          id: string
+          install_count: number
+          is_published: boolean
+          name: string
+          rating_avg: number
+          rating_count: number
+          slug: string
+          tagline: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["app_category"]
+          created_at?: string
+          description?: string | null
+          developer_id?: string | null
+          icon_url?: string | null
+          id?: string
+          install_count?: number
+          is_published?: boolean
+          name: string
+          rating_avg?: number
+          rating_count?: number
+          slug: string
+          tagline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["app_category"]
+          created_at?: string
+          description?: string | null
+          developer_id?: string | null
+          icon_url?: string | null
+          id?: string
+          install_count?: number
+          is_published?: boolean
+          name?: string
+          rating_avg?: number
+          rating_count?: number
+          slug?: string
+          tagline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      installs: {
+        Row: {
+          app_id: string
+          id: string
+          installed_at: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          id?: string
+          installed_at?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          id?: string
+          installed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installs_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          app_id: string
+          body: string | null
+          created_at: string
+          dev_replied_at: string | null
+          dev_reply: string | null
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          body?: string | null
+          created_at?: string
+          dev_replied_at?: string | null
+          dev_reply?: string | null
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          body?: string | null
+          created_at?: string
+          dev_replied_at?: string | null
+          dev_reply?: string | null
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_category: "app" | "game" | "ai_video"
+      app_role: "admin" | "developer" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +319,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_category: ["app", "game", "ai_video"],
+      app_role: ["admin", "developer", "user"],
+    },
   },
 } as const
