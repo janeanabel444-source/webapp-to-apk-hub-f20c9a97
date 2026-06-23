@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sparkles, LogOut, LibraryBig, User as UserIcon } from "lucide-react";
+import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/apps", label: "Apps" },
   { to: "/games", label: "Games" },
   { to: "/ai-videos", label: "AI Videos" },
+  { to: "/ai-image", label: "AI Image" },
 ];
 
 export function Header() {
