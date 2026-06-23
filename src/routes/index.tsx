@@ -23,7 +23,7 @@ function Section({
   category,
 }: {
   title: string;
-  to: "/apps" | "/games" | "/ai-videos";
+  to: "/apps" | "/games";
   icon: typeof LayoutGrid;
   category: "app" | "game" | "ai_video";
 }) {
