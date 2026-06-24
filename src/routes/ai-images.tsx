@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { ImagePlus, Gallery } from "lucide-react";
-import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/ai-images")({
@@ -10,8 +9,6 @@ export const Route = createFileRoute("/ai-images")({
 });
 
 function AIImagesPage() {
-  const { user } = useAuth();
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <div className="mb-8 text-center">
@@ -53,17 +50,6 @@ function AIImagesPage() {
           </Button>
         </div>
       </div>
-
-      {!user && (
-        <div className="mt-8 rounded-3xl border border-dashed border-border/60 bg-card/50 p-8 text-center">
-          <p className="mb-4 text-sm text-muted-foreground">
-            Sign in to create and save AI images
-          </p>
-          <Button asChild size="lg" className="rounded-full">
-            <Link to="/auth">Sign in</Link>
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
