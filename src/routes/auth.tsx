@@ -63,16 +63,28 @@ function AuthPage() {
   async function handleGoogle() {
     setBusy(true);
     stashPromo();
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        console.error("[Auth] Google OAuth error:", result.error);
+        toast.error("Couldn't sign in with Google — check console for details");
+        setBusy(false);
+        return;
+      }
+      if (result.redirected) {
+        // OAuth flow will handle the redirect
+        return;
+      }
+      // If not redirected and no error, the session should be set
+      // Wait a moment for auth state to propagate
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch (err) {
+      console.error("[Auth] Google OAuth exception:", err);
       toast.error("Couldn't sign in with Google");
       setBusy(false);
-      return;
     }
-    if (result.redirected) return;
-    // session set in iframe — effect will pick it up
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -81,19 +93,40 @@ function AuthPage() {
     try {
       stashPromo();
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success("Account created");
+
+        // For email signup, wait for session to be established
+        // Supabase may auto-confirm if email confirmation is disabled
+        let attempts = 0;
+        const maxAttempts = 10;
+        while (attempts < maxAttempts) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            toast.success("Account created and signed in!");
+            break;
+          }
+          if (attempts === maxAttempts - 1) {
+            toast.success("Account created! Please check your email to confirm your account.");
+          }
+          attempts++;
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        toast.success("Signed in successfully!");
+
+        // Wait for session to propagate
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Couldn't sign in");
+      console.error("[Auth] Form submission error:", err);
+      toast.error(err.message ?? "Couldn't complete authentication");
     } finally {
       setBusy(false);
     }
@@ -124,7 +157,7 @@ function AuthPage() {
           disabled={busy}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-            <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4-5.5 4-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.3 14.6 2.3 12 2.3 6.5 2.3 2 6.8 2 12.1S6.5 22 12 22c6.9 0 9.7-4.8 9.7-7.7 0-.5-.1-1-.1-1.4H12z"/>
+            <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4-5.5 4-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.3 14.6 2.3 12 2.3 6.5 2.3 2 6.8 2 12.1S6.5 22 12 22c6.9 0 11.8-4.9 11.8-12 0-.8-.1-1.5-.2-2.1H12v.1z" />
           </svg>
           Continue with Google
         </Button>
