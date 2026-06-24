@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Sparkles, Crown, Download, Loader2, Images, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { getMyPremiumStatus } from "@/lib/premium.functions";
+import { getMyAiQuota } from "@/lib/ai-quota.functions";
 import { generateImage } from "@/lib/stability.functions";
 import { listMyImages } from "@/lib/ai-images.functions";
 
@@ -16,18 +16,18 @@ export const Route = createFileRoute("/_authenticated/ai-image")({
 
 function AiImagePage() {
   const qc = useQueryClient();
-  const getStatus = useServerFn(getMyPremiumStatus);
+  const getQuota = useServerFn(getMyAiQuota);
   const gen = useServerFn(generateImage);
   const listMine = useServerFn(listMyImages);
 
-  const { data: status, isLoading: statusLoading } = useQuery({
-    queryKey: ["premium-status"],
-    queryFn: () => getStatus({ data: undefined as never }),
+  const { data: quota, isLoading: quotaLoading } = useQuery({
+    queryKey: ["ai-quota"],
+    queryFn: () => getQuota({ data: undefined as never }),
   });
   const { data: mine } = useQuery({
     queryKey: ["my-ai-images"],
     queryFn: () => listMine({ data: undefined as never }),
-    enabled: !!status?.isPremium,
+    enabled: !!quota && (quota.unlimited || quota.quota !== 0),
   });
 
   const [prompt, setPrompt] = useState("");
@@ -46,9 +46,12 @@ function AiImagePage() {
       setLastPrompt(p);
       qc.invalidateQueries({ queryKey: ["my-ai-images"] });
       qc.invalidateQueries({ queryKey: ["ai-gallery"] });
+      qc.invalidateQueries({ queryKey: ["ai-quota"] });
     } catch (e: any) {
       const m = e?.message ?? "Generation failed";
-      setErr(m === "PREMIUM_REQUIRED" ? "Premium required to generate images." : m);
+      if (m === "AI_QUOTA_NONE") setErr("You have no AI image generations. Redeem the JASPER AI promo or go Premium.");
+      else if (m === "AI_QUOTA_EXCEEDED") setErr("Daily AI image limit reached. Try again tomorrow.");
+      else setErr(m);
     } finally {
       setBusy(false);
     }
@@ -62,22 +65,23 @@ function AiImagePage() {
     await doGenerate(p);
   }
 
-  if (statusLoading) {
+  if (quotaLoading) {
     return <div className="mx-auto max-w-2xl px-4 py-16 text-center text-sm text-muted-foreground">Loading…</div>;
   }
 
-  if (!status?.isPremium) {
+  if (quota && !quota.unlimited && quota.quota === 0) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
         <div className="rounded-3xl border border-border/60 bg-card p-8 text-center">
           <Crown className="mx-auto h-10 w-10 text-primary" />
-          <h1 className="mt-3 font-display text-2xl font-bold">AI Image Generation is Premium</h1>
+          <h1 className="mt-3 font-display text-2xl font-bold">AI image generation needs access</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Upgrade to Nova Premium to generate AI images, share them in the gallery, and download others' creations.
+            Redeem the <span className="font-mono font-semibold">JASPER AI</span> promo code for 20 images/day, or upgrade to Premium.
           </p>
-          <Button asChild className="mt-6 rounded-full" size="lg">
-            <Link to="/premium">Go Premium</Link>
-          </Button>
+          <div className="mt-6 flex justify-center gap-2">
+            <Button asChild className="rounded-full"><Link to="/auth">Redeem promo code</Link></Button>
+            <Button asChild variant="outline" className="rounded-full"><Link to="/premium">Go Premium</Link></Button>
+          </div>
         </div>
       </div>
     );
@@ -88,9 +92,11 @@ function AiImagePage() {
       <div className="flex flex-wrap items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary" />
         <h1 className="font-display text-2xl font-bold">Create AI Image</h1>
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          <Crown className="h-3 w-3" /> Premium
-        </span>
+        {quota && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            {quota.unlimited ? "Unlimited" : `${quota.remaining}/${quota.quota} today`}
+          </span>
+        )}
         <Button asChild variant="outline" size="sm" className="ml-auto rounded-full">
           <Link to="/ai-gallery"><Images className="mr-1.5 h-4 w-4" /> Gallery</Link>
         </Button>

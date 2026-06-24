@@ -20,12 +20,9 @@ export const generateImage = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    // Premium gate via DB helper (handles both permanent and trial premium)
-    const { data: premium, error: pErr } = await context.supabase.rpc("is_user_premium", {
-      _user_id: context.userId,
-    });
-    if (pErr) throw new Error(pErr.message);
-    if (!premium) throw new Error("PREMIUM_REQUIRED");
+    // Role-based daily quota (admin = unlimited, jasper_ai/premium = 20/day, else 0)
+    const { consumeAiQuota } = await import("@/lib/ai-quota.functions");
+    await consumeAiQuota(context.userId);
 
     const key = process.env.STABILITY_AI_API_KEY;
     if (!key) throw new Error("Image generation is not configured.");
