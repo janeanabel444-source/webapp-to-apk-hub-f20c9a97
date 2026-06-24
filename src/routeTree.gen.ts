@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as GamesRouteImport } from './routes/games'
+import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppsRouteImport } from './routes/apps'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -18,13 +20,27 @@ import { Route as AppSlugRouteImport } from './routes/app.$slug'
 import { Route as AuthenticatedPremiumRouteImport } from './routes/_authenticated/premium'
 import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedAiToolsRouteImport } from './routes/_authenticated/ai-tools'
 import { Route as AuthenticatedAiImageRouteImport } from './routes/_authenticated/ai-image'
 import { Route as AuthenticatedAiGalleryRouteImport } from './routes/_authenticated/ai-gallery'
+import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer.index'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
+import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authenticated/developer.new'
+import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
 
+const TrendingRoute = TrendingRouteImport.update({
+  id: '/trending',
+  path: '/trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesRoute = GamesRouteImport.update({
   id: '/games',
   path: '/games',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -67,6 +83,11 @@ const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAiToolsRoute = AuthenticatedAiToolsRouteImport.update({
+  id: '/ai-tools',
+  path: '/ai-tools',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAiImageRoute = AuthenticatedAiImageRouteImport.update({
   id: '/ai-image',
   path: '/ai-image',
@@ -77,38 +98,68 @@ const AuthenticatedAiGalleryRoute = AuthenticatedAiGalleryRouteImport.update({
   path: '/ai-gallery',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDeveloperIndexRoute =
+  AuthenticatedDeveloperIndexRouteImport.update({
+    id: '/developer/',
+    path: '/developer/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicPaystackWebhookRoute =
   ApiPublicPaystackWebhookRouteImport.update({
     id: '/api/public/paystack-webhook',
     path: '/api/public/paystack-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedDeveloperNewRoute =
+  AuthenticatedDeveloperNewRouteImport.update({
+    id: '/developer/new',
+    path: '/developer/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDeveloperAppIdEditRoute =
+  AuthenticatedDeveloperAppIdEditRouteImport.update({
+    id: '/developer/$appId/edit',
+    path: '/developer/$appId/edit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
+  '/categories': typeof CategoriesRoute
   '/games': typeof GamesRoute
+  '/trending': typeof TrendingRoute
   '/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/ai-image': typeof AuthenticatedAiImageRoute
+  '/ai-tools': typeof AuthenticatedAiToolsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/premium': typeof AuthenticatedPremiumRoute
   '/app/$slug': typeof AppSlugRoute
+  '/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
+  '/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
+  '/categories': typeof CategoriesRoute
   '/games': typeof GamesRoute
+  '/trending': typeof TrendingRoute
   '/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/ai-image': typeof AuthenticatedAiImageRoute
+  '/ai-tools': typeof AuthenticatedAiToolsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/premium': typeof AuthenticatedPremiumRoute
   '/app/$slug': typeof AppSlugRoute
+  '/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
+  '/developer': typeof AuthenticatedDeveloperIndexRoute
+  '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,14 +167,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/apps': typeof AppsRoute
   '/auth': typeof AuthRoute
+  '/categories': typeof CategoriesRoute
   '/games': typeof GamesRoute
+  '/trending': typeof TrendingRoute
   '/_authenticated/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/_authenticated/ai-image': typeof AuthenticatedAiImageRoute
+  '/_authenticated/ai-tools': typeof AuthenticatedAiToolsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/_authenticated/premium': typeof AuthenticatedPremiumRoute
   '/app/$slug': typeof AppSlugRoute
+  '/_authenticated/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
+  '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/_authenticated/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,41 +188,59 @@ export interface FileRouteTypes {
     | '/'
     | '/apps'
     | '/auth'
+    | '/categories'
     | '/games'
+    | '/trending'
     | '/ai-gallery'
     | '/ai-image'
+    | '/ai-tools'
     | '/library'
     | '/payment-callback'
     | '/premium'
     | '/app/$slug'
+    | '/developer/new'
     | '/api/public/paystack-webhook'
+    | '/developer/'
+    | '/developer/$appId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/apps'
     | '/auth'
+    | '/categories'
     | '/games'
+    | '/trending'
     | '/ai-gallery'
     | '/ai-image'
+    | '/ai-tools'
     | '/library'
     | '/payment-callback'
     | '/premium'
     | '/app/$slug'
+    | '/developer/new'
     | '/api/public/paystack-webhook'
+    | '/developer'
+    | '/developer/$appId/edit'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/apps'
     | '/auth'
+    | '/categories'
     | '/games'
+    | '/trending'
     | '/_authenticated/ai-gallery'
     | '/_authenticated/ai-image'
+    | '/_authenticated/ai-tools'
     | '/_authenticated/library'
     | '/_authenticated/payment-callback'
     | '/_authenticated/premium'
     | '/app/$slug'
+    | '/_authenticated/developer/new'
     | '/api/public/paystack-webhook'
+    | '/_authenticated/developer/'
+    | '/_authenticated/developer/$appId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -173,18 +248,34 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AppsRoute: typeof AppsRoute
   AuthRoute: typeof AuthRoute
+  CategoriesRoute: typeof CategoriesRoute
   GamesRoute: typeof GamesRoute
+  TrendingRoute: typeof TrendingRoute
   AppSlugRoute: typeof AppSlugRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trending': {
+      id: '/trending'
+      path: '/trending'
+      fullPath: '/trending'
+      preLoaderRoute: typeof TrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games': {
       id: '/games'
       path: '/games'
       fullPath: '/games'
       preLoaderRoute: typeof GamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -243,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ai-tools': {
+      id: '/_authenticated/ai-tools'
+      path: '/ai-tools'
+      fullPath: '/ai-tools'
+      preLoaderRoute: typeof AuthenticatedAiToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ai-image': {
       id: '/_authenticated/ai-image'
       path: '/ai-image'
@@ -257,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAiGalleryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/developer/': {
+      id: '/_authenticated/developer/'
+      path: '/developer'
+      fullPath: '/developer/'
+      preLoaderRoute: typeof AuthenticatedDeveloperIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/paystack-webhook': {
       id: '/api/public/paystack-webhook'
       path: '/api/public/paystack-webhook'
@@ -264,23 +369,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/developer/new': {
+      id: '/_authenticated/developer/new'
+      path: '/developer/new'
+      fullPath: '/developer/new'
+      preLoaderRoute: typeof AuthenticatedDeveloperNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/developer/$appId/edit': {
+      id: '/_authenticated/developer/$appId/edit'
+      path: '/developer/$appId/edit'
+      fullPath: '/developer/$appId/edit'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdEditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiGalleryRoute: typeof AuthenticatedAiGalleryRoute
   AuthenticatedAiImageRoute: typeof AuthenticatedAiImageRoute
+  AuthenticatedAiToolsRoute: typeof AuthenticatedAiToolsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedPaymentCallbackRoute: typeof AuthenticatedPaymentCallbackRoute
   AuthenticatedPremiumRoute: typeof AuthenticatedPremiumRoute
+  AuthenticatedDeveloperNewRoute: typeof AuthenticatedDeveloperNewRoute
+  AuthenticatedDeveloperIndexRoute: typeof AuthenticatedDeveloperIndexRoute
+  AuthenticatedDeveloperAppIdEditRoute: typeof AuthenticatedDeveloperAppIdEditRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiGalleryRoute: AuthenticatedAiGalleryRoute,
   AuthenticatedAiImageRoute: AuthenticatedAiImageRoute,
+  AuthenticatedAiToolsRoute: AuthenticatedAiToolsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedPaymentCallbackRoute: AuthenticatedPaymentCallbackRoute,
   AuthenticatedPremiumRoute: AuthenticatedPremiumRoute,
+  AuthenticatedDeveloperNewRoute: AuthenticatedDeveloperNewRoute,
+  AuthenticatedDeveloperIndexRoute: AuthenticatedDeveloperIndexRoute,
+  AuthenticatedDeveloperAppIdEditRoute: AuthenticatedDeveloperAppIdEditRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -291,20 +418,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AppsRoute: AppsRoute,
   AuthRoute: AuthRoute,
+  CategoriesRoute: CategoriesRoute,
   GamesRoute: GamesRoute,
+  TrendingRoute: TrendingRoute,
   AppSlugRoute: AppSlugRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

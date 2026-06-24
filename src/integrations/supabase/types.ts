@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_image_usage: {
+        Row: {
+          count: number
+          updated_at: string
+          used_on: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          updated_at?: string
+          used_on?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          updated_at?: string
+          used_on?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_images: {
         Row: {
           created_at: string
@@ -43,50 +64,65 @@ export type Database = {
       }
       apps: {
         Row: {
+          app_url: string | null
           category: Database["public"]["Enums"]["app_category"]
           created_at: string
           description: string | null
           developer_id: string | null
+          file_path: string | null
           icon_url: string | null
           id: string
           install_count: number
           is_published: boolean
           name: string
+          platform: string | null
           rating_avg: number
           rating_count: number
+          screenshots: string[]
           slug: string
+          status: string
           tagline: string | null
           updated_at: string
         }
         Insert: {
+          app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
           created_at?: string
           description?: string | null
           developer_id?: string | null
+          file_path?: string | null
           icon_url?: string | null
           id?: string
           install_count?: number
           is_published?: boolean
           name: string
+          platform?: string | null
           rating_avg?: number
           rating_count?: number
+          screenshots?: string[]
           slug: string
+          status?: string
           tagline?: string | null
           updated_at?: string
         }
         Update: {
+          app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
           created_at?: string
           description?: string | null
           developer_id?: string | null
+          file_path?: string | null
           icon_url?: string | null
           id?: string
           install_count?: number
           is_published?: boolean
           name?: string
+          platform?: string | null
           rating_avg?: number
           rating_count?: number
+          screenshots?: string[]
           slug?: string
+          status?: string
           tagline?: string | null
           updated_at?: string
         }
@@ -323,7 +359,7 @@ export type Database = {
     }
     Enums: {
       app_category: "app" | "game" | "ai_video"
-      app_role: "admin" | "developer" | "user"
+      app_role: "admin" | "developer" | "user" | "jasper_ai"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -452,7 +488,7 @@ export const Constants = {
   public: {
     Enums: {
       app_category: ["app", "game", "ai_video"],
-      app_role: ["admin", "developer", "user"],
+      app_role: ["admin", "developer", "user", "jasper_ai"],
     },
   },
 } as const

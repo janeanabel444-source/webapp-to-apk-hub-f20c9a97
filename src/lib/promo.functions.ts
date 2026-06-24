@@ -76,6 +76,13 @@ export const redeemPromoCode = createServerFn({ method: "POST" })
       if (uErr) throw new Error(uErr.message);
     }
 
+    // The JASPER AI code also grants the jasper_ai role (20 AI images/day)
+    if (code === "JASPER AI") {
+      await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: context.userId, role: "jasper_ai" }, { onConflict: "user_id,role" });
+    }
+
     await supabaseAdmin
       .from("promo_codes")
       .update({ uses: promo.uses + 1 })

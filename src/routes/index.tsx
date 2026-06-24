@@ -2,15 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchApps } from "@/lib/store";
 import { AppCard, AppCardSkeleton } from "@/components/AppCard";
-import { ArrowRight, Gamepad2, LayoutGrid, Sparkles, Crown } from "lucide-react";
+import { ArrowRight, Gamepad2, LayoutGrid, TrendingUp, Code2, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Nova App Store — Apps, games & AI videos" },
-      { name: "description", content: "Browse curated apps, games, and AI videos. Install in one tap." },
+      { title: "Nova App Store — Discover apps and games" },
+      { name: "description", content: "Welcome to Nova App Store. Discover apps and games in one place. Explore, install, and publish apps easily." },
       { property: "og:title", content: "Nova App Store" },
-      { property: "og:description", content: "Browse curated apps, games, and AI videos. Install in one tap." },
+      { property: "og:description", content: "Discover apps and games in one place." },
     ],
   }),
   component: Home,
@@ -18,12 +18,14 @@ export const Route = createFileRoute("/")({
 
 function Section({
   title,
+  subtitle,
   to,
   icon: Icon,
   category,
 }: {
   title: string;
-  to: "/apps" | "/games";
+  subtitle?: string;
+  to: "/apps" | "/games" | "/trending";
   icon: typeof LayoutGrid;
   category: "app" | "game";
 }) {
@@ -38,7 +40,10 @@ function Section({
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-secondary text-foreground">
             <Icon className="h-4.5 w-4.5" />
           </span>
-          <h2 className="font-display text-2xl font-bold">{title}</h2>
+          <div>
+            <h2 className="font-display text-2xl font-bold">{title}</h2>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          </div>
         </div>
         <Link to={to} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
           See all <ArrowRight className="h-4 w-4" />
@@ -59,41 +64,47 @@ function Home() {
       <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 shadow-sm sm:p-12" style={{ backgroundImage: "var(--gradient-hero)" }}>
         <div className="relative max-w-2xl">
           <span className="inline-flex items-center rounded-full border border-border/60 bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            Welcome to Nova
+            Welcome to Nova App Store
           </span>
           <h1 className="mt-4 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
-            A friendlier place to find <span style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>apps you'll love</span>.
+            Discover <span style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>apps and games</span> in one place.
           </h1>
           <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Hand-picked apps and games, plus AI image generation for premium members. Install instantly, organize your library, and keep your reviews in one place.
+            Explore, install, and publish apps easily. Hand-picked apps and games from developers around the world.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Link to="/apps" className="rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90">Browse apps</Link>
             <Link to="/games" className="rounded-full border border-border bg-background/60 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-background">Explore games</Link>
-            <Link to="/ai-image" className="rounded-full border border-border bg-background/60 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-background inline-flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Create AI Image</Link>
+            <Link to="/developer" className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 inline-flex items-center gap-1.5">
+              <Code2 className="h-4 w-4" /> Developer Hub
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 shadow-sm" style={{ backgroundImage: "var(--gradient-primary)" }}>
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-primary-foreground">
-            <span className="inline-flex items-center gap-1 rounded-full bg-background/20 px-3 py-1 text-xs font-medium backdrop-blur">
-              <Crown className="h-3 w-3" /> Premium
-            </span>
-            <h2 className="mt-3 font-display text-2xl font-bold sm:text-3xl">Create AI Images</h2>
-            <p className="mt-1 max-w-lg text-sm opacity-90">
-              Turn a prompt into a stunning image with Stability AI. Premium members only.
-            </p>
-          </div>
-          <Link to="/ai-image" className="rounded-full bg-background px-5 py-2.5 text-sm font-semibold text-foreground hover:opacity-90 inline-flex items-center gap-1.5 self-start">
-            <Sparkles className="h-4 w-4" /> Create AI Image
-          </Link>
-        </div>
-      </section>
+      <Section title="Featured apps" subtitle="Editor picks" to="/apps" icon={LayoutGrid} category="app" />
+      <Section title="Featured games" subtitle="Top games to play right now" to="/games" icon={Gamepad2} category="game" />
+      <Section title="Trending apps" subtitle="Most installed this week" to="/trending" icon={TrendingUp} category="app" />
+      <Section title="Trending games" subtitle="What gamers love right now" to="/trending" icon={TrendingUp} category="game" />
 
-      <Section title="Top apps" to="/apps" icon={LayoutGrid} category="app" />
-      <Section title="Popular games" to="/games" icon={Gamepad2} category="game" />
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Link to="/developer" className="group relative overflow-hidden rounded-3xl border border-border/60 bg-card p-6 transition hover:shadow-md" style={{ backgroundImage: "var(--gradient-primary)" }}>
+          <Code2 className="h-6 w-6 text-primary-foreground" />
+          <h3 className="mt-3 font-display text-xl font-bold text-primary-foreground">Are you a developer?</h3>
+          <p className="mt-1 text-sm text-primary-foreground/90">Upload your apps and games. Reach Nova's users in minutes.</p>
+          <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary-foreground">
+            Publish on Nova <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+        <Link to="/ai-tools" className="group rounded-3xl border border-border/60 bg-card p-6 transition hover:shadow-md">
+          <Sparkles className="h-6 w-6 text-primary" />
+          <h3 className="mt-3 font-display text-xl font-bold">AI Tools (optional)</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Generate AI images and browse the AI Gallery. Limits depend on your role.</p>
+          <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+            Open AI Tools <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+      </section>
     </div>
   );
 }

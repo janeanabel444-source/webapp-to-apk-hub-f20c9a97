@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Image as ImageIcon, Images } from "lucide-react";
+import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const navItems = [
+const navItems: Array<{ to: any; label: string; exact?: boolean; muted?: boolean }> = [
   { to: "/", label: "Home", exact: true },
   { to: "/apps", label: "Apps" },
   { to: "/games", label: "Games" },
-  { to: "/ai-image", label: "Create AI Image" },
-  { to: "/ai-gallery", label: "AI Gallery" },
+  { to: "/trending", label: "Trending" },
+  { to: "/categories", label: "Categories" },
+  { to: "/ai-tools", label: "AI Tools", muted: true },
 ];
 
 export function Header() {
@@ -40,13 +41,23 @@ export function Header() {
                 key={n.to}
                 to={n.to}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                  active ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+                  active ? "bg-secondary text-foreground" : (n as any).muted ? "text-muted-foreground/70 hover:text-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {n.label}
               </Link>
             );
           })}
+          <Link
+            to="/developer"
+            className={`ml-1 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              pathname.startsWith("/developer")
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "border border-primary/40 text-primary hover:bg-primary/10"
+            }`}
+          >
+            <Code2 className="h-4 w-4" /> Developer Hub
+          </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
           {user ? (
@@ -66,10 +77,10 @@ export function Header() {
                   <Link to="/library"><LibraryBig className="mr-2 h-4 w-4" /> My library</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/ai-image"><ImageIcon className="mr-2 h-4 w-4" /> Create AI Image</Link>
+                  <Link to="/developer"><Code2 className="mr-2 h-4 w-4" /> Developer Hub</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/ai-gallery"><Images className="mr-2 h-4 w-4" /> AI Gallery</Link>
+                  <Link to="/ai-tools"><Images className="mr-2 h-4 w-4" /> AI Tools</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/premium"><Crown className="mr-2 h-4 w-4" /> Go Premium</Link>
