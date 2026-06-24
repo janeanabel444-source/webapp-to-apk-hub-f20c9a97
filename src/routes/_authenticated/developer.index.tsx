@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Code2, Download, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, Code2, Download, Clock, CheckCircle2, XCircle, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 import { listMyDeveloperApps } from "@/lib/developer.functions";
 
-export const Route = createFileRoute("/_authenticated/developer/")({
+export const Route = createFileRoute("/developer/")({
   head: () => ({ meta: [{ title: "Developer Hub — Nova" }] }),
   component: DeveloperHome,
 });
@@ -18,10 +19,13 @@ const statusBadge: Record<string, { label: string; cls: string; Icon: any }> = {
 };
 
 function DeveloperHome() {
+  const { user } = useAuth();
   const listFn = useServerFn(listMyDeveloperApps);
+  
   const { data: apps, isLoading } = useQuery({
     queryKey: ["developer-apps"],
     queryFn: () => listFn({ data: undefined as never }),
+    enabled: !!user, // Only fetch if authenticated
   });
 
   return (
@@ -34,13 +38,28 @@ function DeveloperHome() {
           <h1 className="font-display text-2xl font-bold">Developer Hub</h1>
           <p className="text-sm text-muted-foreground">Publish apps and games to Nova.</p>
         </div>
-        <Button asChild className="ml-auto rounded-full">
-          <Link to="/developer/new"><Plus className="mr-1.5 h-4 w-4" /> Upload new app</Link>
-        </Button>
+        {user && (
+          <Button asChild className="ml-auto rounded-full">
+            <Link to="/developer/new"><Plus className="mr-1.5 h-4 w-4" /> Upload new app</Link>
+          </Button>
+        )}
       </div>
 
       <div className="mt-8">
-        {isLoading ? (
+        {!user ? (
+          <div className="rounded-3xl border border-dashed border-border/60 bg-card/50 p-10 text-center">
+            <div className="mb-4 inline-flex items-center justify-center rounded-xl bg-primary/10 p-3">
+              <LogIn className="h-5 w-5 text-primary" />
+            </div>
+            <h2 className="font-display text-lg font-semibold">Sign in to publish apps</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create an account to start publishing your apps and games on Nova.
+            </p>
+            <Button asChild className="mt-6 rounded-full">
+              <Link to="/auth">Sign in</Link>
+            </Button>
+          </div>
+        ) : isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : !apps || apps.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border/60 bg-card/50 p-10 text-center">
