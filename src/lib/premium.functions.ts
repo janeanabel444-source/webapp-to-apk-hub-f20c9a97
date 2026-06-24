@@ -4,7 +4,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const getMyPremiumStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    // Premium columns are not readable via the authenticated user client
+    // (column-level grants restrict them). Read with the admin client,
+    // scoped strictly to the authenticated user's own row.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("is_premium, premium_since, premium_expires_at")
       .eq("id", context.userId)
