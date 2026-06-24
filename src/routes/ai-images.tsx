@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { ImagePlus, Gallery, Lock } from "lucide-react";
+import { ImagePlus, Gallery } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
@@ -34,21 +34,9 @@ function AIImagesPage() {
           <p className="mb-6 text-sm text-muted-foreground">
             Create stunning AI images from text descriptions
           </p>
-          {user ? (
-            <Button asChild className="w-full rounded-full">
-              <Link to="/ai-image">Start generating</Link>
-            </Button>
-          ) : (
-            <>
-              <p className="mb-4 text-xs text-muted-foreground/70">
-                <Lock className="mr-1 inline h-3 w-3" />
-                Sign in to generate images
-              </p>
-              <Button asChild className="w-full rounded-full">
-                <Link to="/auth">Sign in</Link>
-              </Button>
-            </>
-          )}
+          <Button asChild className="w-full rounded-full">
+            <Link to="/ai-image">Start generating</Link>
+          </Button>
         </div>
 
         {/* Gallery Card */}
@@ -60,31 +48,19 @@ function AIImagesPage() {
           <p className="mb-6 text-sm text-muted-foreground">
             Browse images you've created and saved
           </p>
-          {user ? (
-            <Button asChild variant="outline" className="w-full rounded-full">
-              <Link to="/ai-gallery">View gallery</Link>
-            </Button>
-          ) : (
-            <>
-              <p className="mb-4 text-xs text-muted-foreground/70">
-                <Lock className="mr-1 inline h-3 w-3" />
-                Sign in to view your gallery
-              </p>
-              <Button asChild variant="outline" className="w-full rounded-full">
-                <Link to="/auth">Sign in</Link>
-              </Button>
-            </>
-          )}
+          <Button asChild variant="outline" className="w-full rounded-full">
+            <Link to="/ai-gallery">View gallery</Link>
+          </Button>
         </div>
       </div>
 
       {!user && (
         <div className="mt-8 rounded-3xl border border-dashed border-border/60 bg-card/50 p-8 text-center">
           <p className="mb-4 text-sm text-muted-foreground">
-            Create an account to start generating AI images today
+            Sign in to create and save AI images
           </p>
           <Button asChild size="lg" className="rounded-full">
-            <Link to="/auth">Create account</Link>
+            <Link to="/auth">Sign in</Link>
           </Button>
         </div>
       )}
