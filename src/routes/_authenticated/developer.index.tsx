@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { listMyDeveloperApps } from "@/lib/developer.functions";
 
-export const Route = createFileRoute("/developer/")({
+export const Route = createFileRoute("/_authenticated/developer/")({
   head: () => ({ meta: [{ title: "Developer Hub — Nova" }] }),
   component: DeveloperHome,
 });
