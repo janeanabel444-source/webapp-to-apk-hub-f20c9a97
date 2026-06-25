@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images } from "lucide-react";
+import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,6 +81,9 @@ export function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/ai-tools"><Images className="mr-2 h-4 w-4" /> AI Tools</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/redeem"><Gift className="mr-2 h-4 w-4" /> Redeem promo code</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/premium"><Crown className="mr-2 h-4 w-4" /> Go Premium</Link>
