@@ -190,11 +190,11 @@ function AuthPage() {
               id="promo"
               value={promo}
               onChange={(e) => setPromo(e.target.value)}
-              placeholder="e.g. JASPER AI"
+              placeholder="ABC123"
               maxLength={64}
               autoCapitalize="characters"
             />
-            <p className="text-xs text-muted-foreground">Enter a valid code to unlock Premium on sign-in.</p>
+            <p className="text-xs text-muted-foreground">Have a code? Enter it to unlock Premium on sign-in.</p>
           </div>
           <Button type="submit" className="h-11 w-full rounded-full font-semibold" disabled={busy}>
             {mode === "signin" ? "Sign in" : "Create account"}

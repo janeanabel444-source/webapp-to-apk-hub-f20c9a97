@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Star, Download as DownloadIcon, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { fetchApp, fetchReviews, isInstalled, upsertReview, categoryLabel } from "@/lib/store";
+import { fetchApp, fetchReviews, isInstalled, upsertReview, categoryLabel, isDemoApp } from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
 import { Button } from "@/components/ui/button";
@@ -153,7 +153,12 @@ function AppDetail() {
           </div>
 
           <div className="mt-5">
-            <InstallButton appId={app.id} initialInstalled={!!installState} />
+            <InstallButton appId={app.id} initialInstalled={!!installState} isDemo={isDemoApp(app)} />
+            {isDemoApp(app) && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                This is a demo app for preview purposes only. Downloads are not available.
+              </p>
+            )}
           </div>
         </div>
       </header>

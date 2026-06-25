@@ -49,7 +49,7 @@ function AiImagePage() {
       qc.invalidateQueries({ queryKey: ["ai-quota"] });
     } catch (e: any) {
       const m = e?.message ?? "Generation failed";
-      if (m === "AI_QUOTA_NONE") setErr("You have no AI image generations. Redeem the JASPER AI promo or go Premium.");
+      if (m === "AI_QUOTA_NONE") setErr("You have no AI image generations. Redeem a promo code or go Premium.");
       else if (m === "AI_QUOTA_EXCEEDED") setErr("Daily AI image limit reached. Try again tomorrow.");
       else setErr(m);
     } finally {
@@ -76,10 +76,10 @@ function AiImagePage() {
           <Crown className="mx-auto h-10 w-10 text-primary" />
           <h1 className="mt-3 font-display text-2xl font-bold">AI image generation needs access</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Redeem the <span className="font-mono font-semibold">JASPER AI</span> promo code for 20 images/day, or upgrade to Premium.
+            Redeem a valid promo code for 20 images/day, or upgrade to Premium for unlimited access.
           </p>
           <div className="mt-6 flex justify-center gap-2">
-            <Button asChild className="rounded-full"><Link to="/auth">Redeem promo code</Link></Button>
+            <Button asChild className="rounded-full"><Link to="/redeem">Redeem promo code</Link></Button>
             <Button asChild variant="outline" className="rounded-full"><Link to="/premium">Go Premium</Link></Button>
           </div>
         </div>

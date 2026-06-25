@@ -38,8 +38,9 @@ function AiToolsHub() {
             </p>
           ) : q.quota === 0 ? (
             <p className="mt-1 text-muted-foreground">
-              No free generations. Redeem the <span className="font-mono">JASPER AI</span> promo or{" "}
-              <Link to="/premium" className="text-primary hover:underline">go Premium</Link>.
+              No free generations.{" "}
+              <Link to="/redeem" className="text-primary hover:underline">Redeem a promo code</Link>{" "}
+              or <Link to="/premium" className="text-primary hover:underline">go Premium</Link>.
             </p>
           ) : (
             <p className="mt-1 text-muted-foreground">

@@ -10,6 +10,11 @@ export function categoryLabel(c: Category) {
   return c === "app" ? "App" : c === "game" ? "Game" : "AI Video";
 }
 
+/** A "demo" app is a seed/placeholder one without a real developer. */
+export function isDemoApp(app: Pick<App, "developer_id">) {
+  return !app.developer_id;
+}
+
 // Generate a colorful gradient for an app icon based on its slug
 export function iconGradient(seed: string) {
   let h = 0;
@@ -28,12 +33,25 @@ export function iconInitials(name: string) {
     .toUpperCase();
 }
 
-export async function fetchApps(category?: Category) {
-  let q = supabase.from("apps").select("*").eq("is_published", true).order("install_count", { ascending: false });
+export async function fetchApps(category?: Category, search?: string) {
+  // Only show approved, live, published apps publicly.
+  let q = supabase
+    .from("apps")
+    .select("*")
+    .eq("is_published", true)
+    .eq("status", "live")
+    .order("install_count", { ascending: false });
   if (category) q = q.eq("category", category);
+  if (search && search.trim()) q = q.ilike("name", `%${search.trim()}%`);
   const { data, error } = await q;
   if (error) throw error;
-  return data ?? [];
+  const rows = data ?? [];
+  // Sort so real (developer-uploaded) apps come first, demos last.
+  return rows.slice().sort((a, b) => {
+    const ad = isDemoApp(a) ? 1 : 0;
+    const bd = isDemoApp(b) ? 1 : 0;
+    return ad - bd;
+  });
 }
 
 export async function fetchApp(slug: string) {

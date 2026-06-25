@@ -12,10 +12,11 @@ type Props = {
   appId: string;
   initialInstalled: boolean;
   variant?: "default" | "compact";
+  isDemo?: boolean;
   onChange?: (installed: boolean) => void;
 };
 
-export function InstallButton({ appId, initialInstalled, variant = "default", onChange }: Props) {
+export function InstallButton({ appId, initialInstalled, variant = "default", isDemo = false, onChange }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -26,6 +27,10 @@ export function InstallButton({ appId, initialInstalled, variant = "default", on
   useEffect(() => setInstalled(initialInstalled), [initialInstalled]);
 
   async function handleInstall() {
+    if (isDemo) {
+      toast.info("This is a demo app for preview purposes only. Downloads are not available.");
+      return;
+    }
     if (!user) {
       navigate({ to: "/auth", search: { redirect: window.location.pathname } });
       return;
@@ -133,12 +138,14 @@ export function InstallButton({ appId, initialInstalled, variant = "default", on
       onClick={handleInstall}
       disabled={busy}
       className={cn(
-        "rounded-full font-semibold text-primary-foreground shadow-md transition hover:shadow-lg",
+        "rounded-full font-semibold shadow-md transition hover:shadow-lg",
+        isDemo ? "bg-muted text-muted-foreground hover:bg-muted" : "text-primary-foreground",
         variant === "compact" ? "h-9 px-4 text-sm" : "h-11 px-7",
       )}
-      style={{ background: "var(--gradient-primary)" }}
+      style={isDemo ? undefined : { background: "var(--gradient-primary)" }}
+      title={isDemo ? "Demo app — downloads not available" : undefined}
     >
-      <Download className="mr-1.5 h-4 w-4" /> Install
+      <Download className="mr-1.5 h-4 w-4" /> {isDemo ? "Demo only" : "Install"}
     </Button>
   );
 }
