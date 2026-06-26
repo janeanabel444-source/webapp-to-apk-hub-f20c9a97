@@ -25,8 +25,25 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       throw new Error("Provide an app URL or upload an app file.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Security scan: if there's a binary upload, ping VirusTotal by hash.
+    // Reject on confirmed malicious; clean/unknown both proceed to live.
+    if (data.file_path) {
+      const { scanStorageFileWithVirusTotal } = await import("@/lib/virustotal.server");
+      const scan = await scanStorageFileWithVirusTotal("app-files", data.file_path);
+      if (scan.status === "malicious") {
+        // Best-effort cleanup of the rejected binary.
+        await supabaseAdmin.storage.from("app-files").remove([data.file_path]).catch(() => {});
+        throw new Error(
+          `This file was flagged by ${scan.positives} of ${scan.total} antivirus engines and cannot be published.`,
+        );
+      }
+    }
+
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
+    // After a successful (or unknown) scan, publish immediately so users can
+    // discover, install, and download the app right away.
     const { data: row, error } = await supabaseAdmin
       .from("apps")
       .insert({
@@ -42,7 +59,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         file_path: data.file_path ?? null,
         screenshots: data.screenshots,
         is_published: true,
-        status: "pending",
+        status: "live",
       })
       .select("id, slug, status")
       .single();
