@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getMyAiQuota } from "@/lib/ai-quota.functions";
 import { generateImage } from "@/lib/stability.functions";
 import { listMyImages } from "@/lib/ai-images.functions";
+import { ShareAppButton } from "@/components/ShareAppButton";
 
 export const Route = createFileRoute("/_authenticated/ai-image")({
   head: () => ({ meta: [{ title: "AI Image Generation — Nova" }] }),
@@ -140,15 +141,18 @@ function AiImagePage() {
       {preview && (
         <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-background">
           <img src={preview} alt={lastPrompt ?? "Generated"} className="block max-h-[70vh] w-full object-contain" />
-          <div className="flex items-center justify-between gap-2 border-t border-border/60 p-3">
-            <p className="line-clamp-1 text-xs text-muted-foreground">{lastPrompt}</p>
-            <a
-              href={preview}
-              download={`nova-${Date.now()}.png`}
-              className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
-            >
-              <Download className="h-3.5 w-3.5" /> Download Image
-            </a>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 p-3">
+            <p className="line-clamp-1 min-w-0 flex-1 text-xs text-muted-foreground">{lastPrompt}</p>
+            <div className="flex shrink-0 items-center gap-2">
+              <ShareAppButton size="sm" variant="outline" />
+              <a
+                href={preview}
+                download={`nova-${Date.now()}.png`}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+              >
+                <Download className="h-3.5 w-3.5" /> Download Image
+              </a>
+            </div>
           </div>
         </div>
       )}
