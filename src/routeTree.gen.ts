@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -30,6 +31,11 @@ import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/publi
 import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authenticated/developer.new'
 import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrendingRoute = TrendingRouteImport.update({
   id: '/trending',
   path: '/trending',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/games': typeof GamesRoute
   '/trending': typeof TrendingRoute
+  '/welcome': typeof WelcomeRoute
   '/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/ai-image': typeof AuthenticatedAiImageRoute
   '/ai-tools': typeof AuthenticatedAiToolsRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/games': typeof GamesRoute
   '/trending': typeof TrendingRoute
+  '/welcome': typeof WelcomeRoute
   '/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/ai-image': typeof AuthenticatedAiImageRoute
   '/ai-tools': typeof AuthenticatedAiToolsRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/games': typeof GamesRoute
   '/trending': typeof TrendingRoute
+  '/welcome': typeof WelcomeRoute
   '/_authenticated/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/_authenticated/ai-image': typeof AuthenticatedAiImageRoute
   '/_authenticated/ai-tools': typeof AuthenticatedAiToolsRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/games'
     | '/trending'
+    | '/welcome'
     | '/ai-gallery'
     | '/ai-image'
     | '/ai-tools'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/games'
     | '/trending'
+    | '/welcome'
     | '/ai-gallery'
     | '/ai-image'
     | '/ai-tools'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/games'
     | '/trending'
+    | '/welcome'
     | '/_authenticated/ai-gallery'
     | '/_authenticated/ai-image'
     | '/_authenticated/ai-tools'
@@ -276,12 +288,20 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   GamesRoute: typeof GamesRoute
   TrendingRoute: typeof TrendingRoute
+  WelcomeRoute: typeof WelcomeRoute
   AppSlugRoute: typeof AppSlugRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trending': {
       id: '/trending'
       path: '/trending'
@@ -463,19 +483,10 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   GamesRoute: GamesRoute,
   TrendingRoute: TrendingRoute,
+  WelcomeRoute: WelcomeRoute,
   AppSlugRoute: AppSlugRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
