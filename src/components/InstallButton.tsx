@@ -28,7 +28,7 @@ export function InstallButton({ appId, initialInstalled, variant = "default", is
 
   async function handleInstall() {
     if (isDemo) {
-      toast.info("This is a demo app for preview purposes only. Downloads are not available.");
+      toast.info("Demo can't install — this app is a preview placeholder.");
       return;
     }
     if (!user) {
