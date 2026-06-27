@@ -89,8 +89,31 @@ export async function isInstalled(userId: string, appId: string) {
 }
 
 export async function installApp(userId: string, appId: string) {
-  const { error } = await supabase.from("installs").insert({ user_id: userId, app_id: appId });
+  // Capture the current app version so we can later detect "update available".
+  const { data: app } = await supabase
+    .from("apps")
+    .select("version")
+    .eq("id", appId)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("installs")
+    .insert({ user_id: userId, app_id: appId, installed_version: app?.version ?? null });
   if (error && !error.message.includes("duplicate")) throw error;
+}
+
+/** Bump the user's installed_version to the app's current latest. */
+export async function markInstalledAppUpdated(userId: string, appId: string) {
+  const { data: app } = await supabase
+    .from("apps")
+    .select("version")
+    .eq("id", appId)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("installs")
+    .update({ installed_version: app?.version ?? null })
+    .eq("user_id", userId)
+    .eq("app_id", appId);
+  if (error) throw error;
 }
 
 export async function uninstallApp(userId: string, appId: string) {
@@ -101,11 +124,34 @@ export async function uninstallApp(userId: string, appId: string) {
 export async function fetchMyLibrary(userId: string) {
   const { data, error } = await supabase
     .from("installs")
-    .select("installed_at, app:apps(*)")
+    .select("installed_at, installed_version, app:apps(*)")
     .eq("user_id", userId)
     .order("installed_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+export async function fetchAppVersions(appId: string) {
+  const { data, error } = await supabase
+    .from("app_versions")
+    .select("id, version, release_notes, created_at")
+    .eq("app_id", appId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Compare semver-ish strings: returns positive if a > b. */
+export function compareVersions(a: string | null | undefined, b: string | null | undefined) {
+  const pa = (a ?? "0").split(".").map((p) => parseInt(p.replace(/[^0-9]/g, ""), 10) || 0);
+  const pb = (b ?? "0").split(".").map((p) => parseInt(p.replace(/[^0-9]/g, ""), 10) || 0);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const x = pa[i] ?? 0;
+    const y = pb[i] ?? 0;
+    if (x !== y) return x - y;
+  }
+  return 0;
 }
 
 export async function upsertReview(userId: string, appId: string, rating: number, body: string) {
@@ -114,3 +160,4 @@ export async function upsertReview(userId: string, appId: string, rating: number
     .upsert({ user_id: userId, app_id: appId, rating, body }, { onConflict: "user_id,app_id" });
   if (error) throw error;
 }
+
