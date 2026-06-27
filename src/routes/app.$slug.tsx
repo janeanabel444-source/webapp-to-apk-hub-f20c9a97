@@ -214,6 +214,51 @@ function AppDetail() {
       )}
 
       <section className="mt-10">
+        <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+          <History className="h-4 w-4" /> What's new
+        </h2>
+        {app.latest_release_notes ? (
+          <div className="mt-3 rounded-2xl border border-border/60 bg-card p-5">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-sm font-semibold">v{app.version}</span>
+              {app.last_updated_at && (
+                <time className="text-xs text-muted-foreground">
+                  {new Date(app.last_updated_at).toLocaleDateString()}
+                </time>
+              )}
+            </div>
+            <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{app.latest_release_notes}</p>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">No release notes yet.</p>
+        )}
+
+        {(versions ?? []).length > 1 && (
+          <details className="mt-4 group">
+            <summary className="cursor-pointer text-sm font-medium text-primary hover:underline">
+              View previous releases ({(versions ?? []).length - 1})
+            </summary>
+            <ol className="mt-3 space-y-3">
+              {(versions ?? []).slice(1).map((v) => (
+                <li key={v.id} className="rounded-2xl border border-border/60 bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm font-semibold">v{v.version}</span>
+                    <time className="text-xs text-muted-foreground">
+                      {new Date(v.created_at).toLocaleDateString()}
+                    </time>
+                  </div>
+                  {v.release_notes && (
+                    <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{v.release_notes}</p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
+      </section>
+
+
+      <section className="mt-10">
         <div className="flex items-end justify-between">
           <h2 className="font-display text-xl font-bold">Ratings & reviews</h2>
         </div>
