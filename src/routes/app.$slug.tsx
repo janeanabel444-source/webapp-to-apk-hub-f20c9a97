@@ -82,9 +82,24 @@ function AppDetail() {
 
   const { data: installState } = useQuery({
     queryKey: ["install-state", app.id, user?.id],
-    queryFn: () => (user ? isInstalled(user.id, app.id) : Promise.resolve(false)),
+    queryFn: () =>
+      user
+        ? fetchInstallState(user.id, app.id)
+        : Promise.resolve({ installed: false, installedVersion: null }),
     enabled: !!user,
   });
+
+  const { data: versions } = useQuery({
+    queryKey: ["app-versions", app.id],
+    queryFn: () => fetchAppVersions(app.id),
+  });
+
+  const updateAvailable =
+    !!installState?.installed &&
+    !!installState.installedVersion &&
+    !!app.version &&
+    compareVersions(app.version, installState.installedVersion) > 0;
+
 
   const { data: reviews } = useQuery({
     queryKey: ["reviews", app.id],
