@@ -29,6 +29,7 @@ import { Route as AuthenticatedAiGalleryRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer.index'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authenticated/developer.new'
+import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
 import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
 
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -134,6 +135,12 @@ const AuthenticatedDeveloperNewRoute =
     path: '/developer/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDeveloperAppIdUpdateRoute =
+  AuthenticatedDeveloperAppIdUpdateRouteImport.update({
+    id: '/developer/$appId/update',
+    path: '/developer/$appId/update',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDeveloperAppIdEditRoute =
   AuthenticatedDeveloperAppIdEditRouteImport.update({
     id: '/developer/$appId/edit',
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
+  '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -184,6 +192,7 @@ export interface FileRoutesByTo {
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/developer': typeof AuthenticatedDeveloperIndexRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
+  '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -208,6 +217,7 @@ export interface FileRoutesById {
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/_authenticated/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
+  '/_authenticated/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/api/public/paystack-webhook'
     | '/developer/'
     | '/developer/$appId/edit'
+    | '/developer/$appId/update'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/api/public/paystack-webhook'
     | '/developer'
     | '/developer/$appId/edit'
+    | '/developer/$appId/update'
   id:
     | '__root__'
     | '/'
@@ -277,6 +289,7 @@ export interface FileRouteTypes {
     | '/api/public/paystack-webhook'
     | '/_authenticated/developer/'
     | '/_authenticated/developer/$appId/edit'
+    | '/_authenticated/developer/$appId/update'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -435,6 +448,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDeveloperNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/developer/$appId/update': {
+      id: '/_authenticated/developer/$appId/update'
+      path: '/developer/$appId/update'
+      fullPath: '/developer/$appId/update'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdUpdateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/developer/$appId/edit': {
       id: '/_authenticated/developer/$appId/edit'
       path: '/developer/$appId/edit'
@@ -456,6 +476,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDeveloperNewRoute: typeof AuthenticatedDeveloperNewRoute
   AuthenticatedDeveloperIndexRoute: typeof AuthenticatedDeveloperIndexRoute
   AuthenticatedDeveloperAppIdEditRoute: typeof AuthenticatedDeveloperAppIdEditRoute
+  AuthenticatedDeveloperAppIdUpdateRoute: typeof AuthenticatedDeveloperAppIdUpdateRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -469,6 +490,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDeveloperNewRoute: AuthenticatedDeveloperNewRoute,
   AuthenticatedDeveloperIndexRoute: AuthenticatedDeveloperIndexRoute,
   AuthenticatedDeveloperAppIdEditRoute: AuthenticatedDeveloperAppIdEditRoute,
+  AuthenticatedDeveloperAppIdUpdateRoute:
+    AuthenticatedDeveloperAppIdUpdateRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

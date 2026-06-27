@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Download, Trash2 } from "lucide-react";
+import { Check, Download, Trash2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { installApp, uninstallApp } from "@/lib/store";
+import { installApp, uninstallApp, markInstalledAppUpdated, compareVersions } from "@/lib/store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +13,20 @@ type Props = {
   initialInstalled: boolean;
   variant?: "default" | "compact";
   isDemo?: boolean;
+  installedVersion?: string | null;
+  latestVersion?: string | null;
   onChange?: (installed: boolean) => void;
 };
 
-export function InstallButton({ appId, initialInstalled, variant = "default", isDemo = false, onChange }: Props) {
+export function InstallButton({
+  appId,
+  initialInstalled,
+  variant = "default",
+  isDemo = false,
+  installedVersion,
+  latestVersion,
+  onChange,
+}: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -26,15 +36,13 @@ export function InstallButton({ appId, initialInstalled, variant = "default", is
 
   useEffect(() => setInstalled(initialInstalled), [initialInstalled]);
 
-  async function handleInstall() {
-    if (isDemo) {
-      toast.info("Demo can't install — this app is a preview placeholder.");
-      return;
-    }
-    if (!user) {
-      navigate({ to: "/auth", search: { redirect: window.location.pathname } });
-      return;
-    }
+  const updateAvailable =
+    installed &&
+    !!latestVersion &&
+    !!installedVersion &&
+    compareVersions(latestVersion, installedVersion) > 0;
+
+  async function runProgress(work: () => Promise<void>, successMsg: string) {
     setBusy(true);
     setProgress(0);
     const start = performance.now();
@@ -47,19 +55,39 @@ export function InstallButton({ appId, initialInstalled, variant = "default", is
     };
     requestAnimationFrame(tick);
     try {
-      await installApp(user.id, appId);
+      await work();
       await new Promise((r) => setTimeout(r, Math.max(0, duration - (performance.now() - start))));
       setInstalled(true);
       onChange?.(true);
       qc.invalidateQueries({ queryKey: ["library"] });
       qc.invalidateQueries({ queryKey: ["install-state", appId] });
-      toast.success("Installed");
-    } catch (e) {
-      toast.error("Couldn't install — please try again");
+      toast.success(successMsg);
+    } catch {
+      toast.error("Couldn't complete — please try again");
     } finally {
       setBusy(false);
       setProgress(0);
     }
+  }
+
+  async function handleInstall() {
+    if (isDemo) {
+      toast.info("Demo can't install — this app is a preview placeholder.");
+      return;
+    }
+    if (!user) {
+      navigate({ to: "/auth", search: { redirect: window.location.pathname } });
+      return;
+    }
+    await runProgress(() => installApp(user.id, appId), "Installed");
+  }
+
+  async function handleUpdate() {
+    if (!user) return;
+    await runProgress(
+      () => markInstalledAppUpdated(user.id, appId),
+      `Updated to v${latestVersion}`,
+    );
   }
 
   async function handleUninstall() {
@@ -79,19 +107,32 @@ export function InstallButton({ appId, initialInstalled, variant = "default", is
     }
   }
 
-  if (installed) {
+  if (installed && !busy) {
     return (
       <div className="flex items-center gap-2">
-        <Button
-          className={cn(
-            "rounded-full font-semibold",
-            variant === "compact" ? "h-9 px-4 text-sm" : "h-11 px-7",
-          )}
-          variant="secondary"
-          onClick={() => toast.message("Opening " + (variant === "compact" ? "app" : "this app"))}
-        >
-          <Check className="mr-1.5 h-4 w-4" /> Open
-        </Button>
+        {updateAvailable ? (
+          <Button
+            onClick={handleUpdate}
+            className={cn(
+              "rounded-full font-semibold text-primary-foreground shadow-md",
+              variant === "compact" ? "h-9 px-4 text-sm" : "h-11 px-7",
+            )}
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            <RefreshCw className="mr-1.5 h-4 w-4" /> Update
+          </Button>
+        ) : (
+          <Button
+            className={cn(
+              "rounded-full font-semibold",
+              variant === "compact" ? "h-9 px-4 text-sm" : "h-11 px-7",
+            )}
+            variant="secondary"
+            onClick={() => toast.message("Opening " + (variant === "compact" ? "app" : "this app"))}
+          >
+            <Check className="mr-1.5 h-4 w-4" /> Open
+          </Button>
+        )}
         {variant !== "compact" && (
           <Button variant="ghost" size="icon" className="rounded-full" onClick={handleUninstall} disabled={busy} aria-label="Uninstall">
             <Trash2 className="h-4 w-4" />
@@ -100,6 +141,7 @@ export function InstallButton({ appId, initialInstalled, variant = "default", is
       </div>
     );
   }
+
 
   if (busy && progress > 0) {
     const size = variant === "compact" ? 36 : 44;
