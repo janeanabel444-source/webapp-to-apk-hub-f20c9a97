@@ -1,14 +1,24 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Star, Download as DownloadIcon, Shield } from "lucide-react";
+import { ChevronLeft, Star, Download as DownloadIcon, Shield, History, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { fetchApp, fetchReviews, isInstalled, upsertReview, categoryLabel, isDemoApp } from "@/lib/store";
+import {
+  fetchApp,
+  fetchReviews,
+  fetchInstallState,
+  upsertReview,
+  categoryLabel,
+  isDemoApp,
+  fetchAppVersions,
+  compareVersions,
+} from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/app/$slug")({
   loader: async ({ params }) => {
@@ -72,9 +82,24 @@ function AppDetail() {
 
   const { data: installState } = useQuery({
     queryKey: ["install-state", app.id, user?.id],
-    queryFn: () => (user ? isInstalled(user.id, app.id) : Promise.resolve(false)),
+    queryFn: () =>
+      user
+        ? fetchInstallState(user.id, app.id)
+        : Promise.resolve({ installed: false, installedVersion: null }),
     enabled: !!user,
   });
+
+  const { data: versions } = useQuery({
+    queryKey: ["app-versions", app.id],
+    queryFn: () => fetchAppVersions(app.id),
+  });
+
+  const updateAvailable =
+    !!installState?.installed &&
+    !!installState.installedVersion &&
+    !!app.version &&
+    compareVersions(app.version, installState.installedVersion) > 0;
+
 
   const { data: reviews } = useQuery({
     queryKey: ["reviews", app.id],
@@ -153,15 +178,33 @@ function AppDetail() {
           </div>
 
           <div className="mt-5">
-            <InstallButton appId={app.id} initialInstalled={!!installState} isDemo={isDemoApp(app)} />
+            <InstallButton
+              appId={app.id}
+              initialInstalled={!!installState?.installed}
+              isDemo={isDemoApp(app)}
+              installedVersion={installState?.installedVersion}
+              latestVersion={app.version}
+            />
             {isDemoApp(app) && (
               <p className="mt-2 text-xs text-muted-foreground">
                 This is a demo app for preview purposes only. Downloads are not available.
               </p>
             )}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span>Version <span className="font-medium text-foreground">{app.version ?? "1.0.0"}</span></span>
+              {app.last_updated_at && (
+                <span>Updated {new Date(app.last_updated_at).toLocaleDateString()}</span>
+              )}
+              {updateAvailable && installState?.installedVersion && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                  <Sparkles className="h-3 w-3" /> Update available · v{installState.installedVersion} → v{app.version}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
+
 
       {app.description && (
         <section className="mt-8">
@@ -169,6 +212,51 @@ function AppDetail() {
           <p className="mt-2 whitespace-pre-line text-muted-foreground">{app.description}</p>
         </section>
       )}
+
+      <section className="mt-10">
+        <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+          <History className="h-4 w-4" /> What's new
+        </h2>
+        {app.latest_release_notes ? (
+          <div className="mt-3 rounded-2xl border border-border/60 bg-card p-5">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-sm font-semibold">v{app.version}</span>
+              {app.last_updated_at && (
+                <time className="text-xs text-muted-foreground">
+                  {new Date(app.last_updated_at).toLocaleDateString()}
+                </time>
+              )}
+            </div>
+            <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{app.latest_release_notes}</p>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">No release notes yet.</p>
+        )}
+
+        {(versions ?? []).length > 1 && (
+          <details className="mt-4 group">
+            <summary className="cursor-pointer text-sm font-medium text-primary hover:underline">
+              View previous releases ({(versions ?? []).length - 1})
+            </summary>
+            <ol className="mt-3 space-y-3">
+              {(versions ?? []).slice(1).map((v) => (
+                <li key={v.id} className="rounded-2xl border border-border/60 bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm font-semibold">v{v.version}</span>
+                    <time className="text-xs text-muted-foreground">
+                      {new Date(v.created_at).toLocaleDateString()}
+                    </time>
+                  </div>
+                  {v.release_notes && (
+                    <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{v.release_notes}</p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
+      </section>
+
 
       <section className="mt-10">
         <div className="flex items-end justify-between">

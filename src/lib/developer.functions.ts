@@ -17,6 +17,40 @@ const appInput = z.object({
   screenshots: z.array(z.string().url()).max(8).default([]),
 });
 
+// Semver-like x.y.z validation (1–4 numeric segments, e.g. 1.0.1, 2.0.0, 1.2.3.4)
+const SEMVER_RE = /^\d+(\.\d+){0,3}$/;
+function parseVersion(v: string): number[] {
+  return v.split(".").map((p) => parseInt(p.replace(/[^0-9]/g, ""), 10) || 0);
+}
+function compareVersions(a: string, b: string): number {
+  const A = parseVersion(a);
+  const B = parseVersion(b);
+  const len = Math.max(A.length, B.length);
+  for (let i = 0; i < len; i++) {
+    const x = A[i] ?? 0;
+    const y = B[i] ?? 0;
+    if (x !== y) return x - y;
+  }
+  return 0;
+}
+
+/**
+ * Scan an uploaded app binary with VirusTotal. Throws on malicious; returns
+ * silently on clean/unknown. Shared by create + update so both paths are
+ * protected against malware bypass.
+ */
+async function scanAppBinaryOrThrow(filePath: string) {
+  const { scanStorageFileWithVirusTotal } = await import("@/lib/virustotal.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const scan = await scanStorageFileWithVirusTotal("app-files", filePath);
+  if (scan.status === "malicious") {
+    await supabaseAdmin.storage.from("app-files").remove([filePath]).catch(() => {});
+    throw new Error(
+      `This file was flagged by ${scan.positives} of ${scan.total} antivirus engines and cannot be published.`,
+    );
+  }
+}
+
 export const createDeveloperApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => appInput.parse(input))
@@ -26,24 +60,13 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Security scan: if there's a binary upload, ping VirusTotal by hash.
-    // Reject on confirmed malicious; clean/unknown both proceed to live.
     if (data.file_path) {
-      const { scanStorageFileWithVirusTotal } = await import("@/lib/virustotal.server");
-      const scan = await scanStorageFileWithVirusTotal("app-files", data.file_path);
-      if (scan.status === "malicious") {
-        // Best-effort cleanup of the rejected binary.
-        await supabaseAdmin.storage.from("app-files").remove([data.file_path]).catch(() => {});
-        throw new Error(
-          `This file was flagged by ${scan.positives} of ${scan.total} antivirus engines and cannot be published.`,
-        );
-      }
+      await scanAppBinaryOrThrow(data.file_path);
     }
 
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
-    // After a successful (or unknown) scan, publish immediately so users can
-    // discover, install, and download the app right away.
+    const initialVersion = "1.0.0";
     const { data: row, error } = await supabaseAdmin
       .from("apps")
       .insert({
@@ -60,13 +83,26 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         screenshots: data.screenshots,
         is_published: true,
         status: "live",
+        version: initialVersion,
+        latest_release_notes: "Initial release",
+        last_updated_at: new Date().toISOString(),
       })
       .select("id, slug, status")
       .single();
     if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("app_versions").insert({
+      app_id: row.id,
+      version: initialVersion,
+      release_notes: "Initial release",
+      file_path: data.file_path ?? null,
+    });
+
     return row;
   });
 
+// Edits to metadata only. file_path changes here are also scanned (defense in
+// depth) — primary version/binary updates should go through publishAppUpdate.
 export const updateDeveloperApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -77,11 +113,15 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     const { id, ...patch } = data;
     const { data: existing } = await supabaseAdmin
       .from("apps")
-      .select("developer_id, status")
+      .select("developer_id, status, file_path")
       .eq("id", id)
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) {
       throw new Error("Not found");
+    }
+    // SECURITY: any binary swap must be re-scanned, even on a metadata edit.
+    if (patch.file_path && patch.file_path !== existing.file_path) {
+      await scanAppBinaryOrThrow(patch.file_path);
     }
     const { error } = await supabaseAdmin
       .from("apps")
@@ -91,13 +131,83 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const updateInput = z.object({
+  id: z.string().uuid(),
+  version: z.string().trim().regex(SEMVER_RE, "Version must look like 1.0.1, 1.1.0, or 2.0.0"),
+  release_notes: z.string().trim().min(3).max(2000),
+  file_path: z.string().min(1).optional().nullable(),
+  app_url: z.string().url().optional().nullable(),
+});
+
+/**
+ * Publish a new version of an existing app. Replaces the live binary while
+ * preserving installs/ratings/reviews/screenshots. Records a row in
+ * app_versions for the history timeline.
+ */
+export const publishAppUpdate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => updateInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("apps")
+      .select("id, developer_id, version, file_path, app_url")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!existing || existing.developer_id !== context.userId) {
+      throw new Error("App not found");
+    }
+
+    // Version must be strictly greater than current
+    if (compareVersions(data.version, existing.version ?? "0.0.0") <= 0) {
+      throw new Error(
+        `Version ${data.version} must be greater than the current version ${existing.version}.`,
+      );
+    }
+
+    const newFilePath = data.file_path ?? existing.file_path;
+    if (!newFilePath && !data.app_url && !existing.app_url) {
+      throw new Error("Provide a new app file or an updated app URL.");
+    }
+
+    // Re-scan any new binary before going live.
+    if (data.file_path && data.file_path !== existing.file_path) {
+      await scanAppBinaryOrThrow(data.file_path);
+    }
+
+    const now = new Date().toISOString();
+    const { error: updateErr } = await supabaseAdmin
+      .from("apps")
+      .update({
+        version: data.version,
+        latest_release_notes: data.release_notes,
+        file_path: newFilePath,
+        app_url: data.app_url ?? existing.app_url,
+        last_updated_at: now,
+        status: "live",
+        is_published: true,
+      })
+      .eq("id", data.id);
+    if (updateErr) throw new Error(updateErr.message);
+
+    const { error: histErr } = await supabaseAdmin.from("app_versions").insert({
+      app_id: data.id,
+      version: data.version,
+      release_notes: data.release_notes,
+      file_path: newFilePath,
+    });
+    if (histErr) throw new Error(histErr.message);
+
+    return { ok: true, version: data.version };
+  });
+
 export const listMyDeveloperApps = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("apps")
-      .select("id, slug, name, category, platform, icon_url, status, install_count, created_at, updated_at")
+      .select("id, slug, name, category, platform, icon_url, status, install_count, version, last_updated_at, created_at, updated_at")
       .eq("developer_id", context.userId)
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);

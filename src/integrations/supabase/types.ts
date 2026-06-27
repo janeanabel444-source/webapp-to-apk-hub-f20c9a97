@@ -62,6 +62,41 @@ export type Database = {
         }
         Relationships: []
       }
+      app_versions: {
+        Row: {
+          app_id: string
+          created_at: string
+          file_path: string | null
+          id: string
+          release_notes: string | null
+          version: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          release_notes?: string | null
+          version: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          release_notes?: string | null
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_versions_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apps: {
         Row: {
           app_url: string | null
@@ -74,6 +109,8 @@ export type Database = {
           id: string
           install_count: number
           is_published: boolean
+          last_updated_at: string
+          latest_release_notes: string | null
           name: string
           platform: string | null
           rating_avg: number
@@ -83,6 +120,7 @@ export type Database = {
           status: string
           tagline: string | null
           updated_at: string
+          version: string
         }
         Insert: {
           app_url?: string | null
@@ -95,6 +133,8 @@ export type Database = {
           id?: string
           install_count?: number
           is_published?: boolean
+          last_updated_at?: string
+          latest_release_notes?: string | null
           name: string
           platform?: string | null
           rating_avg?: number
@@ -104,6 +144,7 @@ export type Database = {
           status?: string
           tagline?: string | null
           updated_at?: string
+          version?: string
         }
         Update: {
           app_url?: string | null
@@ -116,6 +157,8 @@ export type Database = {
           id?: string
           install_count?: number
           is_published?: boolean
+          last_updated_at?: string
+          latest_release_notes?: string | null
           name?: string
           platform?: string | null
           rating_avg?: number
@@ -125,6 +168,7 @@ export type Database = {
           status?: string
           tagline?: string | null
           updated_at?: string
+          version?: string
         }
         Relationships: []
       }
@@ -133,18 +177,21 @@ export type Database = {
           app_id: string
           id: string
           installed_at: string
+          installed_version: string | null
           user_id: string
         }
         Insert: {
           app_id: string
           id?: string
           installed_at?: string
+          installed_version?: string | null
           user_id: string
         }
         Update: {
           app_id?: string
           id?: string
           installed_at?: string
+          installed_version?: string | null
           user_id?: string
         }
         Relationships: [
@@ -375,7 +422,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      semver_to_int_array: { Args: { v: string }; Returns: number[] }
     }
     Enums: {
       app_category: "app" | "game" | "ai_video"
