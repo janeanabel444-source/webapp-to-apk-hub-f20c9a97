@@ -178,15 +178,33 @@ function AppDetail() {
           </div>
 
           <div className="mt-5">
-            <InstallButton appId={app.id} initialInstalled={!!installState} isDemo={isDemoApp(app)} />
+            <InstallButton
+              appId={app.id}
+              initialInstalled={!!installState?.installed}
+              isDemo={isDemoApp(app)}
+              installedVersion={installState?.installedVersion}
+              latestVersion={app.version}
+            />
             {isDemoApp(app) && (
               <p className="mt-2 text-xs text-muted-foreground">
                 This is a demo app for preview purposes only. Downloads are not available.
               </p>
             )}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span>Version <span className="font-medium text-foreground">{app.version ?? "1.0.0"}</span></span>
+              {app.last_updated_at && (
+                <span>Updated {new Date(app.last_updated_at).toLocaleDateString()}</span>
+              )}
+              {updateAvailable && installState?.installedVersion && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                  <Sparkles className="h-3 w-3" /> Update available · v{installState.installedVersion} → v{app.version}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
+
 
       {app.description && (
         <section className="mt-8">
