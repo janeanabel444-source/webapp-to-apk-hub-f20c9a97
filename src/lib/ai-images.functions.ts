@@ -28,11 +28,17 @@ async function signMany(paths: string[]): Promise<Record<string, string>> {
 export const listGalleryImages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // RLS already restricts to premium users; non-premium gets empty
-    const { data: premium } = await context.supabase.rpc("is_user_premium", {
-      _user_id: context.userId,
-    });
-    if (!premium) throw new Error("PREMIUM_REQUIRED");
+    // Check premium status for current user via admin client (column-restricted via RLS).
+    const { supabaseAdmin: adminForPremium } = await import("@/integrations/supabase/client.server");
+    const { data: prof } = await adminForPremium
+      .from("profiles")
+      .select("is_premium, premium_expires_at")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const trialActive = prof?.premium_expires_at
+      ? new Date(prof.premium_expires_at).getTime() > Date.now()
+      : false;
+    if (!prof?.is_premium && !trialActive) throw new Error("PREMIUM_REQUIRED");
 
     const { data: rows, error } = await context.supabase
       .from("ai_images")
