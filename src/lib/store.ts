@@ -88,6 +88,20 @@ export async function isInstalled(userId: string, appId: string) {
   return !!data;
 }
 
+export async function fetchInstallState(userId: string, appId: string) {
+  const { data, error } = await supabase
+    .from("installs")
+    .select("id, installed_version")
+    .eq("user_id", userId)
+    .eq("app_id", appId)
+    .maybeSingle();
+  if (error) throw error;
+  return data
+    ? { installed: true, installedVersion: data.installed_version as string | null }
+    : { installed: false, installedVersion: null };
+}
+
+
 export async function installApp(userId: string, appId: string) {
   // Capture the current app version so we can later detect "update available".
   const { data: app } = await supabase
