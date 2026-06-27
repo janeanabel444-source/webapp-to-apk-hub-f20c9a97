@@ -94,9 +94,14 @@ function DeveloperHome() {
                       <span className="inline-flex items-center gap-1"><Download className="h-3 w-3" />{a.install_count}</span>
                     </p>
                   </div>
-                  <Button asChild size="sm" variant="outline" className="rounded-full">
-                    <Link to="/developer/$appId/edit" params={{ appId: a.id }}>Edit</Link>
-                  </Button>
+                  <div className="flex flex-col gap-1.5 sm:flex-row">
+                    <Button asChild size="sm" className="rounded-full">
+                      <Link to="/developer/$appId/update" params={{ appId: a.id }}>Update</Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline" className="rounded-full">
+                      <Link to="/developer/$appId/edit" params={{ appId: a.id }}>Edit</Link>
+                    </Button>
+                  </div>
                 </li>
               );
             })}
