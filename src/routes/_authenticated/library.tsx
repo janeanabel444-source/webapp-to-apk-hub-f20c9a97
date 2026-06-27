@@ -35,6 +35,10 @@ function Library() {
         {(data ?? []).map((row: any) => {
           const app = row.app;
           if (!app) return null;
+          const updateAvailable =
+            !!row.installed_version &&
+            !!app.version &&
+            row.installed_version !== app.version;
           return (
             <div key={app.id} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3">
               <Link to="/app/$slug" params={{ slug: app.slug }}>
@@ -44,9 +48,23 @@ function Library() {
                 <Link to="/app/$slug" params={{ slug: app.slug }} className="block truncate font-semibold hover:underline">
                   {app.name}
                 </Link>
-                <p className="truncate text-xs text-muted-foreground">{app.tagline}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  v{row.installed_version ?? app.version}
+                  {updateAvailable && (
+                    <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 font-medium text-primary">
+                      Update to v{app.version}
+                    </span>
+                  )}
+                  {app.tagline ? ` · ${app.tagline}` : ""}
+                </p>
               </div>
-              <InstallButton appId={app.id} initialInstalled={true} variant="compact" />
+              <InstallButton
+                appId={app.id}
+                initialInstalled={true}
+                variant="compact"
+                installedVersion={row.installed_version}
+                latestVersion={app.version}
+              />
             </div>
           );
         })}
