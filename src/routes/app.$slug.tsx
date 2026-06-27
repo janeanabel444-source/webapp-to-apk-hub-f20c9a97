@@ -1,14 +1,24 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Star, Download as DownloadIcon, Shield } from "lucide-react";
+import { ChevronLeft, Star, Download as DownloadIcon, Shield, History, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { fetchApp, fetchReviews, isInstalled, upsertReview, categoryLabel, isDemoApp } from "@/lib/store";
+import {
+  fetchApp,
+  fetchReviews,
+  fetchInstallState,
+  upsertReview,
+  categoryLabel,
+  isDemoApp,
+  fetchAppVersions,
+  compareVersions,
+} from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/app/$slug")({
   loader: async ({ params }) => {
