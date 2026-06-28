@@ -158,6 +158,10 @@ const updateInput = z.object({
   release_notes: z.string().trim().min(3).max(2000),
   file_path: z.string().min(1).optional().nullable(),
   app_url: z.string().url().optional().nullable(),
+  package_name: z.string().max(255).optional().nullable(),
+  version_code: z.number().int().nonnegative().optional().nullable(),
+  apk_size: z.number().int().nonnegative().optional().nullable(),
+  permissions: z.array(z.string()).max(200).default([]),
 });
 
 /**
@@ -172,14 +176,13 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing } = await supabaseAdmin
       .from("apps")
-      .select("id, developer_id, version, file_path, app_url")
+      .select("id, developer_id, version, file_path, app_url, permissions")
       .eq("id", data.id)
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) {
       throw new Error("App not found");
     }
 
-    // Version must be strictly greater than current
     if (compareVersions(data.version, existing.version ?? "0.0.0") <= 0) {
       throw new Error(
         `Version ${data.version} must be greater than the current version ${existing.version}.`,
@@ -191,10 +194,16 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       throw new Error("Provide a new app file or an updated app URL.");
     }
 
-    // Re-scan any new binary before going live.
     if (data.file_path && data.file_path !== existing.file_path) {
       await scanAppBinaryOrThrow(data.file_path);
     }
+
+    const prevPerms: string[] = (existing.permissions as string[] | null) ?? [];
+    const nextPerms = data.permissions ?? [];
+    const prevSet = new Set(prevPerms);
+    const nextSet = new Set(nextPerms);
+    const permsAdded = [...nextSet].filter((p) => !prevSet.has(p));
+    const permsRemoved = [...prevSet].filter((p) => !nextSet.has(p));
 
     const now = new Date().toISOString();
     const { error: updateErr } = await supabaseAdmin
@@ -207,6 +216,10 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
         last_updated_at: now,
         status: "live",
         is_published: true,
+        package_name: data.package_name ?? undefined,
+        version_code: data.version_code ?? undefined,
+        apk_size: data.apk_size ?? undefined,
+        permissions: nextPerms.length ? nextPerms : undefined,
       })
       .eq("id", data.id);
     if (updateErr) throw new Error(updateErr.message);
@@ -216,6 +229,12 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       version: data.version,
       release_notes: data.release_notes,
       file_path: newFilePath,
+      package_name: data.package_name ?? null,
+      version_code: data.version_code ?? null,
+      apk_size: data.apk_size ?? null,
+      permissions: nextPerms,
+      permissions_added: permsAdded,
+      permissions_removed: permsRemoved,
     });
     if (histErr) throw new Error(histErr.message);
 
