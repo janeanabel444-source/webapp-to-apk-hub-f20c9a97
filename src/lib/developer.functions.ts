@@ -60,7 +60,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => appInput.parse(input))
   .handler(async ({ data, context }) => {
-    if (!data.app_url && !data.file_path) {
+    // Android apps are APK-only; non-Android still accept a URL or file.
+    if (data.platform === "android") {
+      if (!data.file_path) throw new Error("Android apps require an APK upload.");
+    } else if (!data.app_url && !data.file_path) {
       throw new Error("Provide an app URL or upload an app file.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -71,7 +74,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
 
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
-    const initialVersion = "1.0.0";
+    const initialVersion = (data.version_name && data.version_name.trim()) || "1.0.0";
     const { data: row, error } = await supabaseAdmin
       .from("apps")
       .insert({
@@ -83,7 +86,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         category: data.category,
         platform: data.platform,
         icon_url: data.icon_url,
-        app_url: data.app_url ?? null,
+        app_url: data.platform === "android" ? null : (data.app_url ?? null),
         file_path: data.file_path ?? null,
         screenshots: data.screenshots,
         is_published: true,
@@ -91,6 +94,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         version: initialVersion,
         latest_release_notes: "Initial release",
         last_updated_at: new Date().toISOString(),
+        package_name: data.package_name ?? null,
+        version_code: data.version_code ?? null,
+        apk_size: data.apk_size ?? null,
+        permissions: data.permissions ?? [],
       })
       .select("id, slug, status")
       .single();
@@ -101,6 +108,12 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       version: initialVersion,
       release_notes: "Initial release",
       file_path: data.file_path ?? null,
+      package_name: data.package_name ?? null,
+      version_code: data.version_code ?? null,
+      apk_size: data.apk_size ?? null,
+      permissions: data.permissions ?? [],
+      permissions_added: data.permissions ?? [],
+      permissions_removed: [],
     });
 
     return row;
@@ -128,9 +141,12 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     if (patch.file_path && patch.file_path !== existing.file_path) {
       await scanAppBinaryOrThrow(patch.file_path);
     }
+    // Drop fields not on the apps table.
+    const { version_name: _vn, ...safePatch } = patch as typeof patch & { version_name?: unknown };
+    void _vn;
     const { error } = await supabaseAdmin
       .from("apps")
-      .update({ ...patch, status: existing.status === "live" ? "live" : "pending" })
+      .update({ ...safePatch, status: existing.status === "live" ? "live" : "pending" })
       .eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
