@@ -64,28 +64,46 @@ export type Database = {
       }
       app_versions: {
         Row: {
+          apk_size: number | null
           app_id: string
           created_at: string
           file_path: string | null
           id: string
+          package_name: string | null
+          permissions: string[] | null
+          permissions_added: string[] | null
+          permissions_removed: string[] | null
           release_notes: string | null
           version: string
+          version_code: number | null
         }
         Insert: {
+          apk_size?: number | null
           app_id: string
           created_at?: string
           file_path?: string | null
           id?: string
+          package_name?: string | null
+          permissions?: string[] | null
+          permissions_added?: string[] | null
+          permissions_removed?: string[] | null
           release_notes?: string | null
           version: string
+          version_code?: number | null
         }
         Update: {
+          apk_size?: number | null
           app_id?: string
           created_at?: string
           file_path?: string | null
           id?: string
+          package_name?: string | null
+          permissions?: string[] | null
+          permissions_added?: string[] | null
+          permissions_removed?: string[] | null
           release_notes?: string | null
           version?: string
+          version_code?: number | null
         }
         Relationships: [
           {
@@ -99,6 +117,7 @@ export type Database = {
       }
       apps: {
         Row: {
+          apk_size: number | null
           app_url: string | null
           category: Database["public"]["Enums"]["app_category"]
           created_at: string
@@ -112,6 +131,8 @@ export type Database = {
           last_updated_at: string
           latest_release_notes: string | null
           name: string
+          package_name: string | null
+          permissions: string[] | null
           platform: string | null
           rating_avg: number
           rating_count: number
@@ -121,8 +142,10 @@ export type Database = {
           tagline: string | null
           updated_at: string
           version: string
+          version_code: number | null
         }
         Insert: {
+          apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
           created_at?: string
@@ -136,6 +159,8 @@ export type Database = {
           last_updated_at?: string
           latest_release_notes?: string | null
           name: string
+          package_name?: string | null
+          permissions?: string[] | null
           platform?: string | null
           rating_avg?: number
           rating_count?: number
@@ -145,8 +170,10 @@ export type Database = {
           tagline?: string | null
           updated_at?: string
           version?: string
+          version_code?: number | null
         }
         Update: {
+          apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
           created_at?: string
@@ -160,6 +187,8 @@ export type Database = {
           last_updated_at?: string
           latest_release_notes?: string | null
           name?: string
+          package_name?: string | null
+          permissions?: string[] | null
           platform?: string | null
           rating_avg?: number
           rating_count?: number
@@ -169,6 +198,7 @@ export type Database = {
           tagline?: string | null
           updated_at?: string
           version?: string
+          version_code?: number | null
         }
         Relationships: []
       }

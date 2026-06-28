@@ -15,6 +15,11 @@ const appInput = z.object({
   app_url: z.string().url().optional().nullable(),
   file_path: z.string().min(1).optional().nullable(),
   screenshots: z.array(z.string().url()).max(8).default([]),
+  package_name: z.string().trim().max(255).optional().nullable(),
+  version_name: z.string().trim().max(64).optional().nullable(),
+  version_code: z.number().int().nonnegative().optional().nullable(),
+  apk_size: z.number().int().nonnegative().optional().nullable(),
+  permissions: z.array(z.string()).max(200).default([]),
 });
 
 // Semver-like x.y.z validation (1–4 numeric segments, e.g. 1.0.1, 2.0.0, 1.2.3.4)
@@ -55,7 +60,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => appInput.parse(input))
   .handler(async ({ data, context }) => {
-    if (!data.app_url && !data.file_path) {
+    // Android apps are APK-only; non-Android still accept a URL or file.
+    if (data.platform === "android") {
+      if (!data.file_path) throw new Error("Android apps require an APK upload.");
+    } else if (!data.app_url && !data.file_path) {
       throw new Error("Provide an app URL or upload an app file.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -66,7 +74,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
 
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
-    const initialVersion = "1.0.0";
+    const initialVersion = (data.version_name && data.version_name.trim()) || "1.0.0";
     const { data: row, error } = await supabaseAdmin
       .from("apps")
       .insert({
@@ -78,7 +86,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         category: data.category,
         platform: data.platform,
         icon_url: data.icon_url,
-        app_url: data.app_url ?? null,
+        app_url: data.platform === "android" ? null : (data.app_url ?? null),
         file_path: data.file_path ?? null,
         screenshots: data.screenshots,
         is_published: true,
@@ -86,6 +94,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         version: initialVersion,
         latest_release_notes: "Initial release",
         last_updated_at: new Date().toISOString(),
+        package_name: data.package_name ?? null,
+        version_code: data.version_code ?? null,
+        apk_size: data.apk_size ?? null,
+        permissions: data.permissions ?? [],
       })
       .select("id, slug, status")
       .single();
@@ -96,6 +108,12 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       version: initialVersion,
       release_notes: "Initial release",
       file_path: data.file_path ?? null,
+      package_name: data.package_name ?? null,
+      version_code: data.version_code ?? null,
+      apk_size: data.apk_size ?? null,
+      permissions: data.permissions ?? [],
+      permissions_added: data.permissions ?? [],
+      permissions_removed: [],
     });
 
     return row;
@@ -123,9 +141,12 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     if (patch.file_path && patch.file_path !== existing.file_path) {
       await scanAppBinaryOrThrow(patch.file_path);
     }
+    // Drop fields not on the apps table.
+    const { version_name: _vn, ...safePatch } = patch as typeof patch & { version_name?: unknown };
+    void _vn;
     const { error } = await supabaseAdmin
       .from("apps")
-      .update({ ...patch, status: existing.status === "live" ? "live" : "pending" })
+      .update({ ...safePatch, status: existing.status === "live" ? "live" : "pending" })
       .eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -137,6 +158,10 @@ const updateInput = z.object({
   release_notes: z.string().trim().min(3).max(2000),
   file_path: z.string().min(1).optional().nullable(),
   app_url: z.string().url().optional().nullable(),
+  package_name: z.string().max(255).optional().nullable(),
+  version_code: z.number().int().nonnegative().optional().nullable(),
+  apk_size: z.number().int().nonnegative().optional().nullable(),
+  permissions: z.array(z.string()).max(200).default([]),
 });
 
 /**
@@ -151,14 +176,13 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing } = await supabaseAdmin
       .from("apps")
-      .select("id, developer_id, version, file_path, app_url")
+      .select("id, developer_id, version, file_path, app_url, permissions")
       .eq("id", data.id)
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) {
       throw new Error("App not found");
     }
 
-    // Version must be strictly greater than current
     if (compareVersions(data.version, existing.version ?? "0.0.0") <= 0) {
       throw new Error(
         `Version ${data.version} must be greater than the current version ${existing.version}.`,
@@ -170,10 +194,16 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       throw new Error("Provide a new app file or an updated app URL.");
     }
 
-    // Re-scan any new binary before going live.
     if (data.file_path && data.file_path !== existing.file_path) {
       await scanAppBinaryOrThrow(data.file_path);
     }
+
+    const prevPerms: string[] = (existing.permissions as string[] | null) ?? [];
+    const nextPerms = data.permissions ?? [];
+    const prevSet = new Set(prevPerms);
+    const nextSet = new Set(nextPerms);
+    const permsAdded = [...nextSet].filter((p) => !prevSet.has(p));
+    const permsRemoved = [...prevSet].filter((p) => !nextSet.has(p));
 
     const now = new Date().toISOString();
     const { error: updateErr } = await supabaseAdmin
@@ -186,6 +216,10 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
         last_updated_at: now,
         status: "live",
         is_published: true,
+        package_name: data.package_name ?? undefined,
+        version_code: data.version_code ?? undefined,
+        apk_size: data.apk_size ?? undefined,
+        permissions: nextPerms.length ? nextPerms : undefined,
       })
       .eq("id", data.id);
     if (updateErr) throw new Error(updateErr.message);
@@ -195,6 +229,12 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       version: data.version,
       release_notes: data.release_notes,
       file_path: newFilePath,
+      package_name: data.package_name ?? null,
+      version_code: data.version_code ?? null,
+      apk_size: data.apk_size ?? null,
+      permissions: nextPerms,
+      permissions_added: permsAdded,
+      permissions_removed: permsRemoved,
     });
     if (histErr) throw new Error(histErr.message);
 

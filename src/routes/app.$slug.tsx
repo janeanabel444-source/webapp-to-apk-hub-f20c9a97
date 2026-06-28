@@ -180,6 +180,10 @@ function AppDetail() {
           <div className="mt-5">
             <InstallButton
               appId={app.id}
+              appName={app.name}
+              filePath={app.file_path}
+              appUrl={app.app_url}
+              apkSize={app.apk_size}
               initialInstalled={!!installState?.installed}
               isDemo={isDemoApp(app)}
               installedVersion={installState?.installedVersion}
