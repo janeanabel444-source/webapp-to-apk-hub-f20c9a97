@@ -74,8 +74,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Discover great apps, games, and AI videos on Nova." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/92fddde7-47f7-471c-8d66-ba9503158d52/id-preview-4f84c315--4ce31e4d-be82-4e07-9036-de39e7a47389.lovable.app-1782369811196.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/92fddde7-47f7-471c-8d66-ba9503158d52/id-preview-4f84c315--4ce31e4d-be82-4e07-9036-de39e7a47389.lovable.app-1782369811196.png" },
+      { name: "theme-color", content: "#000000" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Nova" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/icons/icon-32.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/icon-180.png" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -103,6 +114,7 @@ function RootComponent() {
           <Footer />
         </div>
         <Toaster position="bottom-center" />
+        <PwaInstaller />
       </AuthProvider>
     </QueryClientProvider>
   );
