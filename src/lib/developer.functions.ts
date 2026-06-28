@@ -15,6 +15,11 @@ const appInput = z.object({
   app_url: z.string().url().optional().nullable(),
   file_path: z.string().min(1).optional().nullable(),
   screenshots: z.array(z.string().url()).max(8).default([]),
+  package_name: z.string().trim().max(255).optional().nullable(),
+  version_name: z.string().trim().max(64).optional().nullable(),
+  version_code: z.number().int().nonnegative().optional().nullable(),
+  apk_size: z.number().int().nonnegative().optional().nullable(),
+  permissions: z.array(z.string()).max(200).default([]),
 });
 
 // Semver-like x.y.z validation (1–4 numeric segments, e.g. 1.0.1, 2.0.0, 1.2.3.4)
