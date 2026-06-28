@@ -15,6 +15,7 @@ import { AuthProvider } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import { PwaInstaller } from "@/components/PwaInstaller";
 
 function NotFoundComponent() {
   return (
