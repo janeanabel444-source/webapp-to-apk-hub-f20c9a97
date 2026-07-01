@@ -15,13 +15,13 @@ export function AppCard({ app }: { app: App }) {
     <Link
       to="/app/$slug"
       params={{ slug: app.slug }}
-      className="group flex gap-3 rounded-2xl bg-card p-3 transition-all hover:bg-accent/40"
+      className="group flex gap-3 rounded-2xl bg-card p-2.5 transition-all hover:bg-accent/40 sm:p-3"
     >
-      <AppIcon name={app.name} slug={app.slug} url={app.icon_url} size={64} />
+      <AppIcon name={app.name} slug={app.slug} url={app.icon_url} size={56} />
       <div className="min-w-0 flex-1 pt-0.5">
-        <h3 className="truncate font-semibold leading-tight">{app.name}</h3>
-        <p className="truncate text-xs text-muted-foreground">{app.tagline ?? categoryLabel(app.category)}</p>
-        <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+        <h3 className="truncate text-[0.9rem] font-semibold leading-tight sm:text-base">{app.name}</h3>
+        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{app.tagline ?? categoryLabel(app.category)}</p>
+        <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
           <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
             {Number(app.rating_avg).toFixed(1)}
             <Star className="h-3 w-3 fill-foreground stroke-none" />
