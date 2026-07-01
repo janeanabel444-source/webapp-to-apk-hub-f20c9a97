@@ -93,12 +93,28 @@
 @layer base {
   * { border-color: var(--color-border); }
   html, body { font-family: var(--font-sans); }
+  html {
+    /* Mobile-first: scale root font down on small phones so all rem-based
+       typography (headings, nav, cards) shrinks proportionally without
+       touching every component. Ramps back up on tablets/desktops. */
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  @media (min-width: 480px) { html { font-size: 15.5px; } }
+  @media (min-width: 640px) { html { font-size: 16px; } }
   body {
     background-color: var(--color-background);
     background-image: var(--gradient-hero);
     background-attachment: fixed;
     color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
+    /* Respect Android/iOS safe areas when installed as a PWA. */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow-x: hidden;
   }
-  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; overflow-wrap: break-word; }
+  /* Prevent iOS zoom on focused inputs (needs >=16px). */
+  input, select, textarea { font-size: 16px; }
 }
