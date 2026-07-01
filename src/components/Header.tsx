@@ -26,10 +26,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-xl text-primary-foreground" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-pop)" }}>
-            <Sparkles className="h-4 w-4" />
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-3 sm:h-16 sm:gap-6 sm:px-6">
+        <Link to="/" className="flex items-center gap-2 font-display text-base font-bold tracking-tight sm:text-lg">
+          <span className="grid h-7 w-7 place-items-center rounded-xl text-primary-foreground sm:h-8 sm:w-8" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-pop)" }}>
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </span>
           Nova
         </Link>
@@ -102,15 +102,18 @@ export function Header() {
           )}
         </div>
       </div>
-      <nav className="flex gap-1 overflow-x-auto border-t border-border/50 px-4 py-2 md:hidden">
+      <nav className="flex gap-1 overflow-x-auto border-t border-border/50 px-3 py-1.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map((n) => {
           const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
           return (
-            <Link key={n.to} to={n.to} className={`whitespace-nowrap rounded-full px-3 py-1 text-sm ${active ? "bg-secondary" : "text-muted-foreground"}`}>
+            <Link key={n.to} to={n.to} className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-medium ${active ? "bg-secondary text-foreground" : "text-muted-foreground"}`}>
               {n.label}
             </Link>
           );
         })}
+        <Link to="/developer" className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-semibold ${pathname.startsWith("/developer") ? "bg-primary text-primary-foreground" : "border border-primary/40 text-primary"}`}>
+          Developer Hub
+        </Link>
       </nav>
     </header>
   );
