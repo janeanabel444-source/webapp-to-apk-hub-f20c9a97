@@ -156,12 +156,13 @@ export async function fetchMyLibrary(userId: string) {
 export async function fetchAppVersions(appId: string) {
   const { data, error } = await supabase
     .from("app_versions")
-    .select("id, version, release_notes, created_at")
+    .select("id, version, release_notes, created_at, apk_size, package_name, permissions_added, permissions_removed")
     .eq("app_id", appId)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
 }
+
 
 /** Compare semver-ish strings: returns positive if a > b. */
 export function compareVersions(a: string | null | undefined, b: string | null | undefined) {
