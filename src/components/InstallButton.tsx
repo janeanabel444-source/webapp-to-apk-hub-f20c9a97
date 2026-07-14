@@ -21,8 +21,15 @@ type Props = {
   installedVersion?: string | null;
   latestVersion?: string | null;
   apkSize?: number | null;
+  license?: "free" | "paid" | null;
+  priceKobo?: number | null;
   onChange?: (installed: boolean) => void;
 };
+function formatNaira(kobo: number) {
+  const n = kobo / 100;
+  return `₦${n.toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
+}
+
 
 export function InstallButton({
   appId,
