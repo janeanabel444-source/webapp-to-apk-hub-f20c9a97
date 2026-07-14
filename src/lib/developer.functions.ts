@@ -77,21 +77,35 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => appInput.parse(input))
   .handler(async ({ data, context }) => {
+    const isDraft = data.is_draft === true;
     // Android apps are APK-only; non-Android still accept a URL or file.
-    if (data.platform === "android") {
-      if (!data.file_path) throw new Error("Android apps require an APK upload.");
-    } else if (!data.app_url && !data.file_path) {
-      throw new Error("Provide an app URL or upload an app file.");
+    // Drafts skip these requirements so developers can save partial work.
+    if (!isDraft) {
+      if (data.platform === "android") {
+        if (!data.file_path) throw new Error("Android apps require an APK upload.");
+      } else if (!data.app_url && !data.file_path) {
+        throw new Error("Provide an app URL or upload an app file.");
+      }
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    if (data.file_path) {
+    // Duplicate-name guard within a developer's own catalogue.
+    const { data: dup } = await supabaseAdmin
+      .from("apps")
+      .select("id")
+      .eq("developer_id", context.userId)
+      .ilike("name", data.name)
+      .maybeSingle();
+    if (dup) throw new Error("You already have an app with this name.");
+
+    if (data.file_path && !isDraft) {
       await scanAppBinaryOrThrow(data.file_path);
     }
 
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
     const initialVersion = (data.version_name && data.version_name.trim()) || "1.0.0";
+    const releaseNotes = (data.release_notes && data.release_notes.trim()) || "Initial release";
     const { data: row, error } = await supabaseAdmin
       .from("apps")
       .insert({
@@ -99,17 +113,32 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         slug,
         name: data.name,
         tagline: data.tagline ?? null,
+        short_description: data.short_description ?? null,
         description: data.description,
         category: data.category,
+        subcategory: data.subcategory ?? null,
         platform: data.platform,
         icon_url: data.icon_url,
+        feature_banner_url: data.feature_banner_url ?? null,
         app_url: data.platform === "android" ? null : (data.app_url ?? null),
+        website_url: data.website_url ?? null,
+        privacy_policy_url: data.privacy_policy_url ?? null,
+        developer_name: data.developer_name ?? null,
+        developer_email: data.developer_email ?? null,
         file_path: data.file_path ?? null,
         screenshots: data.screenshots,
-        is_published: true,
-        status: "live",
+        tags: data.tags ?? [],
+        languages: data.languages ?? [],
+        min_android_version: data.min_android_version ?? null,
+        target_android_version: data.target_android_version ?? null,
+        content_rating: data.content_rating ?? null,
+        license: data.license ?? "free",
+        price_kobo: data.license === "paid" ? (data.price_kobo ?? 0) : 0,
+        is_draft: isDraft,
+        is_published: !isDraft,
+        status: isDraft ? "draft" : "live",
         version: initialVersion,
-        latest_release_notes: "Initial release",
+        latest_release_notes: releaseNotes,
         last_updated_at: new Date().toISOString(),
         package_name: data.package_name ?? null,
         version_code: data.version_code ?? null,
@@ -120,21 +149,42 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    await supabaseAdmin.from("app_versions").insert({
-      app_id: row.id,
-      version: initialVersion,
-      release_notes: "Initial release",
-      file_path: data.file_path ?? null,
-      package_name: data.package_name ?? null,
-      version_code: data.version_code ?? null,
-      apk_size: data.apk_size ?? null,
-      permissions: data.permissions ?? [],
-      permissions_added: data.permissions ?? [],
-      permissions_removed: [],
-    });
+    if (!isDraft) {
+      await supabaseAdmin.from("app_versions").insert({
+        app_id: row.id,
+        version: initialVersion,
+        release_notes: releaseNotes,
+        file_path: data.file_path ?? null,
+        package_name: data.package_name ?? null,
+        version_code: data.version_code ?? null,
+        apk_size: data.apk_size ?? null,
+        permissions: data.permissions ?? [],
+        permissions_added: data.permissions ?? [],
+        permissions_removed: [],
+      });
+    }
 
     return row;
   });
+
+/** Check if the current developer already uses this app name. */
+export const checkAppNameAvailable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ name: z.string().trim().min(1).max(80) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("apps")
+      .select("id")
+      .eq("developer_id", context.userId)
+      .ilike("name", data.name)
+      .maybeSingle();
+    return { available: !existing };
+  });
+
+
 
 // Edits to metadata only. file_path changes here are also scanned (defense in
 // depth) — primary version/binary updates should go through publishAppUpdate.
