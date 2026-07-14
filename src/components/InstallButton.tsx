@@ -110,12 +110,19 @@ export function InstallButton({
   async function handleInstall() {
     if (isDemo) return toast.info("Demo can't install — this app is a preview placeholder.");
     if (!user) return navigate({ to: "/auth", search: { redirect: window.location.pathname } });
+    if (isPaid) {
+      // Paid apps route through checkout before install.
+      toast.message(`Redirecting to checkout for ${formatNaira(priceKobo ?? 0)}…`);
+      navigate({ to: "/premium" });
+      return;
+    }
     if (!filePath && appUrl) {
       // Web/PWA app — just open it and mark installed.
       window.open(appUrl, "_blank", "noopener,noreferrer");
     }
     await runDownloadAndMark(() => installApp(user.id, appId), "Installed");
   }
+
 
   async function handleUpdate() {
     if (!user) return;
