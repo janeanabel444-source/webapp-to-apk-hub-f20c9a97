@@ -8,19 +8,36 @@ const slugify = (s: string) =>
 const appInput = z.object({
   name: z.string().trim().min(2).max(80),
   tagline: z.string().trim().max(160).optional().nullable(),
+  short_description: z.string().trim().max(80).optional().nullable(),
   description: z.string().trim().min(10).max(4000),
   category: z.enum(["app", "game"]),
+  subcategory: z.string().trim().max(60).optional().nullable(),
   platform: z.enum(["web", "pwa", "android"]),
   icon_url: z.string().url(),
+  feature_banner_url: z.string().url().optional().nullable(),
   app_url: z.string().url().optional().nullable(),
+  website_url: z.string().url().optional().nullable(),
+  privacy_policy_url: z.string().url().optional().nullable(),
+  developer_name: z.string().trim().max(120).optional().nullable(),
+  developer_email: z.string().trim().email().max(255).optional().nullable(),
   file_path: z.string().min(1).optional().nullable(),
   screenshots: z.array(z.string().url()).max(8).default([]),
+  tags: z.array(z.string().trim().min(1).max(32)).max(20).default([]),
+  languages: z.array(z.string().trim().min(2).max(32)).max(30).default([]),
+  min_android_version: z.string().trim().max(16).optional().nullable(),
+  target_android_version: z.string().trim().max(16).optional().nullable(),
+  content_rating: z.enum(["everyone", "teen", "mature"]).optional().nullable(),
+  license: z.enum(["free", "paid"]).default("free"),
+  price_kobo: z.number().int().nonnegative().default(0),
+  is_draft: z.boolean().default(false),
   package_name: z.string().trim().max(255).optional().nullable(),
   version_name: z.string().trim().max(64).optional().nullable(),
   version_code: z.number().int().nonnegative().optional().nullable(),
   apk_size: z.number().int().nonnegative().optional().nullable(),
   permissions: z.array(z.string()).max(200).default([]),
+  release_notes: z.string().trim().max(2000).optional().nullable(),
 });
+
 
 // Semver-like x.y.z validation (1–4 numeric segments, e.g. 1.0.1, 2.0.0, 1.2.3.4)
 const SEMVER_RE = /^\d+(\.\d+){0,3}$/;
