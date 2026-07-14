@@ -159,8 +159,9 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
       await scanAppBinaryOrThrow(patch.file_path);
     }
     // Drop fields not on the apps table.
-    const { version_name: _vn, ...safePatch } = patch as typeof patch & { version_name?: unknown };
-    void _vn;
+    const { version_name: _vn, release_notes: _rn, ...safePatch } =
+      patch as typeof patch & { version_name?: unknown; release_notes?: unknown };
+    void _vn; void _rn;
     const { error } = await supabaseAdmin
       .from("apps")
       .update({ ...safePatch, status: existing.status === "live" ? "live" : "pending" })
