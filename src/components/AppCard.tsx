@@ -20,7 +20,9 @@ export function AppCard({ app }: { app: App }) {
       <AppIcon name={app.name} slug={app.slug} url={app.icon_url} size={56} />
       <div className="min-w-0 flex-1 pt-0.5">
         <h3 className="truncate text-[0.9rem] font-semibold leading-tight sm:text-base">{app.name}</h3>
-        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{app.tagline ?? categoryLabel(app.category)}</p>
+        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
+          {(app as any).short_description ?? app.tagline ?? categoryLabel(app.category)}
+        </p>
         <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
           <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
             {Number(app.rating_avg).toFixed(1)}
