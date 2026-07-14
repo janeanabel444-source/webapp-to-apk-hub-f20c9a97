@@ -42,6 +42,8 @@ export function InstallButton({
   installedVersion,
   latestVersion,
   apkSize,
+  license = "free",
+  priceKobo = 0,
   onChange,
 }: Props) {
   const { user } = useAuth();
@@ -51,6 +53,8 @@ export function InstallButton({
   const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
   const [showHelper, setShowHelper] = useState(false);
+  const isPaid = license === "paid" && (priceKobo ?? 0) > 0;
+
 
   useEffect(() => setInstalled(initialInstalled), [initialInstalled]);
 
