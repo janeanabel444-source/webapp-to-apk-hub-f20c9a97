@@ -224,8 +224,8 @@ export function InstallButton({
         title={isDemo ? "Demo app — downloads not available" : undefined}
       >
         <Download className="mr-1.5 h-4 w-4" />
-        {isDemo ? "Demo only" : "Install"}
-        {!isDemo && apkSize ? <span className="ml-1 text-xs opacity-80">· {formatBytes(apkSize)}</span> : null}
+        {isDemo ? "Demo only" : isPaid ? `Buy · ${formatNaira(priceKobo ?? 0)}` : "Install"}
+        {!isDemo && !isPaid && apkSize ? <span className="ml-1 text-xs opacity-80">· {formatBytes(apkSize)}</span> : null}
       </Button>
     );
   }
