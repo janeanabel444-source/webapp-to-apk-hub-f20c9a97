@@ -120,85 +120,130 @@ export type Database = {
           apk_size: number | null
           app_url: string | null
           category: Database["public"]["Enums"]["app_category"]
+          content_rating: string | null
           created_at: string
           description: string | null
+          developer_email: string | null
           developer_id: string | null
+          developer_name: string | null
+          feature_banner_url: string | null
           file_path: string | null
           icon_url: string | null
           id: string
           install_count: number
+          is_draft: boolean
           is_published: boolean
+          languages: string[]
           last_updated_at: string
           latest_release_notes: string | null
+          license: string
+          min_android_version: string | null
           name: string
           package_name: string | null
           permissions: string[] | null
           platform: string | null
+          price_kobo: number
+          privacy_policy_url: string | null
           rating_avg: number
           rating_count: number
           screenshots: string[]
+          short_description: string | null
           slug: string
           status: string
+          subcategory: string | null
           tagline: string | null
+          tags: string[]
+          target_android_version: string | null
           updated_at: string
           version: string
           version_code: number | null
+          website_url: string | null
         }
         Insert: {
           apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
+          content_rating?: string | null
           created_at?: string
           description?: string | null
+          developer_email?: string | null
           developer_id?: string | null
+          developer_name?: string | null
+          feature_banner_url?: string | null
           file_path?: string | null
           icon_url?: string | null
           id?: string
           install_count?: number
+          is_draft?: boolean
           is_published?: boolean
+          languages?: string[]
           last_updated_at?: string
           latest_release_notes?: string | null
+          license?: string
+          min_android_version?: string | null
           name: string
           package_name?: string | null
           permissions?: string[] | null
           platform?: string | null
+          price_kobo?: number
+          privacy_policy_url?: string | null
           rating_avg?: number
           rating_count?: number
           screenshots?: string[]
+          short_description?: string | null
           slug: string
           status?: string
+          subcategory?: string | null
           tagline?: string | null
+          tags?: string[]
+          target_android_version?: string | null
           updated_at?: string
           version?: string
           version_code?: number | null
+          website_url?: string | null
         }
         Update: {
           apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
+          content_rating?: string | null
           created_at?: string
           description?: string | null
+          developer_email?: string | null
           developer_id?: string | null
+          developer_name?: string | null
+          feature_banner_url?: string | null
           file_path?: string | null
           icon_url?: string | null
           id?: string
           install_count?: number
+          is_draft?: boolean
           is_published?: boolean
+          languages?: string[]
           last_updated_at?: string
           latest_release_notes?: string | null
+          license?: string
+          min_android_version?: string | null
           name?: string
           package_name?: string | null
           permissions?: string[] | null
           platform?: string | null
+          price_kobo?: number
+          privacy_policy_url?: string | null
           rating_avg?: number
           rating_count?: number
           screenshots?: string[]
+          short_description?: string | null
           slug?: string
           status?: string
+          subcategory?: string | null
           tagline?: string | null
+          tags?: string[]
+          target_android_version?: string | null
           updated_at?: string
           version?: string
           version_code?: number | null
+          website_url?: string | null
         }
         Relationships: []
       }
