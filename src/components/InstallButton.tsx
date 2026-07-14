@@ -21,8 +21,15 @@ type Props = {
   installedVersion?: string | null;
   latestVersion?: string | null;
   apkSize?: number | null;
+  license?: "free" | "paid" | null;
+  priceKobo?: number | null;
   onChange?: (installed: boolean) => void;
 };
+function formatNaira(kobo: number) {
+  const n = kobo / 100;
+  return `₦${n.toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
+}
+
 
 export function InstallButton({
   appId,
@@ -35,6 +42,8 @@ export function InstallButton({
   installedVersion,
   latestVersion,
   apkSize,
+  license = "free",
+  priceKobo = 0,
   onChange,
 }: Props) {
   const { user } = useAuth();
@@ -44,6 +53,8 @@ export function InstallButton({
   const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
   const [showHelper, setShowHelper] = useState(false);
+  const isPaid = license === "paid" && (priceKobo ?? 0) > 0;
+
 
   useEffect(() => setInstalled(initialInstalled), [initialInstalled]);
 
@@ -99,12 +110,19 @@ export function InstallButton({
   async function handleInstall() {
     if (isDemo) return toast.info("Demo can't install — this app is a preview placeholder.");
     if (!user) return navigate({ to: "/auth", search: { redirect: window.location.pathname } });
+    if (isPaid) {
+      // Paid apps route through checkout before install.
+      toast.message(`Redirecting to checkout for ${formatNaira(priceKobo ?? 0)}…`);
+      navigate({ to: "/premium" });
+      return;
+    }
     if (!filePath && appUrl) {
       // Web/PWA app — just open it and mark installed.
       window.open(appUrl, "_blank", "noopener,noreferrer");
     }
     await runDownloadAndMark(() => installApp(user.id, appId), "Installed");
   }
+
 
   async function handleUpdate() {
     if (!user) return;
@@ -206,8 +224,8 @@ export function InstallButton({
         title={isDemo ? "Demo app — downloads not available" : undefined}
       >
         <Download className="mr-1.5 h-4 w-4" />
-        {isDemo ? "Demo only" : "Install"}
-        {!isDemo && apkSize ? <span className="ml-1 text-xs opacity-80">· {formatBytes(apkSize)}</span> : null}
+        {isDemo ? "Demo only" : isPaid ? `Buy · ${formatNaira(priceKobo ?? 0)}` : "Install"}
+        {!isDemo && !isPaid && apkSize ? <span className="ml-1 text-xs opacity-80">· {formatBytes(apkSize)}</span> : null}
       </Button>
     );
   }

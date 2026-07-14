@@ -33,7 +33,7 @@ export function iconInitials(name: string) {
     .toUpperCase();
 }
 
-export async function fetchApps(category?: Category, search?: string) {
+export async function fetchApps(category?: Category, search?: string, language?: string) {
   // Only show approved, live, published apps publicly.
   let q = supabase
     .from("apps")
@@ -42,7 +42,14 @@ export async function fetchApps(category?: Category, search?: string) {
     .eq("status", "live")
     .order("install_count", { ascending: false });
   if (category) q = q.eq("category", category);
-  if (search && search.trim()) q = q.ilike("name", `%${search.trim()}%`);
+  if (language) q = q.contains("languages", [language]);
+  if (search && search.trim()) {
+    const s = search.trim();
+    // Match by name, tagline, short description, or tag.
+    q = q.or(
+      `name.ilike.%${s}%,tagline.ilike.%${s}%,short_description.ilike.%${s}%,tags.cs.{${s.toLowerCase()}}`,
+    );
+  }
   const { data, error } = await q;
   if (error) throw error;
   const rows = data ?? [];
@@ -53,6 +60,7 @@ export async function fetchApps(category?: Category, search?: string) {
     return ad - bd;
   });
 }
+
 
 export async function fetchApp(slug: string) {
   const { data, error } = await supabase.from("apps").select("*").eq("slug", slug).maybeSingle();
@@ -148,12 +156,13 @@ export async function fetchMyLibrary(userId: string) {
 export async function fetchAppVersions(appId: string) {
   const { data, error } = await supabase
     .from("app_versions")
-    .select("id, version, release_notes, created_at")
+    .select("id, version, release_notes, created_at, apk_size, package_name, permissions_added, permissions_removed")
     .eq("app_id", appId)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
 }
+
 
 /** Compare semver-ish strings: returns positive if a > b. */
 export function compareVersions(a: string | null | undefined, b: string | null | undefined) {
