@@ -60,12 +60,21 @@ function AuthPage() {
     }
   }
 
+  function postAuthUrl() {
+    // Return an absolute URL the OAuth/email provider can bounce back to.
+    // If a `redirect` param is present (e.g. from the OAuth consent route),
+    // preserve it through /auth so the useEffect above can navigate onward.
+    if (typeof window === "undefined") return "/";
+    if (redirect) return `${window.location.origin}/auth?redirect=${encodeURIComponent(redirect)}`;
+    return window.location.origin;
+  }
+
   async function handleGoogle() {
     setBusy(true);
     stashPromo();
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: postAuthUrl(),
       });
       if (result.error) {
         console.error("[Auth] Google OAuth error:", result.error);
@@ -96,9 +105,10 @@ function AuthPage() {
         const { error, data } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
+          options: { data: { full_name: name }, emailRedirectTo: postAuthUrl() },
         });
         if (error) throw error;
+
 
         // For email signup, wait for session to be established
         // Supabase may auto-confirm if email confirmation is disabled

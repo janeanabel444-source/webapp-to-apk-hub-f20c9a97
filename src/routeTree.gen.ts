@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as TrendingRouteImport } from './routes/trending'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CategoriesRouteImport } from './routes/categories'
@@ -26,9 +27,13 @@ import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAiToolsRouteImport } from './routes/_authenticated/ai-tools'
 import { Route as AuthenticatedAiImageRouteImport } from './routes/_authenticated/ai-image'
 import { Route as AuthenticatedAiGalleryRouteImport } from './routes/_authenticated/ai-gallery'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer.index'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authenticated/developer.new'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
 import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
 
@@ -40,6 +45,11 @@ const WelcomeRoute = WelcomeRouteImport.update({
 const TrendingRoute = TrendingRouteImport.update({
   id: '/trending',
   path: '/trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesRoute = GamesRouteImport.update({
@@ -117,6 +127,18 @@ const AuthenticatedAiGalleryRoute = AuthenticatedAiGalleryRouteImport.update({
   path: '/ai-gallery',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedDeveloperIndexRoute =
   AuthenticatedDeveloperIndexRouteImport.update({
     id: '/developer/',
@@ -135,6 +157,17 @@ const AuthenticatedDeveloperNewRoute =
     path: '/developer/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDeveloperAppIdUpdateRoute =
   AuthenticatedDeveloperAppIdUpdateRouteImport.update({
     id: '/developer/$appId/update',
@@ -155,8 +188,11 @@ export interface FileRoutesByFullPath {
   '/categories': typeof CategoriesRoute
   '/contact': typeof ContactRoute
   '/games': typeof GamesRoute
+  '/mcp': typeof McpRoute
   '/trending': typeof TrendingRoute
   '/welcome': typeof WelcomeRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/ai-image': typeof AuthenticatedAiImageRoute
   '/ai-tools': typeof AuthenticatedAiToolsRoute
@@ -165,6 +201,8 @@ export interface FileRoutesByFullPath {
   '/premium': typeof AuthenticatedPremiumRoute
   '/redeem': typeof AuthenticatedRedeemRoute
   '/app/$slug': typeof AppSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
@@ -178,8 +216,11 @@ export interface FileRoutesByTo {
   '/categories': typeof CategoriesRoute
   '/contact': typeof ContactRoute
   '/games': typeof GamesRoute
+  '/mcp': typeof McpRoute
   '/trending': typeof TrendingRoute
   '/welcome': typeof WelcomeRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/ai-image': typeof AuthenticatedAiImageRoute
   '/ai-tools': typeof AuthenticatedAiToolsRoute
@@ -188,6 +229,8 @@ export interface FileRoutesByTo {
   '/premium': typeof AuthenticatedPremiumRoute
   '/redeem': typeof AuthenticatedRedeemRoute
   '/app/$slug': typeof AppSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/developer': typeof AuthenticatedDeveloperIndexRoute
@@ -203,8 +246,11 @@ export interface FileRoutesById {
   '/categories': typeof CategoriesRoute
   '/contact': typeof ContactRoute
   '/games': typeof GamesRoute
+  '/mcp': typeof McpRoute
   '/trending': typeof TrendingRoute
   '/welcome': typeof WelcomeRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/ai-gallery': typeof AuthenticatedAiGalleryRoute
   '/_authenticated/ai-image': typeof AuthenticatedAiImageRoute
   '/_authenticated/ai-tools': typeof AuthenticatedAiToolsRoute
@@ -213,6 +259,8 @@ export interface FileRoutesById {
   '/_authenticated/premium': typeof AuthenticatedPremiumRoute
   '/_authenticated/redeem': typeof AuthenticatedRedeemRoute
   '/app/$slug': typeof AppSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
@@ -228,8 +276,11 @@ export interface FileRouteTypes {
     | '/categories'
     | '/contact'
     | '/games'
+    | '/mcp'
     | '/trending'
     | '/welcome'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/ai-gallery'
     | '/ai-image'
     | '/ai-tools'
@@ -238,6 +289,8 @@ export interface FileRouteTypes {
     | '/premium'
     | '/redeem'
     | '/app/$slug'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/developer/new'
     | '/api/public/paystack-webhook'
     | '/developer/'
@@ -251,8 +304,11 @@ export interface FileRouteTypes {
     | '/categories'
     | '/contact'
     | '/games'
+    | '/mcp'
     | '/trending'
     | '/welcome'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/ai-gallery'
     | '/ai-image'
     | '/ai-tools'
@@ -261,6 +317,8 @@ export interface FileRouteTypes {
     | '/premium'
     | '/redeem'
     | '/app/$slug'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/developer/new'
     | '/api/public/paystack-webhook'
     | '/developer'
@@ -275,8 +333,11 @@ export interface FileRouteTypes {
     | '/categories'
     | '/contact'
     | '/games'
+    | '/mcp'
     | '/trending'
     | '/welcome'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/ai-gallery'
     | '/_authenticated/ai-image'
     | '/_authenticated/ai-tools'
@@ -285,6 +346,8 @@ export interface FileRouteTypes {
     | '/_authenticated/premium'
     | '/_authenticated/redeem'
     | '/app/$slug'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/developer/new'
     | '/api/public/paystack-webhook'
     | '/_authenticated/developer/'
@@ -300,9 +363,14 @@ export interface RootRouteChildren {
   CategoriesRoute: typeof CategoriesRoute
   ContactRoute: typeof ContactRoute
   GamesRoute: typeof GamesRoute
+  McpRoute: typeof McpRoute
   TrendingRoute: typeof TrendingRoute
   WelcomeRoute: typeof WelcomeRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AppSlugRoute: typeof AppSlugRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
 }
 
@@ -320,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/trending'
       fullPath: '/trending'
       preLoaderRoute: typeof TrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games': {
@@ -427,6 +502,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAiGalleryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/developer/': {
       id: '/_authenticated/developer/'
       path: '/developer'
@@ -447,6 +536,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/developer/new'
       preLoaderRoute: typeof AuthenticatedDeveloperNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/developer/$appId/update': {
       id: '/_authenticated/developer/$appId/update'
@@ -505,9 +608,15 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriesRoute: CategoriesRoute,
   ContactRoute: ContactRoute,
   GamesRoute: GamesRoute,
+  McpRoute: McpRoute,
   TrendingRoute: TrendingRoute,
   WelcomeRoute: WelcomeRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AppSlugRoute: AppSlugRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
 }
 export const routeTree = rootRouteImport
