@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift } from "lucide-react";
+import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift, Heart, Shield, Layers } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems: Array<{ to: any; label: string; exact?: boolean; muted?: boolean }> = [
   { to: "/", label: "Home", exact: true },
@@ -17,6 +18,7 @@ const navItems: Array<{ to: any; label: string; exact?: boolean; muted?: boolean
   { to: "/games", label: "Games" },
   { to: "/trending", label: "Trending" },
   { to: "/categories", label: "Categories" },
+  { to: "/collections", label: "Collections" },
   { to: "/ai-tools", label: "AI Tools", muted: true },
 ];
 
