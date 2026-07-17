@@ -126,12 +126,15 @@ export type Database = {
           developer_email: string | null
           developer_id: string | null
           developer_name: string | null
+          download_count: number
           feature_banner_url: string | null
+          featured_at: string | null
           file_path: string | null
           icon_url: string | null
           id: string
           install_count: number
           is_draft: boolean
+          is_featured: boolean
           is_published: boolean
           languages: string[]
           last_updated_at: string
@@ -169,12 +172,15 @@ export type Database = {
           developer_email?: string | null
           developer_id?: string | null
           developer_name?: string | null
+          download_count?: number
           feature_banner_url?: string | null
+          featured_at?: string | null
           file_path?: string | null
           icon_url?: string | null
           id?: string
           install_count?: number
           is_draft?: boolean
+          is_featured?: boolean
           is_published?: boolean
           languages?: string[]
           last_updated_at?: string
@@ -212,12 +218,15 @@ export type Database = {
           developer_email?: string | null
           developer_id?: string | null
           developer_name?: string | null
+          download_count?: number
           feature_banner_url?: string | null
+          featured_at?: string | null
           file_path?: string | null
           icon_url?: string | null
           id?: string
           install_count?: number
           is_draft?: boolean
+          is_featured?: boolean
           is_published?: boolean
           languages?: string[]
           last_updated_at?: string
@@ -247,6 +256,110 @@ export type Database = {
         }
         Relationships: []
       }
+      collection_apps: {
+        Row: {
+          app_id: string
+          collection_id: string
+          created_at: string
+          sort_order: number
+        }
+        Insert: {
+          app_id: string
+          collection_id: string
+          created_at?: string
+          sort_order?: number
+        }
+        Update: {
+          app_id?: string
+          collection_id?: string
+          created_at?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_apps_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_apps_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_published: boolean
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       installs: {
         Row: {
           app_id: string
@@ -272,6 +385,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "installs_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          app_id: string | null
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          app_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_app_id_fkey"
             columns: ["app_id"]
             isOneToOne: false
             referencedRelation: "apps"
@@ -324,6 +478,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -333,6 +488,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id: string
@@ -342,6 +498,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -407,6 +564,73 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "promo_codes"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      recently_viewed: {
+        Row: {
+          app_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          app_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          app_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recently_viewed_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          app_id: string
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -10,10 +10,14 @@ import {
   fetchApp, fetchReviews, fetchInstallState, upsertReview,
   categoryLabel, isDemoApp, fetchAppVersions, compareVersions,
 } from "@/lib/store";
+import { trackView, fetchSimilarApps } from "@/lib/store-extras";
 import { formatBytes } from "@/lib/apk-parser";
 import { detectAndroidVersion, compareAndroid } from "@/lib/android-compat";
 import { AppIcon } from "@/components/AppIcon";
+import { AppCard } from "@/components/AppCard";
 import { InstallButton } from "@/components/InstallButton";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { ReportAppDialog } from "@/components/ReportAppDialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -102,6 +106,16 @@ function AppDetail() {
     const mine = reviews?.find((r) => r.user_id === user?.id);
     if (mine) { setRating(mine.rating); setBody(mine.body ?? ""); }
   }, [reviews, user?.id]);
+
+  // Track view for logged-in users (Recently viewed)
+  useEffect(() => {
+    if (user) trackView(user.id, app.id).catch(() => {});
+  }, [user, app.id]);
+
+  const { data: similar } = useQuery({
+    queryKey: ["similar", app.id],
+    queryFn: () => fetchSimilarApps(app as any, 8),
+  });
 
   // Android compatibility check (best-effort from UA).
   const compat = useMemo(() => {
@@ -449,6 +463,21 @@ function AppDetail() {
           <img src={shots[activeShot]} alt="" className="max-h-full max-w-full rounded-2xl" />
         </div>
       )}
+      {/* Similar apps */}
+      {(similar ?? []).length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-xl font-bold">Similar apps</h2>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {(similar ?? []).map((s) => <AppCard key={s.id} app={s} />)}
+          </div>
+        </section>
+      )}
+
+      {/* Actions footer */}
+      <section className="mt-10 flex flex-wrap items-center gap-2">
+        <FavoriteButton appId={app.id} />
+        <ReportAppDialog appId={app.id} />
+      </section>
     </div>
   );
 }

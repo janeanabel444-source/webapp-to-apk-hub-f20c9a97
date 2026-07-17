@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import type { App } from "@/lib/store";
 import { categoryLabel } from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
+import { FavoriteButton } from "@/components/FavoriteButton";
 
 function formatCount(n: number) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
@@ -11,28 +12,41 @@ function formatCount(n: number) {
 }
 
 export function AppCard({ app }: { app: App }) {
+  const a = app as any;
   return (
-    <Link
-      to="/app/$slug"
-      params={{ slug: app.slug }}
-      className="group flex gap-3 rounded-2xl bg-card p-2.5 transition-all hover:bg-accent/40 sm:p-3"
-    >
-      <AppIcon name={app.name} slug={app.slug} url={app.icon_url} size={56} />
-      <div className="min-w-0 flex-1 pt-0.5">
-        <h3 className="truncate text-[0.9rem] font-semibold leading-tight sm:text-base">{app.name}</h3>
-        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
-          {(app as any).short_description ?? app.tagline ?? categoryLabel(app.category)}
-        </p>
-        <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
-          <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
-            {Number(app.rating_avg).toFixed(1)}
-            <Star className="h-3 w-3 fill-foreground stroke-none" />
-          </span>
-          <span>·</span>
-          <span>{formatCount(app.install_count)}</span>
+    <div className="group relative">
+      <Link
+        to="/app/$slug"
+        params={{ slug: app.slug }}
+        className="flex gap-3 rounded-2xl bg-card p-2.5 transition-all hover:bg-accent/40 sm:p-3"
+      >
+        <AppIcon name={app.name} slug={app.slug} url={app.icon_url} size={56} />
+        <div className="min-w-0 flex-1 pt-0.5 pr-9">
+          <div className="flex items-center gap-1.5">
+            <h3 className="truncate text-[0.9rem] font-semibold leading-tight sm:text-base">{app.name}</h3>
+            {a.is_featured && (
+              <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+                Featured
+              </span>
+            )}
+          </div>
+          <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
+            {a.short_description ?? app.tagline ?? categoryLabel(app.category)}
+          </p>
+          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
+            <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
+              {Number(app.rating_avg).toFixed(1)}
+              <Star className="h-3 w-3 fill-foreground stroke-none" />
+            </span>
+            <span>·</span>
+            <span>{formatCount(app.install_count)}</span>
+          </div>
         </div>
+      </Link>
+      <div className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+        <FavoriteButton appId={app.id} />
       </div>
-    </Link>
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift } from "lucide-react";
+import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift, Heart, Shield, Layers } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems: Array<{ to: any; label: string; exact?: boolean; muted?: boolean }> = [
   { to: "/", label: "Home", exact: true },
@@ -17,6 +18,7 @@ const navItems: Array<{ to: any; label: string; exact?: boolean; muted?: boolean
   { to: "/games", label: "Games" },
   { to: "/trending", label: "Trending" },
   { to: "/categories", label: "Categories" },
+  { to: "/collections", label: "Collections" },
   { to: "/ai-tools", label: "AI Tools", muted: true },
 ];
 
@@ -60,6 +62,7 @@ export function Header() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          {user && <NotificationBell />}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -77,7 +80,16 @@ export function Header() {
                   <Link to="/library"><LibraryBig className="mr-2 h-4 w-4" /> My library</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/favorites"><Heart className="mr-2 h-4 w-4" /> Favorites</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/collections"><Layers className="mr-2 h-4 w-4" /> Collections</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/developer"><Code2 className="mr-2 h-4 w-4" /> Developer Hub</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin"><Shield className="mr-2 h-4 w-4" /> Admin</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/ai-tools"><Images className="mr-2 h-4 w-4" /> AI Tools</Link>
