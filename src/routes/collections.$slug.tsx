@@ -54,7 +54,7 @@ function CollectionPage() {
         <p className="mt-1 text-muted-foreground">{data.collection.description}</p>
       )}
       <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {data.apps.map((app) => <AppCard key={app.id} app={app} />)}
+        {data.apps.map((app: any) => <AppCard key={app.id} app={app} />)}
       </div>
       {data.apps.length === 0 && (
         <p className="mt-8 text-center text-sm text-muted-foreground">This collection is empty. Check back soon.</p>
