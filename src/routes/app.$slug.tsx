@@ -463,6 +463,21 @@ function AppDetail() {
           <img src={shots[activeShot]} alt="" className="max-h-full max-w-full rounded-2xl" />
         </div>
       )}
+      {/* Similar apps */}
+      {(similar ?? []).length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-xl font-bold">Similar apps</h2>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {(similar ?? []).map((s) => <AppCard key={s.id} app={s} />)}
+          </div>
+        </section>
+      )}
+
+      {/* Actions footer */}
+      <section className="mt-10 flex flex-wrap items-center gap-2">
+        <FavoriteButton appId={app.id} />
+        <ReportAppDialog appId={app.id} />
+      </section>
     </div>
   );
 }
