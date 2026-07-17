@@ -10,10 +10,14 @@ import {
   fetchApp, fetchReviews, fetchInstallState, upsertReview,
   categoryLabel, isDemoApp, fetchAppVersions, compareVersions,
 } from "@/lib/store";
+import { trackView, fetchSimilarApps } from "@/lib/store-extras";
 import { formatBytes } from "@/lib/apk-parser";
 import { detectAndroidVersion, compareAndroid } from "@/lib/android-compat";
 import { AppIcon } from "@/components/AppIcon";
+import { AppCard } from "@/components/AppCard";
 import { InstallButton } from "@/components/InstallButton";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { ReportAppDialog } from "@/components/ReportAppDialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -102,6 +106,16 @@ function AppDetail() {
     const mine = reviews?.find((r) => r.user_id === user?.id);
     if (mine) { setRating(mine.rating); setBody(mine.body ?? ""); }
   }, [reviews, user?.id]);
+
+  // Track view for logged-in users (Recently viewed)
+  useEffect(() => {
+    if (user) trackView(user.id, app.id).catch(() => {});
+  }, [user, app.id]);
+
+  const { data: similar } = useQuery({
+    queryKey: ["similar", app.id],
+    queryFn: () => fetchSimilarApps(app as any, 8),
+  });
 
   // Android compatibility check (best-effort from UA).
   const compat = useMemo(() => {
