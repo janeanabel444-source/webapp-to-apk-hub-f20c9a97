@@ -62,6 +62,7 @@ export function Header() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          {user && <NotificationBell />}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -79,7 +80,16 @@ export function Header() {
                   <Link to="/library"><LibraryBig className="mr-2 h-4 w-4" /> My library</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/favorites"><Heart className="mr-2 h-4 w-4" /> Favorites</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/collections"><Layers className="mr-2 h-4 w-4" /> Collections</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/developer"><Code2 className="mr-2 h-4 w-4" /> Developer Hub</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin"><Shield className="mr-2 h-4 w-4" /> Admin</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/ai-tools"><Images className="mr-2 h-4 w-4" /> AI Tools</Link>
