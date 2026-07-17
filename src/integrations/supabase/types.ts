@@ -721,8 +721,6 @@ export type Database = {
       }
     }
     Functions: {
-      increment_download: { Args: { _app_id: string }; Returns: undefined }
-      is_admin: { Args: { _user_id: string }; Returns: boolean }
       semver_to_int_array: { Args: { v: string }; Returns: number[] }
     }
     Enums: {
