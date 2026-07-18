@@ -316,7 +316,12 @@ export const adminModerateCampaign = createServerFn({ method: "POST" })
       : data.action === "reject" ? "rejected"
       : data.action === "pause" ? "paused"
       : "active";
-    const patch: Record<string, any> = { status, moderator_note: data.note ?? null };
+    const patch: {
+      status: "active" | "rejected" | "paused";
+      moderator_note: string | null;
+      starts_at?: string;
+      ends_at?: string;
+    } = { status, moderator_note: data.note ?? null };
     if (data.action === "approve") {
       const now = new Date();
       patch.starts_at = now.toISOString();
