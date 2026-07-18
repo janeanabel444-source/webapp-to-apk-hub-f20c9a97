@@ -2,13 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Sparkles, Crown, Download, Loader2, Images, RotateCw } from "lucide-react";
+import { Sparkles, Crown, Download, Loader2, Images, RotateCw, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getMyAiQuota } from "@/lib/ai-quota.functions";
 import { generateImage } from "@/lib/stability.functions";
 import { listMyImages } from "@/lib/ai-images.functions";
 import { ShareAppButton } from "@/components/ShareAppButton";
+import { AdViewer } from "@/components/AdViewer";
 
 export const Route = createFileRoute("/_authenticated/ai-image")({
   head: () => ({ meta: [{ title: "AI Image Generation — Nova" }] }),
