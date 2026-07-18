@@ -81,11 +81,20 @@ function AiImagePage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Redeem a valid promo code for 20 images/day, or upgrade to Premium for unlimited access.
           </p>
-          <div className="mt-6 flex justify-center gap-2">
-            <Button asChild className="rounded-full"><Link to="/redeem">Redeem promo code</Link></Button>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Button onClick={() => setShowAd(true)} className="rounded-full">
+              <Gift className="mr-1.5 h-4 w-4" /> Watch Ad (+1 Credit)
+            </Button>
+            <Button asChild variant="outline" className="rounded-full"><Link to="/redeem">Redeem promo code</Link></Button>
             <Button asChild variant="outline" className="rounded-full"><Link to="/premium">Go Premium</Link></Button>
           </div>
         </div>
+        {showAd && (
+          <AdViewer
+            onClose={() => setShowAd(false)}
+            onRewarded={() => qc.invalidateQueries({ queryKey: ["ai-quota"] })}
+          />
+        )}
       </div>
     );
   }
