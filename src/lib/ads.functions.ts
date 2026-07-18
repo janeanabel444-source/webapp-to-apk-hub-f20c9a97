@@ -200,14 +200,13 @@ export const pickAdForReward = createServerFn({ method: "POST" })
       .single();
     if (sErr) throw new Error(sErr.message);
 
-    // Record an impression.
+    // Record an impression and bump the campaign's counter.
     await supabaseAdmin.from("ad_impressions").insert({
       campaign_id: pick.id, user_id: context.userId, placement: "reward",
     });
-    await supabaseAdmin.rpc as any; // no-op — increment via update
     await supabaseAdmin
       .from("ad_campaigns")
-      .update({ impressions_count: (undefined as any) }) // placeholder; use raw increment below
+      .update({ impressions_count: (pick.impressions_count ?? 0) + 1 })
       .eq("id", pick.id);
 
     return {
