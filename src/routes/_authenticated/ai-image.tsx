@@ -109,10 +109,22 @@ function AiImagePage() {
             {quota.unlimited ? "Unlimited" : `${quota.remaining}/${quota.quota} today`}
           </span>
         )}
+        {quota && !quota.unlimited && (
+          <Button size="sm" variant="outline" onClick={() => setShowAd(true)} className="rounded-full">
+            <Gift className="mr-1.5 h-4 w-4" /> Watch Ad (+1)
+          </Button>
+        )}
         <Button asChild variant="outline" size="sm" className="ml-auto rounded-full">
           <Link to="/ai-gallery"><Images className="mr-1.5 h-4 w-4" /> Gallery</Link>
         </Button>
       </div>
+
+      {showAd && (
+        <AdViewer
+          onClose={() => setShowAd(false)}
+          onRewarded={() => qc.invalidateQueries({ queryKey: ["ai-quota"] })}
+        />
+      )}
 
       <form onSubmit={onSubmit} className="mt-5 rounded-2xl border border-border/60 bg-card p-4">
         <label className="text-sm font-medium">Describe the image you want</label>
