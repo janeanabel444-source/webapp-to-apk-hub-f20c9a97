@@ -168,7 +168,7 @@ export const pickAdForReward = createServerFn({ method: "POST" })
     const { data: candidates, error } = await supabaseAdmin
       .from("ad_campaigns")
       .select(
-        "id, format, cost_per_view_kobo, spent_kobo, total_budget_kobo, app:apps(id, slug, name, icon_url, tagline, short_description, screenshots, promo_video_path)",
+        "id, format, cost_per_view_kobo, spent_kobo, total_budget_kobo, impressions_count, app:apps(id, slug, name, icon_url, tagline, short_description, screenshots, promo_video_path)",
       )
       .eq("status", "active")
       .limit(30);
