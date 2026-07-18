@@ -37,6 +37,7 @@ function AiImagePage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+  const [showAd, setShowAd] = useState(false);
 
   async function doGenerate(p: string) {
     setErr(null);
