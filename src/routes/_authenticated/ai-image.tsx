@@ -2,13 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Sparkles, Crown, Download, Loader2, Images, RotateCw } from "lucide-react";
+import { Sparkles, Crown, Download, Loader2, Images, RotateCw, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getMyAiQuota } from "@/lib/ai-quota.functions";
 import { generateImage } from "@/lib/stability.functions";
 import { listMyImages } from "@/lib/ai-images.functions";
 import { ShareAppButton } from "@/components/ShareAppButton";
+import { AdViewer } from "@/components/AdViewer";
 
 export const Route = createFileRoute("/_authenticated/ai-image")({
   head: () => ({ meta: [{ title: "AI Image Generation — Nova" }] }),
@@ -36,6 +37,7 @@ function AiImagePage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+  const [showAd, setShowAd] = useState(false);
 
   async function doGenerate(p: string) {
     setErr(null);
@@ -79,11 +81,20 @@ function AiImagePage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Redeem a valid promo code for 20 images/day, or upgrade to Premium for unlimited access.
           </p>
-          <div className="mt-6 flex justify-center gap-2">
-            <Button asChild className="rounded-full"><Link to="/redeem">Redeem promo code</Link></Button>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Button onClick={() => setShowAd(true)} className="rounded-full">
+              <Gift className="mr-1.5 h-4 w-4" /> Watch Ad (+1 Credit)
+            </Button>
+            <Button asChild variant="outline" className="rounded-full"><Link to="/redeem">Redeem promo code</Link></Button>
             <Button asChild variant="outline" className="rounded-full"><Link to="/premium">Go Premium</Link></Button>
           </div>
         </div>
+        {showAd && (
+          <AdViewer
+            onClose={() => setShowAd(false)}
+            onRewarded={() => qc.invalidateQueries({ queryKey: ["ai-quota"] })}
+          />
+        )}
       </div>
     );
   }
@@ -98,10 +109,22 @@ function AiImagePage() {
             {quota.unlimited ? "Unlimited" : `${quota.remaining}/${quota.quota} today`}
           </span>
         )}
+        {quota && !quota.unlimited && (
+          <Button size="sm" variant="outline" onClick={() => setShowAd(true)} className="rounded-full">
+            <Gift className="mr-1.5 h-4 w-4" /> Watch Ad (+1)
+          </Button>
+        )}
         <Button asChild variant="outline" size="sm" className="ml-auto rounded-full">
           <Link to="/ai-gallery"><Images className="mr-1.5 h-4 w-4" /> Gallery</Link>
         </Button>
       </div>
+
+      {showAd && (
+        <AdViewer
+          onClose={() => setShowAd(false)}
+          onRewarded={() => qc.invalidateQueries({ queryKey: ["ai-quota"] })}
+        />
+      )}
 
       <form onSubmit={onSubmit} className="mt-5 rounded-2xl border border-border/60 bg-card p-4">
         <label className="text-sm font-medium">Describe the image you want</label>

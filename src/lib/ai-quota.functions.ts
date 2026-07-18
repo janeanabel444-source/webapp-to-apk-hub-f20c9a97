@@ -10,7 +10,6 @@ export function quotaForRole(role: Role, isPremium: boolean): number {
   return 0;
 }
 
-/** Returns the highest-priority role held by the user. */
 async function resolveTopRole(supabaseAdmin: any, userId: string): Promise<Role> {
   const { data } = await supabaseAdmin
     .from("user_roles")
@@ -30,7 +29,7 @@ export const getMyAiQuota = createServerFn({ method: "GET" })
     const role = await resolveTopRole(supabaseAdmin, context.userId);
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("is_premium, premium_expires_at")
+      .select("is_premium, premium_expires_at, bonus_ai_credits")
       .eq("id", context.userId)
       .maybeSingle();
     const isPremium = Boolean(profile?.is_premium) ||
@@ -46,28 +45,46 @@ export const getMyAiQuota = createServerFn({ method: "GET" })
 
     const quota = quotaForRole(role, isPremium);
     const used = usage?.count ?? 0;
+    const bonus = profile?.bonus_ai_credits ?? 0;
+    const dailyRemaining = quota === Infinity ? null : Math.max(0, quota - used);
+    const totalRemaining =
+      quota === Infinity ? null : (dailyRemaining ?? 0) + bonus;
     return {
       role,
       isPremium,
       quota: quota === Infinity ? null : quota,
       unlimited: quota === Infinity,
       used,
-      remaining: quota === Infinity ? null : Math.max(0, quota - used),
+      remaining: dailyRemaining,
+      bonusCredits: bonus,
+      totalRemaining, // what the user can actually spend right now (null = unlimited)
     };
   });
 
-/** Internal: enforce + increment usage. Throws if over quota. */
+/** Internal: enforce + increment usage. Consumes bonus credits first, then daily. */
 export async function consumeAiQuota(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const role = await resolveTopRole(supabaseAdmin, userId);
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("is_premium, premium_expires_at")
+    .select("is_premium, premium_expires_at, bonus_ai_credits")
     .eq("id", userId)
     .maybeSingle();
   const isPremium = Boolean(profile?.is_premium) ||
     (profile?.premium_expires_at ? new Date(profile.premium_expires_at).getTime() > Date.now() : false);
   const quota = quotaForRole(role, isPremium);
+  const bonus = profile?.bonus_ai_credits ?? 0;
+
+  // Try bonus first (available to everyone including free users)
+  if (bonus > 0) {
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ bonus_ai_credits: bonus - 1 })
+      .eq("id", userId);
+    if (error) throw new Error(error.message);
+    return { role, isPremium, quota: quota === Infinity ? null : quota, used: 0, source: "bonus" as const };
+  }
+
   if (quota === 0) throw new Error("AI_QUOTA_NONE");
 
   const today = new Date().toISOString().slice(0, 10);
@@ -87,5 +104,5 @@ export async function consumeAiQuota(userId: string) {
       { onConflict: "user_id,used_on" },
     );
   if (error) throw new Error(error.message);
-  return { role, isPremium, quota: quota === Infinity ? null : quota, used: current + 1 };
+  return { role, isPremium, quota: quota === Infinity ? null : quota, used: current + 1, source: "daily" as const };
 }

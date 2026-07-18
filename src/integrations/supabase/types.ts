@@ -14,6 +14,197 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_campaigns: {
+        Row: {
+          advertiser_id: string
+          app_id: string
+          clicks_count: number
+          cost_per_view_kobo: number
+          created_at: string
+          daily_budget_kobo: number
+          downloads_count: number
+          duration_days: number
+          ends_at: string | null
+          format: string
+          id: string
+          impressions_count: number
+          moderator_note: string | null
+          name: string
+          paid_at: string | null
+          payment_reference: string | null
+          spent_kobo: number
+          starts_at: string | null
+          status: string
+          target_categories: string[]
+          target_countries: string[]
+          total_budget_kobo: number
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          advertiser_id: string
+          app_id: string
+          clicks_count?: number
+          cost_per_view_kobo?: number
+          created_at?: string
+          daily_budget_kobo: number
+          downloads_count?: number
+          duration_days: number
+          ends_at?: string | null
+          format: string
+          id?: string
+          impressions_count?: number
+          moderator_note?: string | null
+          name: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          spent_kobo?: number
+          starts_at?: string | null
+          status?: string
+          target_categories?: string[]
+          target_countries?: string[]
+          total_budget_kobo: number
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          advertiser_id?: string
+          app_id?: string
+          clicks_count?: number
+          cost_per_view_kobo?: number
+          created_at?: string
+          daily_budget_kobo?: number
+          downloads_count?: number
+          duration_days?: number
+          ends_at?: string | null
+          format?: string
+          id?: string
+          impressions_count?: number
+          moderator_note?: string | null
+          name?: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          spent_kobo?: number
+          starts_at?: string | null
+          status?: string
+          target_categories?: string[]
+          target_countries?: string[]
+          total_budget_kobo?: number
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_campaigns_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_clicks: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_clicks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_impressions: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          placement: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          placement: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          placement?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_impressions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_view_sessions: {
+        Row: {
+          campaign_id: string
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          required_seconds: number
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          required_seconds?: number
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          required_seconds?: number
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_view_sessions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_image_usage: {
         Row: {
           count: number
@@ -147,6 +338,7 @@ export type Database = {
           platform: string | null
           price_kobo: number
           privacy_policy_url: string | null
+          promo_video_path: string | null
           rating_avg: number
           rating_count: number
           screenshots: string[]
@@ -193,6 +385,7 @@ export type Database = {
           platform?: string | null
           price_kobo?: number
           privacy_policy_url?: string | null
+          promo_video_path?: string | null
           rating_avg?: number
           rating_count?: number
           screenshots?: string[]
@@ -239,6 +432,7 @@ export type Database = {
           platform?: string | null
           price_kobo?: number
           privacy_policy_url?: string | null
+          promo_video_path?: string | null
           rating_avg?: number
           rating_count?: number
           screenshots?: string[]
@@ -479,6 +673,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          bonus_ai_credits: number
           created_at: string
           display_name: string | null
           id: string
@@ -489,6 +684,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          bonus_ai_credits?: number
           created_at?: string
           display_name?: string | null
           id: string
@@ -499,6 +695,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          bonus_ai_credits?: number
           created_at?: string
           display_name?: string | null
           id?: string

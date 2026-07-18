@@ -10,31 +10,27 @@ const ALLOWED_IMAGE_MIME = new Set([
 ]);
 const ALLOWED_IMAGE_EXT = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
 
+// APK ONLY — Nova is an Android APK marketplace. Web URLs, PWA links,
+// GitHub Pages, and any other web bundle are not accepted.
 const ALLOWED_APP_FILE_MIME = new Set([
-  "application/zip",
-  "application/x-zip-compressed",
   "application/vnd.android.package-archive",
   "application/octet-stream",
 ]);
-const ALLOWED_APP_FILE_EXT = new Set(["zip", "apk"]);
+const ALLOWED_APP_FILE_EXT = new Set(["apk"]);
+
+const ALLOWED_VIDEO_MIME = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+const ALLOWED_VIDEO_EXT = new Set(["mp4", "webm", "mov"]);
 
 const MAX_BYTES: Record<string, number> = {
   "app-logos": 2 * 1024 * 1024, // 2 MB
   "app-screenshots": 5 * 1024 * 1024, // 5 MB
   "app-files": 75 * 1024 * 1024, // 75 MB
+  "app-videos": 30 * 1024 * 1024, // 30 MB
 };
 
-/**
- * Validate the file's declared MIME type AND filename extension against an
- * allow-list before uploading. The browser-provided `file.type` can be spoofed
- * but checking both reduces the attack surface for public buckets, and the
- * sanitized contentType is what we forward to storage (never the raw user
- * value verbatim if it's outside the allow-list).
- */
-function validateFile(
-  bucket: "app-logos" | "app-screenshots" | "app-files",
-  file: File,
-): { ext: string; contentType: string } {
+type Bucket = "app-logos" | "app-screenshots" | "app-files" | "app-videos";
+
+function validateFile(bucket: Bucket, file: File): { ext: string; contentType: string } {
   const ext = (file.name.split(".").pop()?.toLowerCase() ?? "").replace(/[^a-z0-9]/g, "");
   const mime = (file.type || "").toLowerCase();
 
@@ -50,16 +46,24 @@ function validateFile(
     return { ext, contentType: mime };
   }
 
-  // app-files: APK/ZIP only
-  if (!ALLOWED_APP_FILE_EXT.has(ext) || !ALLOWED_APP_FILE_MIME.has(mime)) {
-    throw new Error("Only .apk or .zip app bundles are allowed.");
+  if (bucket === "app-videos") {
+    if (!ALLOWED_VIDEO_EXT.has(ext) || !ALLOWED_VIDEO_MIME.has(mime)) {
+      throw new Error("Only MP4, WEBM or MOV videos are allowed.");
+    }
+    return { ext, contentType: mime };
   }
-  // Force a safe binary content-type so the CDN never serves an executable script type.
-  return { ext, contentType: "application/octet-stream" };
+
+  // app-files: APK ONLY. Reject .zip, .aab, .html, everything else.
+  if (!ALLOWED_APP_FILE_EXT.has(ext) || !ALLOWED_APP_FILE_MIME.has(mime)) {
+    throw new Error(
+      "Only Android APK files are accepted. If you have a PWA or web app, convert it to an APK first.",
+    );
+  }
+  return { ext, contentType: "application/vnd.android.package-archive" };
 }
 
 export async function uploadToBucket(
-  bucket: "app-logos" | "app-screenshots" | "app-files",
+  bucket: Bucket,
   userId: string,
   file: File,
 ): Promise<{ path: string; url: string }> {
