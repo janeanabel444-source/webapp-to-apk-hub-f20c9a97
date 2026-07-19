@@ -1,6 +1,35 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createHmac, timingSafeEqual } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+const PLACEHOLDER_REQUIRED_SECONDS = 10;
+const PLACEHOLDER_TOKEN_TTL_MS = 5 * 60_000;
+const PLACEHOLDER_COOLDOWN_MS = 30_000;
+const placeholderLastClaim = new Map<string, number>();
+
+function placeholderSecret() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.LOVABLE_API_KEY || "nova-placeholder-secret";
+}
+function signPlaceholder(userId: string, issuedAt: number) {
+  const payload = `${userId}.${issuedAt}`;
+  const sig = createHmac("sha256", placeholderSecret()).update(payload).digest("hex");
+  return `${issuedAt}.${sig}`;
+}
+function verifyPlaceholder(userId: string, token: string): number | null {
+  const [issuedAtStr, sig] = token.split(".");
+  if (!issuedAtStr || !sig) return null;
+  const issuedAt = Number(issuedAtStr);
+  if (!Number.isFinite(issuedAt)) return null;
+  const expected = createHmac("sha256", placeholderSecret()).update(`${userId}.${issuedAt}`).digest("hex");
+  try {
+    if (sig.length !== expected.length) return null;
+    if (!timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) return null;
+  } catch { return null; }
+  if (Date.now() - issuedAt > PLACEHOLDER_TOKEN_TTL_MS) return null;
+  return issuedAt;
+}
+
 
 const SUPER_ADMIN_EMAIL = "paschalsoromtochukwu@gmail.com";
 const COST_PER_VIEW_KOBO = 500; // ₦5 per view — base rate
