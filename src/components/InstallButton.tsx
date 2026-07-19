@@ -69,11 +69,13 @@ export function InstallButton({
     setProgress(0);
     try {
       if (filePath) {
-        // Real APK download with streaming progress.
-        await downloadApkWithProgress(filePath, appName, (loaded, total) => {
+        // Real APK download — native wrapper handles installer, else browser stream.
+        const result = await downloadApkWithProgress(filePath, appName, (loaded, total) => {
           setProgress(total ? (loaded / total) * 100 : 0);
         });
-        if (isAndroidDevice()) {
+        if (result.nativeInstalled) {
+          toast.success("Installing via Nova Android…");
+        } else if (isAndroidDevice()) {
           setShowHelper(true);
           toast.success("APK downloaded — tap the notification to install");
         } else {
@@ -106,6 +108,7 @@ export function InstallButton({
       setProgress(0);
     }
   }
+
 
   async function handleInstall() {
     if (isDemo) return toast.info("Demo can't install — this app is a preview placeholder.");
