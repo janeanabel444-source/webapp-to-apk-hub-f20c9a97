@@ -1,6 +1,35 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createHmac, timingSafeEqual } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+const PLACEHOLDER_REQUIRED_SECONDS = 10;
+const PLACEHOLDER_TOKEN_TTL_MS = 5 * 60_000;
+const PLACEHOLDER_COOLDOWN_MS = 30_000;
+const placeholderLastClaim = new Map<string, number>();
+
+function placeholderSecret() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.LOVABLE_API_KEY || "nova-placeholder-secret";
+}
+function signPlaceholder(userId: string, issuedAt: number) {
+  const payload = `${userId}.${issuedAt}`;
+  const sig = createHmac("sha256", placeholderSecret()).update(payload).digest("hex");
+  return `${issuedAt}.${sig}`;
+}
+function verifyPlaceholder(userId: string, token: string): number | null {
+  const [issuedAtStr, sig] = token.split(".");
+  if (!issuedAtStr || !sig) return null;
+  const issuedAt = Number(issuedAtStr);
+  if (!Number.isFinite(issuedAt)) return null;
+  const expected = createHmac("sha256", placeholderSecret()).update(`${userId}.${issuedAt}`).digest("hex");
+  try {
+    if (sig.length !== expected.length) return null;
+    if (!timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) return null;
+  } catch { return null; }
+  if (Date.now() - issuedAt > PLACEHOLDER_TOKEN_TTL_MS) return null;
+  return issuedAt;
+}
+
 
 const SUPER_ADMIN_EMAIL = "paschalsoromtochukwu@gmail.com";
 const COST_PER_VIEW_KOBO = 500; // ₦5 per view — base rate
@@ -334,4 +363,42 @@ export const adminModerateCampaign = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("ad_campaigns").update(patch).eq("id", data.campaignId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// ─────────────── Placeholder ad (used when no real campaigns are active) ───────────────
+// Returns a signed token the client must present to claim the reward AFTER
+// the required watch time has elapsed. Prevents users from repeatedly
+// claiming without completing the ad.
+export const startPlaceholderAd = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const now = Date.now();
+    return {
+      token: signPlaceholder(context.userId, now),
+      requiredSeconds: PLACEHOLDER_REQUIRED_SECONDS,
+    };
+  });
+
+export const claimPlaceholderAd = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { token: string }) => z.object({ token: z.string().min(8) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const issuedAt = verifyPlaceholder(context.userId, data.token);
+    if (!issuedAt) throw new Error("Invalid or expired ad session — please try again.");
+    const elapsed = Date.now() - issuedAt;
+    if (elapsed < (PLACEHOLDER_REQUIRED_SECONDS - 1) * 1000) {
+      throw new Error("Please finish watching the ad.");
+    }
+    const last = placeholderLastClaim.get(context.userId) ?? 0;
+    if (Date.now() - last < PLACEHOLDER_COOLDOWN_MS) {
+      throw new Error("Please wait a moment before watching another ad.");
+    }
+    placeholderLastClaim.set(context.userId, Date.now());
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("bonus_ai_credits").eq("id", context.userId).maybeSingle();
+    const newBonus = (prof?.bonus_ai_credits ?? 0) + 1;
+    await supabaseAdmin.from("profiles").update({ bonus_ai_credits: newBonus }).eq("id", context.userId);
+    return { rewarded: true, bonusCredits: newBonus };
   });
