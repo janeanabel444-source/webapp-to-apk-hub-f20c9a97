@@ -919,10 +919,6 @@ export type Database = {
     }
     Functions: {
       semver_to_int_array: { Args: { v: string }; Returns: number[] }
-      storage_object_is_public_app_file: {
-        Args: { object_name: string }
-        Returns: boolean
-      }
     }
     Enums: {
       app_category: "app" | "game" | "ai_video"
