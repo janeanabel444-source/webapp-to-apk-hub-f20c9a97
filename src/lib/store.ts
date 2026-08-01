@@ -33,6 +33,11 @@ export function iconInitials(name: string) {
     .toUpperCase();
 }
 
+/** Escape characters that would break a PostgREST `or(...)` filter string. */
+function escapeFilterValue(s: string) {
+  return s.replace(/[,()\\]/g, " ").trim();
+}
+
 export async function fetchApps(category?: Category, search?: string, language?: string) {
   // Only show approved, live, published apps publicly.
   let q = supabase
@@ -44,11 +49,21 @@ export async function fetchApps(category?: Category, search?: string, language?:
   if (category) q = q.eq("category", category);
   if (language) q = q.contains("languages", [language]);
   if (search && search.trim()) {
-    const s = search.trim();
-    // Match by name, tagline, short description, or tag.
-    q = q.or(
-      `name.ilike.%${s}%,tagline.ilike.%${s}%,short_description.ilike.%${s}%,tags.cs.{${s.toLowerCase()}}`,
-    );
+    const s = escapeFilterValue(search);
+    if (s) {
+      // Match by name, developer, tagline, descriptions, subcategory or tag.
+      q = q.or(
+        [
+          `name.ilike.%${s}%`,
+          `developer_name.ilike.%${s}%`,
+          `tagline.ilike.%${s}%`,
+          `short_description.ilike.%${s}%`,
+          `description.ilike.%${s}%`,
+          `subcategory.ilike.%${s}%`,
+          `tags.cs.{"${s.toLowerCase()}"}`,
+        ].join(","),
+      );
+    }
   }
   const { data, error } = await q;
   if (error) throw error;
@@ -60,6 +75,7 @@ export async function fetchApps(category?: Category, search?: string, language?:
     return ad - bd;
   });
 }
+
 
 
 export async function fetchApp(slug: string) {

@@ -8,6 +8,10 @@ import { nativeBridge, isNovaAndroid } from "@/lib/native-bridge";
 
 export async function getApkSignedUrl(filePath: string) {
   if (!filePath) throw new Error("This app has no APK file attached yet.");
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) {
+    throw new Error("Please sign in to download apps.");
+  }
   const { data, error } = await supabase.storage
     .from("app-files")
     .createSignedUrl(filePath, 60 * 60, {
@@ -16,12 +20,18 @@ export async function getApkSignedUrl(filePath: string) {
   if (error || !data) {
     const msg = error?.message ?? "";
     if (/not found|Object not found/i.test(msg)) {
-      throw new Error("APK file is missing from storage. Please contact the developer.");
+      throw new Error(
+        "This download isn't available yet — the app is still under review or its file was removed. Please try again later.",
+      );
+    }
+    if (/unauthorized|permission|denied|jwt/i.test(msg)) {
+      throw new Error("Your session expired. Please sign in again to download.");
     }
     throw new Error(msg || "Could not generate download link");
   }
   return data.signedUrl;
 }
+
 
 /**
  * Downloads an APK. Inside the Nova Android wrapper, hands off to the native
