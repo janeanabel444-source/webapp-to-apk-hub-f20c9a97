@@ -385,7 +385,7 @@ export const listMyDeveloperApps = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("apps")
-      .select("id, slug, name, category, platform, icon_url, status, install_count, version, last_updated_at, created_at, updated_at")
+      .select("id, slug, name, category, platform, icon_url, status, install_count, version, last_updated_at, created_at, updated_at, review_note, release_channel, share_token")
       .eq("developer_id", context.userId)
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
