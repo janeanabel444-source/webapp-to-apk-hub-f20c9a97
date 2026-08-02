@@ -467,9 +467,35 @@ export const setReleaseChannel = createServerFn({ method: "POST" })
       .from("apps")
       .update({
         release_channel: data.release_channel,
-        is_published: !existing.is_draft && !dev,
-        status: existing.is_draft ? "draft" : dev ? "development" : "live",
+        is_published: false,
+        status: existing.is_draft ? "draft" : dev ? "development" : "pending",
       })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Resubmit a listing after a reviewer returned it for changes. Clears the
+ * previous reviewer note and puts the application back in the review queue.
+ */
+export const resubmitForReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("apps")
+      .select("developer_id, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!existing || existing.developer_id !== context.userId) throw new Error("Not found");
+    if (!["changes_requested", "rejected", "draft"].includes(existing.status)) {
+      throw new Error("This application is not awaiting changes.");
+    }
+    const { error } = await supabaseAdmin
+      .from("apps")
+      .update({ status: "pending", is_published: false, is_draft: false, review_note: null })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
