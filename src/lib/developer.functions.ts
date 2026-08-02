@@ -133,7 +133,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         platform: data.platform,
         icon_url: data.icon_url,
         feature_banner_url: data.feature_banner_url ?? null,
-        app_url: data.platform === "android" ? null : (data.app_url ?? null),
+        app_url: spec.requiresApk ? null : (data.app_url ?? null),
+        release_channel: data.release_channel ?? "public",
+        integration_method: data.integration_method ?? null,
+
         website_url: data.website_url ?? null,
         privacy_policy_url: data.privacy_policy_url ?? null,
         developer_name: data.developer_name ?? null,
