@@ -153,7 +153,16 @@ export async function fetchCollection(slug: string) {
 export async function submitReport(
   userId: string,
   appId: string,
-  reason: "malware" | "broken" | "inappropriate" | "copyright" | "spam" | "other",
+  reason:
+    | "malware"
+    | "broken"
+    | "inappropriate"
+    | "impersonation"
+    | "misleading"
+    | "copyright"
+    | "spam"
+    | "other",
+
   details: string,
 ) {
   const { error } = await supabase
