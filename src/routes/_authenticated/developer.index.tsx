@@ -1,22 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Code2, Download, Clock, CheckCircle2, XCircle, LogIn } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, Code2, Download, LogIn, Copy, RefreshCw, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { listMyDeveloperApps } from "@/lib/developer.functions";
+import { listMyDeveloperApps, resubmitForReview } from "@/lib/developer.functions";
+import { REVIEW_STATES } from "@/lib/review";
 
 export const Route = createFileRoute("/_authenticated/developer/")({
   head: () => ({ meta: [{ title: "Developer Hub — Nova" }] }),
   component: DeveloperHome,
 });
 
-const statusBadge: Record<string, { label: string; cls: string; Icon: any }> = {
-  pending: { label: "Pending review", cls: "bg-amber-500/10 text-amber-600", Icon: Clock },
-  approved: { label: "Approved", cls: "bg-blue-500/10 text-blue-600", Icon: CheckCircle2 },
-  live: { label: "Live", cls: "bg-emerald-500/10 text-emerald-600", Icon: CheckCircle2 },
-  rejected: { label: "Rejected", cls: "bg-destructive/10 text-destructive", Icon: XCircle },
+const toneCls: Record<string, string> = {
+  pending: "bg-amber-500/10 text-amber-600",
+  good: "bg-emerald-500/10 text-emerald-600",
+  warn: "bg-orange-500/10 text-orange-600",
+  bad: "bg-destructive/10 text-destructive",
 };
+
 
 function DeveloperHome() {
   const { user } = useAuth();
