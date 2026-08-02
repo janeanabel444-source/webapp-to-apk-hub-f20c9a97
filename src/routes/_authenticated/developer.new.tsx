@@ -2,8 +2,8 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, ArrowRight, Check, ImagePlus, Loader2, Package, Save,
-  Shield, Sparkles, UploadCloud, X,
+  ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, HelpCircle, ImagePlus, Loader2,
+  Package, Rocket, Sparkles, UploadCloud, X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -13,82 +13,198 @@ import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
 import { createDeveloperApp, checkAppNameAvailable } from "@/lib/developer.functions";
 import { generateAppDescription, generateAppKeywords } from "@/lib/app-listing-ai.functions";
-import { generateReleaseNotes } from "@/lib/release-notes.functions";
 import { parseApkFile, formatBytes, type ParsedApk } from "@/lib/apk-parser";
+import {
+  PLATFORMS, RELEASE_CHANNELS, getPlatform,
+  type PlatformId, type ReleaseChannel, type IntegrationMethod,
+} from "@/lib/platforms";
 
 export const Route = createFileRoute("/_authenticated/developer/new")({
   head: () => ({
     meta: [
-      { title: "Upload App — Nova Developer Hub" },
-      { name: "description", content: "Publish your Android APK on Nova App Store — a guided, professional submission form." },
+      { title: "Publish Your Application — Nova Developer Hub" },
+      { name: "description", content: "A guided, step-by-step publishing wizard for Progressive Web Apps, web apps, Android APKs and hybrid applications on Nova App Store." },
+      { property: "og:title", content: "Publish Your Application — Nova Developer Hub" },
+      { property: "og:description", content: "Publish your application on Nova App Store with a guided wizard." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: NewAppPage,
 });
 
 type Category = "app" | "game";
-type Platform = "web" | "pwa" | "android";
-type Rating = "everyone" | "teen" | "mature";
-type License = "free" | "paid";
 
 interface DraftState {
+  platform: PlatformId;
+  integrationMethod: IntegrationMethod | "";
+  releaseChannel: ReleaseChannel;
   name: string;
   shortDescription: string;
   description: string;
-  tagline: string;
   category: Category;
-  subcategory: string;
   tags: string[];
-  platform: Platform;
   appUrl: string;
+  minAndroidVersion: string;
+  targetAndroidVersion: string;
+  version: string;
+  releaseNotes: string;
+  privacyPolicyUrl: string;
   developerName: string;
   developerEmail: string;
   websiteUrl: string;
-  privacyPolicyUrl: string;
-  minAndroidVersion: string;
-  targetAndroidVersion: string;
-  languages: string[];
-  contentRating: Rating;
-  license: License;
-  priceNaira: string;
-  releaseNotes: string;
 }
 
-const DRAFT_KEY = "nova.developer.new-app.draft";
+const DRAFT_KEY = "nova.developer.wizard.draft";
 const ANDROID_VERSIONS = ["5.0", "6.0", "7.0", "8.0", "9.0", "10", "11", "12", "13", "14", "15"];
-const LANGUAGES = ["English", "French", "Spanish", "Portuguese", "German", "Arabic", "Hindi", "Chinese", "Swahili", "Yoruba", "Igbo", "Hausa"];
 
 const initialDraft: DraftState = {
+  platform: "android",
+  integrationMethod: "",
+  releaseChannel: "public",
   name: "",
   shortDescription: "",
   description: "",
-  tagline: "",
   category: "app",
-  subcategory: "",
   tags: [],
-  platform: "android",
   appUrl: "",
+  minAndroidVersion: "7.0",
+  targetAndroidVersion: "14",
+  version: "1.0.0",
+  releaseNotes: "Initial release",
+  privacyPolicyUrl: "",
   developerName: "",
   developerEmail: "",
   websiteUrl: "",
-  privacyPolicyUrl: "",
-  minAndroidVersion: "7.0",
-  targetAndroidVersion: "14",
-  languages: ["English"],
-  contentRating: "everyone",
-  license: "free",
-  priceNaira: "",
-  releaseNotes: "",
 };
 
-const STEPS = [
-  { id: "basics", label: "Basics" },
-  { id: "media", label: "Media" },
-  { id: "apk", label: "APK" },
-  { id: "details", label: "Details" },
-  { id: "store", label: "Store info" },
-  { id: "preview", label: "Preview" },
-] as const;
+const HELP: Record<string, { title: string; body: string[] }> = {
+  platform: {
+    title: "Choosing an application type",
+    body: [
+      "Nova supports several application types, and each one has its own publishing workflow — you'll only be asked for information that applies to your app.",
+      "Nova does not convert websites into Android applications. Upload the application you have already built.",
+      "Common mistake: choosing Native Android APK when you only have a hosted website. Pick Progressive Web App or Web Application instead.",
+    ],
+  },
+  integration: {
+    title: "SDK vs link integration",
+    body: [
+      "Hybrid applications can talk to Nova through the Nova Services SDK, through a Nova-generated link, or through both.",
+      "SDK integration unlocks in-app features such as native install and update handling.",
+      "Link integration is the fastest way to publish — Nova generates the links your app needs.",
+      "If your app supports both, choose Both; you are never forced to pick one.",
+    ],
+  },
+  name: {
+    title: "Your application name",
+    body: [
+      "This is the name users see everywhere in Nova — search, categories and your store page.",
+      "Best practice: keep it short, memorable and free of keyword stuffing.",
+      "Common mistake: adding 'free', 'best' or version numbers to the name.",
+      "You can't publish two applications with the same name under one developer account.",
+    ],
+  },
+  short: {
+    title: "Short description",
+    body: [
+      "The one-line summary shown in listings and search results — up to 80 characters.",
+      "Best practice: describe what the app does, not how great it is.",
+      "Common mistake: repeating the app name instead of explaining the value.",
+    ],
+  },
+  description: {
+    title: "Full description",
+    body: [
+      "The full story of your app on its store page. Users read this before installing.",
+      "Best practice: open with a short hook, then list key features as bullets.",
+      "Press Enhance to let the AI assistant draft or improve it — you always keep the final say.",
+    ],
+  },
+  category: {
+    title: "Category & tags",
+    body: [
+      "Categories and tags power discovery — browsing, filters and search all depend on them.",
+      "Best practice: pick the single most accurate category and 5–10 relevant tags.",
+      "Common mistake: adding unrelated popular tags; this hurts ranking and can be reported.",
+    ],
+  },
+  icon: {
+    title: "Application icon",
+    body: [
+      "The icon is mandatory — it represents your app across the entire store.",
+      "Best practice: a square PNG at 512×512, simple, high contrast, no small text.",
+      "Common mistake: uploading a screenshot or a logo with lots of white space.",
+    ],
+  },
+  media: {
+    title: "Screenshots & promotional image",
+    body: [
+      "Screenshots are the single biggest driver of installs. Up to 8 are supported.",
+      "Best practice: show real screens in order of importance; portrait works best on phones.",
+      "The promotional image is the wide banner used on featured placements — optional but recommended.",
+    ],
+  },
+  apk: {
+    title: "Uploading your APK",
+    body: [
+      "Upload the already-built, signed APK. Nova reads the package name, version, size and permissions automatically.",
+      "Every binary is scanned for malware before it can be published.",
+      "Common mistake: uploading an .aab bundle or a .zip — only .apk files are accepted.",
+    ],
+  },
+  url: {
+    title: "Application URL",
+    body: [
+      "The hosted address users are sent to. It must be a public HTTPS URL.",
+      "For a PWA this should be the installable start URL that serves your manifest.",
+      "Common mistake: pointing at a staging URL or a page behind a login.",
+    ],
+  },
+  android: {
+    title: "Android compatibility",
+    body: [
+      "Minimum Android version determines who can install your app; target version tells Android which behaviours you support.",
+      "Best practice: target the newest version you have tested against.",
+    ],
+  },
+  version: {
+    title: "Version & release notes",
+    body: [
+      "Versions must look like 1.0.0. Later updates must use a higher number.",
+      "Release notes explain what changed — users see them on the store page and in update notifications.",
+    ],
+  },
+  privacy: {
+    title: "Privacy policy",
+    body: [
+      "If your app collects any personal data, a privacy policy URL is required by most platforms and expected by users.",
+      "Best practice: host it publicly on your own domain and keep it reachable without a login.",
+    ],
+  },
+  contact: {
+    title: "Contact information",
+    body: [
+      "Users and Nova reviewers use this to reach you about your listing.",
+      "Your email is used for review outcomes and support requests; it is not shown publicly.",
+    ],
+  },
+  release: {
+    title: "Release type",
+    body: [
+      "A Development build stays out of the marketplace and is reachable only through a private testing link you share.",
+      "A Public release is visible, searchable and downloadable by everyone.",
+      "You can switch a development build to a public release later — no new listing required.",
+    ],
+  },
+  review: {
+    title: "Final review",
+    body: [
+      "Check everything before submitting. Use Back and Edit to change any answer — nothing is lost.",
+      "After submission your app goes through automated validation and review before it goes live.",
+    ],
+  },
+};
 
 function NewAppPage() {
   const { user } = useAuth();
@@ -97,43 +213,48 @@ function NewAppPage() {
   const checkName = useServerFn(checkAppNameAvailable);
   const aiDescribe = useServerFn(generateAppDescription);
   const aiKeywords = useServerFn(generateAppKeywords);
-  const aiReleaseNotes = useServerFn(generateReleaseNotes);
 
-  const [step, setStep] = useState(0);
+  const [phase, setPhase] = useState<"intro" | "wizard" | "done">("intro");
   const [form, setForm] = useState<DraftState>(initialDraft);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [dir, setDir] = useState<1 | -1>(1);
+  const [showHelp, setShowHelp] = useState(false);
+
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [banner, setBanner] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [screenshots, setScreenshots] = useState<File[]>([]);
-  const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
+  const [shotPreviews, setShotPreviews] = useState<string[]>([]);
   const [appFile, setAppFile] = useState<File | null>(null);
   const [apkInfo, setApkInfo] = useState<ParsedApk | null>(null);
   const [parsing, setParsing] = useState(false);
+
   const [tagInput, setTagInput] = useState("");
   const [nameStatus, setNameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [aiBusy, setAiBusy] = useState<"desc" | "kw" | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ label: string; pct: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [aiBusy, setAiBusy] = useState<"desc" | "kw" | "notes" | null>(null);
   const [autosaved, setAutosaved] = useState<Date | null>(null);
+  const [result, setResult] = useState<{ slug: string; shareToken: string; dev: boolean } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const spec = getPlatform(form.platform);
 
   const set = useCallback(<K extends keyof DraftState>(k: K, v: DraftState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
   }, []);
 
-  // Load draft on mount
+  // Restore draft
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        setForm({ ...initialDraft, ...parsed });
-      }
+      if (raw) setForm({ ...initialDraft, ...JSON.parse(raw) });
     } catch { /* ignore */ }
   }, []);
 
-  // Autosave (debounced)
+  // Autosave every answer
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -142,11 +263,11 @@ function NewAppPage() {
         localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
         setAutosaved(new Date());
       } catch { /* ignore */ }
-    }, 700);
+    }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [form]);
 
-  // Debounced duplicate-name check
+  // Duplicate name check
   useEffect(() => {
     const n = form.name.trim();
     if (n.length < 2) { setNameStatus("idle"); return; }
@@ -160,6 +281,26 @@ function NewAppPage() {
     return () => clearTimeout(t);
   }, [form.name, checkName]);
 
+  // ---- Dynamic step list: adapts to the selected application type ----
+  const steps = useMemo(() => {
+    const s: string[] = ["platform"];
+    if (spec.supportsSdk && spec.supportsLink) s.push("integration");
+    s.push("name", "short", "description", "category", "icon", "media");
+    if (spec.requiresApk || form.platform === "hybrid") s.push("apk");
+    if (spec.requiresUrl || (form.platform === "hybrid" && form.integrationMethod !== "sdk")) s.push("url");
+    if (spec.androidDetails && (spec.requiresApk || appFile)) s.push("android");
+    s.push("version", "privacy", "contact", "release", "review");
+    return s;
+  }, [spec, form.platform, form.integrationMethod, appFile]);
+
+  // Keep the pointer in range if earlier answers removed later steps.
+  useEffect(() => {
+    setStepIndex((i) => Math.min(i, steps.length - 1));
+  }, [steps.length]);
+
+  const stepId = steps[stepIndex] ?? "platform";
+  const help = HELP[stepId === "url" ? "url" : stepId];
+
   function pickLogo(f: File | null) {
     setLogo(f);
     setLogoPreview(f ? URL.createObjectURL(f) : null);
@@ -168,32 +309,29 @@ function NewAppPage() {
     setBanner(f);
     setBannerPreview(f ? URL.createObjectURL(f) : null);
   }
-  function pickScreenshots(files: FileList | null) {
+  function pickShots(files: FileList | null) {
     const arr = Array.from(files ?? []).slice(0, 8);
     setScreenshots(arr);
-    setScreenshotPreviews(arr.map((f) => URL.createObjectURL(f)));
+    setShotPreviews(arr.map((f) => URL.createObjectURL(f)));
   }
-  function removeScreenshot(i: number) {
+  function removeShot(i: number) {
     const next = screenshots.filter((_, idx) => idx !== i);
     setScreenshots(next);
-    setScreenshotPreviews(next.map((f) => URL.createObjectURL(f)));
+    setShotPreviews(next.map((f) => URL.createObjectURL(f)));
   }
-
   async function pickAppFile(f: File | null) {
     setAppFile(f);
     setApkInfo(null);
     if (!f) return;
-    if (form.platform === "android" && /\.apk$/i.test(f.name)) {
-      setParsing(true);
-      try {
-        const info = await parseApkFile(f);
-        setApkInfo(info);
-      } finally { setParsing(false); }
-    } else {
+    setParsing(true);
+    try {
+      const info = await parseApkFile(f);
+      setApkInfo(info);
+      if (info.versionName) set("version", info.versionName);
+    } catch {
       setApkInfo({ packageName: null, versionName: null, versionCode: null, apkSize: f.size, permissions: [] });
-    }
+    } finally { setParsing(false); }
   }
-
   function addTag() {
     const t = tagInput.trim().toLowerCase();
     if (!t) return;
@@ -203,660 +341,743 @@ function NewAppPage() {
   }
 
   async function runAiDescription() {
-    if (!form.name) { setErr("Add an app name first."); return; }
+    if (!form.name.trim()) { setErr("Add an application name first."); return; }
     setAiBusy("desc");
+    setErr(null);
     try {
       const res = await aiDescribe({
-        data: { name: form.name, category: form.category, tagline: form.tagline || null, hint: form.shortDescription || null },
+        data: {
+          name: form.name,
+          category: form.category,
+          tagline: form.shortDescription || null,
+          hint: form.description || null,
+        },
       });
       set("description", res.text);
-    } catch (e: any) { setErr(e?.message ?? "AI failed"); }
+    } catch (e: any) { setErr(e?.message ?? "The AI assistant is unavailable right now."); }
     finally { setAiBusy(null); }
   }
   async function runAiKeywords() {
-    if (!form.name) { setErr("Add an app name first."); return; }
+    if (!form.name.trim()) { setErr("Add an application name first."); return; }
     setAiBusy("kw");
     try {
       const res = await aiKeywords({ data: { name: form.name, category: form.category, description: form.description || null } });
-      const merged = Array.from(new Set([...form.tags, ...res.tags])).slice(0, 12);
-      set("tags", merged);
-    } catch (e: any) { setErr(e?.message ?? "AI failed"); }
-    finally { setAiBusy(null); }
-  }
-  async function runAiReleaseNotes() {
-    if (!form.name) { setErr("Add an app name first."); return; }
-    setAiBusy("notes");
-    try {
-      const res = await aiReleaseNotes({
-        data: {
-          appName: form.name,
-          previousVersion: null,
-          newVersion: apkInfo?.versionName ?? "1.0.0",
-          previousSize: null,
-          newSize: apkInfo?.apkSize ?? null,
-          permissionsAdded: apkInfo?.permissions ?? [],
-          permissionsRemoved: [],
-        },
-      });
-      set("releaseNotes", res.notes);
-    } catch (e: any) { setErr(e?.message ?? "AI failed"); }
+      set("tags", Array.from(new Set([...form.tags, ...res.tags])).slice(0, 12));
+    } catch (e: any) { setErr(e?.message ?? "The AI assistant is unavailable right now."); }
     finally { setAiBusy(null); }
   }
 
-  const validation = useMemo(() => {
-    const errors: Record<string, string> = {};
-    if (form.name.trim().length < 2) errors.name = "App name is required (min 2 chars).";
-    if (nameStatus === "taken") errors.name = "You already have an app with this name.";
-    if (form.shortDescription.length > 80) errors.shortDescription = "Short description must be 80 chars or less.";
-    if (form.description.trim().length < 10) errors.description = "Description must be at least 10 characters.";
-    if (!logo) errors.logo = "App icon is required.";
-    if (form.platform === "android" && !appFile) errors.appFile = "APK file is required for Android.";
-    if (form.platform !== "android" && !form.appUrl && !appFile) errors.appFile = "Provide an app URL or upload a file.";
-    if (form.developerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.developerEmail)) errors.developerEmail = "Invalid email.";
-    if (form.license === "paid" && (!form.priceNaira || Number(form.priceNaira) <= 0)) errors.price = "Price required for paid apps.";
-    return errors;
-  }, [form, logo, appFile, nameStatus]);
+  const emailOk = !form.developerEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.developerEmail);
+  const urlOk = /^https?:\/\/.+\..+/.test(form.appUrl.trim());
 
   const stepValid = useMemo(() => {
-    switch (STEPS[step].id) {
-      case "basics":
-        return !validation.name && !validation.shortDescription && !validation.description && form.name && form.description;
-      case "media":
-        return !validation.logo;
-      case "apk":
-        return !validation.appFile;
-      case "details":
-        return !validation.developerEmail;
-      case "store":
-        return !validation.price;
-      case "preview":
-        return Object.keys(validation).length === 0;
+    switch (stepId) {
+      case "platform": return spec.enabled;
+      case "integration": return form.integrationMethod !== "";
+      case "name": return form.name.trim().length >= 2 && nameStatus !== "taken" && nameStatus !== "checking";
+      case "short": return form.shortDescription.trim().length > 0 && form.shortDescription.length <= 80;
+      case "description": return form.description.trim().length >= 10;
+      case "category": return !!form.category;
+      case "icon": return !!logo;
+      case "media": return true;
+      case "apk": return spec.requiresApk ? !!appFile && !parsing : !parsing;
+      case "url": return spec.requiresUrl ? urlOk : (!form.appUrl.trim() || urlOk);
+      case "android": return true;
+      case "version": return /^\d+(\.\d+){0,3}$/.test(form.version.trim()) && form.releaseNotes.trim().length >= 3;
+      case "privacy": return !form.privacyPolicyUrl.trim() || /^https?:\/\/.+\..+/.test(form.privacyPolicyUrl.trim());
+      case "contact": return emailOk;
+      case "release": return !!form.releaseChannel;
+      case "review": return true;
       default: return true;
     }
-  }, [step, validation, form]);
+  }, [stepId, spec, form, nameStatus, logo, appFile, parsing, emailOk, urlOk]);
 
-  async function submit(asDraft: boolean) {
+  function next() {
+    if (!stepValid) return;
+    setDir(1);
+    setShowHelp(false);
+    setStepIndex((i) => Math.min(i + 1, steps.length - 1));
+  }
+  function back() {
+    setDir(-1);
+    setShowHelp(false);
+    setStepIndex((i) => Math.max(i - 1, 0));
+  }
+  function goTo(id: string) {
+    const i = steps.indexOf(id);
+    if (i >= 0) { setDir(-1); setShowHelp(false); setStepIndex(i); }
+  }
+
+  async function submit() {
     setErr(null);
-    if (!user) return;
-    if (!asDraft && Object.keys(validation).length > 0) {
-      setErr(Object.values(validation)[0]);
-      return;
-    }
-    if (!logo && !asDraft) { setErr("App icon is required."); return; }
+    if (!user || !logo) { setErr("An application icon is required."); return; }
     setBusy(true);
     try {
       setProgress({ label: "Uploading icon…", pct: 10 });
-      const logoUp = logo ? await uploadToBucket("app-logos", user.id, logo) : null;
+      const logoUp = await uploadToBucket("app-logos", user.id, logo);
       let bannerUrl: string | null = null;
       if (banner) {
-        setProgress({ label: "Uploading feature banner…", pct: 20 });
-        const b = await uploadToBucket("app-screenshots", user.id, banner);
-        bannerUrl = b.url;
+        setProgress({ label: "Uploading promotional image…", pct: 25 });
+        bannerUrl = (await uploadToBucket("app-screenshots", user.id, banner)).url;
       }
-      setProgress({ label: "Uploading screenshots…", pct: 35 });
-      const shotUps = await Promise.all(
-        screenshots.map((f) => uploadToBucket("app-screenshots", user.id, f)),
-      );
+      setProgress({ label: "Uploading screenshots…", pct: 40 });
+      const shots = await Promise.all(screenshots.map((f) => uploadToBucket("app-screenshots", user.id, f)));
       let filePath: string | null = null;
       if (appFile) {
-        setProgress({ label: "Uploading APK…", pct: 60 });
-        const fUp = await uploadToBucket("app-files", user.id, appFile);
-        filePath = fUp.path;
+        setProgress({ label: "Uploading application file…", pct: 65 });
+        filePath = (await uploadToBucket("app-files", user.id, appFile)).path;
       }
-      setProgress({ label: asDraft ? "Saving draft…" : "Publishing…", pct: 90 });
-      await create({
+      setProgress({ label: "Running security checks & publishing…", pct: 88 });
+      const row: any = await create({
         data: {
           name: form.name.trim(),
-          tagline: form.tagline.trim() || null,
           short_description: form.shortDescription.trim() || null,
-          description: form.description.trim() || (asDraft ? "Draft in progress." : ""),
+          description: form.description.trim(),
           category: form.category,
-          subcategory: form.subcategory.trim() || null,
           platform: form.platform,
-          icon_url: logoUp?.url ?? "",
+          integration_method: (form.integrationMethod || null) as any,
+          release_channel: form.releaseChannel,
+          icon_url: logoUp.url,
           feature_banner_url: bannerUrl,
-          app_url: form.platform === "android" ? null : (form.appUrl.trim() || null),
+          app_url: form.appUrl.trim() || null,
           website_url: form.websiteUrl.trim() || null,
           privacy_policy_url: form.privacyPolicyUrl.trim() || null,
           developer_name: form.developerName.trim() || null,
           developer_email: form.developerEmail.trim() || null,
           file_path: filePath,
-          screenshots: shotUps.map((s) => s.url),
+          screenshots: shots.map((s) => s.url),
           tags: form.tags,
-          languages: form.languages,
-          min_android_version: form.minAndroidVersion || null,
-          target_android_version: form.targetAndroidVersion || null,
-          content_rating: form.contentRating,
-          license: form.license,
-          price_kobo: form.license === "paid" ? Math.round(Number(form.priceNaira || 0) * 100) : 0,
-          is_draft: asDraft,
+          languages: ["English"],
+          min_android_version: spec.androidDetails ? form.minAndroidVersion : null,
+          target_android_version: spec.androidDetails ? form.targetAndroidVersion : null,
+          license: "free",
+          price_kobo: 0,
+          is_draft: false,
           package_name: apkInfo?.packageName ?? null,
-          version_name: apkInfo?.versionName ?? null,
+          version_name: form.version.trim(),
           version_code: apkInfo?.versionCode ?? null,
           apk_size: apkInfo?.apkSize ?? null,
           permissions: apkInfo?.permissions ?? [],
-          release_notes: form.releaseNotes.trim() || null,
+          release_notes: form.releaseNotes.trim(),
         },
       });
-      setProgress({ label: "Done", pct: 100 });
-      try { localStorage.removeItem(DRAFT_KEY); } catch {}
-      navigate({ to: "/developer" });
+      localStorage.removeItem(DRAFT_KEY);
+      setResult({
+        slug: row.slug,
+        shareToken: row.share_token,
+        dev: form.releaseChannel === "development",
+      });
+      setPhase("done");
     } catch (e: any) {
-      setErr(e?.message ?? "Upload failed");
-      setProgress(null);
+      setErr(e?.message ?? "Something went wrong while publishing.");
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
-  function next() { setStep((s) => Math.min(s + 1, STEPS.length - 1)); }
-  function back() { setStep((s) => Math.max(s - 1, 0)); }
+  // ---------------- Intro ----------------
+  if (phase === "intro") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+        <div className="wizard-forward rounded-3xl border border-border/60 bg-card p-6 sm:p-9">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Rocket className="h-6 w-6" />
+          </span>
+          <h1 className="mt-5 font-display text-2xl font-bold sm:text-3xl">Publish Your Application</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Welcome to Nova App Store. This publishing wizard will guide you through every step
+            required to publish your application.
+          </p>
+          <p className="mt-5 text-sm font-medium">You will provide:</p>
+          <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+            {["Application information", "Application type", "Images and media", "Store listing details", "Privacy information", "Release settings", "Final review"].map((t) => (
+              <li key={t} className="flex items-center gap-2">
+                <Check className="h-4 w-4 shrink-0 text-primary" /> {t}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button className="rounded-full" onClick={() => setPhase("wizard")}>
+              Continue <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+            <Button asChild variant="ghost" className="rounded-full">
+              <Link to="/developer">Cancel</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- Success ----------------
+  if (phase === "done" && result) {
+    const shareUrl = typeof window !== "undefined"
+      ? `${window.location.origin}/testing/${result.shareToken}`
+      : "";
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+        <div className="wizard-forward rounded-3xl border border-border/60 bg-card p-6 text-center sm:p-9">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+            <CheckCircle2 className="h-7 w-7" />
+          </span>
+          <h1 className="mt-5 font-display text-2xl font-bold">
+            {result.dev ? "Development build created" : "Submitted for review"}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {result.dev
+              ? "Your build is private. Share the testing link below with your testers — it will not appear in search or categories."
+              : "Your application has been submitted. It will appear across Nova once it clears review."}
+          </p>
+          {result.dev && (
+            <div className="mt-6 flex items-center gap-2 rounded-2xl border border-border/60 bg-secondary/40 p-3">
+              <code className="min-w-0 flex-1 truncate text-left text-xs">{shareUrl}</code>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                onClick={() => {
+                  navigator.clipboard?.writeText(shareUrl);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1800);
+                }}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          )}
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button className="rounded-full" onClick={() => navigate({ to: "/developer" })}>
+              Go to Developer Hub
+            </Button>
+            {!result.dev && (
+              <Button asChild variant="outline" className="rounded-full">
+                <Link to="/app/$slug" params={{ slug: result.slug }}>View store page</Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- Wizard ----------------
+  const pct = Math.round(((stepIndex + 1) / steps.length) * 100);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-      <Link to="/developer" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Developer Hub
-      </Link>
-
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">Publish a new app</h1>
-          <p className="text-sm text-muted-foreground">
-            A guided submission — save a draft any time.
+    <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
+      <div className="flex items-center gap-3">
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+          <UploadCloud className="h-4.5 w-4.5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-muted-foreground">
+            Step {stepIndex + 1} of {steps.length}
           </p>
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${pct}%` }} />
+          </div>
         </div>
-        {autosaved && (
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <Save className="h-3 w-3" /> Auto-saved
-          </span>
+        {help && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full"
+            aria-label="Help"
+            onClick={() => setShowHelp((v) => !v)}
+          >
+            <HelpCircle className="h-4.5 w-4.5" />
+          </Button>
         )}
       </div>
 
-      {/* Stepper */}
-      <ol className="mt-6 flex items-center gap-1 overflow-x-auto pb-1">
-        {STEPS.map((s, i) => {
-          const done = i < step;
-          const active = i === step;
-          return (
-            <li key={s.id} className="flex flex-1 min-w-fit items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setStep(i)}
-                className={[
-                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition",
-                  active ? "bg-primary text-primary-foreground"
-                    : done ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                ].join(" ")}
-              >
-                <span className={[
-                  "grid h-4 w-4 place-items-center rounded-full text-[10px]",
-                  active ? "bg-primary-foreground/20"
-                    : done ? "bg-foreground/10"
-                    : "border border-border",
-                ].join(" ")}>
-                  {done ? <Check className="h-2.5 w-2.5" /> : i + 1}
-                </span>
-                {s.label}
-              </button>
-              {i < STEPS.length - 1 && <span className="h-px flex-1 bg-border/60" />}
-            </li>
-          );
-        })}
-      </ol>
+      {showHelp && help && (
+        <div className="wizard-forward mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+          <p className="text-sm font-semibold">{help.title}</p>
+          <ul className="mt-2 space-y-1.5 text-xs text-muted-foreground">
+            {help.body.map((b) => <li key={b}>• {b}</li>)}
+          </ul>
+        </div>
+      )}
 
-      <div className="mt-6 rounded-3xl border border-border/60 bg-card p-5 sm:p-6">
-        {/* BASICS */}
-        {STEPS[step].id === "basics" && (
-          <section className="space-y-5">
-            <SectionHead title="Basic information" subtitle="How your app appears in search and on the store page." />
+      <div className="mt-6 overflow-hidden">
+        <div key={stepId} className={dir === 1 ? "wizard-forward" : "wizard-back"}>
+          {renderStep()}
+        </div>
+      </div>
 
-            <div>
-              <Label htmlFor="name">App name <Req /></Label>
-              <div className="relative mt-1">
-                <Input id="name" required minLength={2} maxLength={80} value={form.name}
-                  onChange={(e) => set("name", e.target.value)}
-                  className={nameStatus === "taken" ? "border-destructive pr-24" : "pr-24"} />
-                <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[11px]">
-                  {nameStatus === "checking" && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-                  {nameStatus === "available" && <span className="text-emerald-600">Available</span>}
-                  {nameStatus === "taken" && <span className="text-destructive">Taken</span>}
-                </span>
-              </div>
-              {validation.name && <FieldErr>{validation.name}</FieldErr>}
-            </div>
+      {err && (
+        <p className="mt-5 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{err}</p>
+      )}
 
-            <div>
-              <Label htmlFor="tagline">Tagline (optional)</Label>
-              <Input id="tagline" maxLength={160} value={form.tagline}
-                onChange={(e) => set("tagline", e.target.value)} className="mt-1" />
-            </div>
-
-            <div>
-              <Label htmlFor="short">Short description <span className="text-muted-foreground">({form.shortDescription.length}/80)</span></Label>
-              <Input id="short" maxLength={80} value={form.shortDescription}
-                onChange={(e) => set("shortDescription", e.target.value)}
-                placeholder="One sentence pitch." className="mt-1" />
-              {validation.shortDescription && <FieldErr>{validation.shortDescription}</FieldErr>}
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="description">Full description <Req /></Label>
-                <Button type="button" size="sm" variant="ghost" onClick={runAiDescription}
-                  disabled={aiBusy === "desc"} className="h-7 gap-1 text-xs">
-                  {aiBusy === "desc" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  AI generate
-                </Button>
-              </div>
-              <Textarea id="description" required minLength={10} maxLength={4000} rows={6}
-                value={form.description}
-                onChange={(e) => set("description", e.target.value)}
-                className="mt-1 resize-none" />
-              {validation.description && <FieldErr>{validation.description}</FieldErr>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Category <Req /></Label>
-                <select value={form.category} onChange={(e) => set("category", e.target.value as Category)}
-                  className={selectCls}>
-                  <option value="app">App</option>
-                  <option value="game">Game</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="subcategory">Subcategory (optional)</Label>
-                <Input id="subcategory" maxLength={60} value={form.subcategory}
-                  onChange={(e) => set("subcategory", e.target.value)}
-                  placeholder="e.g. Productivity" className="mt-1" />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* MEDIA */}
-        {STEPS[step].id === "media" && (
-          <section className="space-y-5">
-            <SectionHead title="Icon, banner & screenshots" subtitle="Great visuals lift install rates dramatically." />
-
-            <div>
-              <Label>App icon <Req /></Label>
-              <div className="mt-2 flex items-center gap-4">
-                <label className="grid h-24 w-24 cursor-pointer place-items-center rounded-2xl border border-dashed border-border bg-background text-muted-foreground hover:bg-secondary">
-                  {logoPreview
-                    ? <img src={logoPreview} alt="icon" className="h-full w-full rounded-2xl object-cover" />
-                    : <ImagePlus className="h-6 w-6" />}
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => pickLogo(e.target.files?.[0] ?? null)} />
-                </label>
-                <p className="text-xs text-muted-foreground">512×512 PNG recommended.</p>
-              </div>
-              {validation.logo && <FieldErr>{validation.logo}</FieldErr>}
-            </div>
-
-            <div>
-              <Label>Feature banner (optional)</Label>
-              <label className="mt-2 flex aspect-[1024/500] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-background text-muted-foreground hover:bg-secondary">
-                {bannerPreview
-                  ? <img src={bannerPreview} alt="banner" className="h-full w-full object-cover" />
-                  : <span className="flex items-center gap-2 text-sm"><ImagePlus className="h-4 w-4" /> Upload 1024×500 banner</span>}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => pickBanner(e.target.files?.[0] ?? null)} />
-              </label>
-            </div>
-
-            <div>
-              <Label>Screenshots (up to 8)</Label>
-              <input type="file" multiple accept="image/*" className="mt-2 block w-full text-sm"
-                onChange={(e) => pickScreenshots(e.target.files)} />
-              {screenshotPreviews.length > 0 && (
-                <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {screenshotPreviews.map((src, i) => (
-                    <div key={i} className="relative aspect-[9/16] overflow-hidden rounded-lg border border-border/60">
-                      <img src={src} alt="" className="h-full w-full object-cover" />
-                      <button type="button" onClick={() => removeScreenshot(i)}
-                        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-background/80 text-foreground shadow">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* APK */}
-        {STEPS[step].id === "apk" && (
-          <section className="space-y-5">
-            <SectionHead title="APK & version" subtitle="Upload your APK — we detect metadata automatically." />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Platform</Label>
-                <select value={form.platform} onChange={(e) => set("platform", e.target.value as Platform)}
-                  className={selectCls}>
-                  <option value="android">Android (APK)</option>
-                  <option value="web">Web</option>
-                  <option value="pwa">PWA</option>
-                </select>
-              </div>
-              {form.platform !== "android" && (
-                <div>
-                  <Label htmlFor="app_url">App URL</Label>
-                  <Input id="app_url" type="url" placeholder="https://yourapp.com" value={form.appUrl}
-                    onChange={(e) => set("appUrl", e.target.value)} className="mt-1" />
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label>{form.platform === "android" ? "APK file" : "App file (optional)"}
-                {form.platform === "android" && <Req />}
-              </Label>
-              <label className="mt-1 flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-border bg-background px-3 py-3 text-sm text-muted-foreground hover:bg-secondary">
-                <UploadCloud className="h-4 w-4" />
-                <span className="truncate">{appFile ? appFile.name : "Choose file"}</span>
-                <input type="file" className="hidden"
-                  accept={form.platform === "android" ? ".apk,application/vnd.android.package-archive" : ".apk,.zip,application/zip,application/vnd.android.package-archive"}
-                  onChange={(e) => pickAppFile(e.target.files?.[0] ?? null)} />
-              </label>
-              {validation.appFile && <FieldErr>{validation.appFile}</FieldErr>}
-              {parsing && (
-                <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Reading APK metadata…
-                </p>
-              )}
-              {apkInfo && !parsing && (
-                <div className="mt-3 rounded-xl border border-border/60 bg-background/50 p-3 text-xs">
-                  <div className="flex items-center gap-1 font-semibold text-foreground">
-                    <Package className="h-3.5 w-3.5" /> Detected
-                  </div>
-                  <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-muted-foreground">
-                    <dt>Package</dt><dd className="truncate text-foreground">{apkInfo.packageName ?? "—"}</dd>
-                    <dt>Version</dt><dd className="text-foreground">{apkInfo.versionName ?? "—"} ({apkInfo.versionCode ?? "—"})</dd>
-                    <dt>Size</dt><dd className="text-foreground">{formatBytes(apkInfo.apkSize)}</dd>
-                    <dt>Permissions</dt><dd className="text-foreground">{apkInfo.permissions.length}</dd>
-                  </dl>
-                  {apkInfo.permissions.length > 0 && (
-                    <details className="mt-2">
-                      <summary className="flex cursor-pointer items-center gap-1 text-muted-foreground">
-                        <Shield className="h-3 w-3" /> View permissions
-                      </summary>
-                      <ul className="mt-1 max-h-40 list-disc space-y-0.5 overflow-y-auto pl-5 text-[11px] text-muted-foreground">
-                        {apkInfo.permissions.map((p) => <li key={p} className="font-mono">{p}</li>)}
-                      </ul>
-                    </details>
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* DETAILS */}
-        {STEPS[step].id === "details" && (
-          <section className="space-y-5">
-            <SectionHead title="App details" subtitle="Developer info and Android compatibility." />
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="devName">Developer name</Label>
-                <Input id="devName" maxLength={120} value={form.developerName}
-                  onChange={(e) => set("developerName", e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="devEmail">Developer email</Label>
-                <Input id="devEmail" type="email" maxLength={255} value={form.developerEmail}
-                  onChange={(e) => set("developerEmail", e.target.value)} className="mt-1" />
-                {validation.developerEmail && <FieldErr>{validation.developerEmail}</FieldErr>}
-              </div>
-              <div>
-                <Label htmlFor="website">Website (optional)</Label>
-                <Input id="website" type="url" value={form.websiteUrl}
-                  onChange={(e) => set("websiteUrl", e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="privacy">Privacy policy URL (optional)</Label>
-                <Input id="privacy" type="url" value={form.privacyPolicyUrl}
-                  onChange={(e) => set("privacyPolicyUrl", e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label>Minimum Android</Label>
-                <select value={form.minAndroidVersion} onChange={(e) => set("minAndroidVersion", e.target.value)}
-                  className={selectCls}>
-                  {ANDROID_VERSIONS.map((v) => <option key={v} value={v}>Android {v}</option>)}
-                </select>
-              </div>
-              <div>
-                <Label>Target Android</Label>
-                <select value={form.targetAndroidVersion} onChange={(e) => set("targetAndroidVersion", e.target.value)}
-                  className={selectCls}>
-                  {ANDROID_VERSIONS.map((v) => <option key={v} value={v}>Android {v}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <Label>Languages supported</Label>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {LANGUAGES.map((lang) => {
-                  const active = form.languages.includes(lang);
-                  return (
-                    <button key={lang} type="button"
-                      onClick={() => set("languages", active ? form.languages.filter((l) => l !== lang) : [...form.languages, lang])}
-                      className={[
-                        "rounded-full border px-3 py-1 text-xs",
-                        active ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground",
-                      ].join(" ")}
-                    >{lang}</button>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* STORE INFO */}
-        {STEPS[step].id === "store" && (
-          <section className="space-y-5">
-            <SectionHead title="Store information" subtitle="Release notes, tags, rating and license." />
-
-            <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="tags">Tags / keywords ({form.tags.length}/12)</Label>
-                <Button type="button" size="sm" variant="ghost" onClick={runAiKeywords}
-                  disabled={aiBusy === "kw"} className="h-7 gap-1 text-xs">
-                  {aiBusy === "kw" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  AI suggest
-                </Button>
-              </div>
-              <div className="mt-1 flex gap-2">
-                <Input id="tags" value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-                  placeholder="Type a tag and press Enter" />
-                <Button type="button" variant="outline" onClick={addTag}>Add</Button>
-              </div>
-              {form.tags.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {form.tags.map((t) => (
-                    <span key={t} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs">
-                      {t}
-                      <button type="button" onClick={() => set("tags", form.tags.filter((x) => x !== t))}
-                        className="text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /></button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="notes">What's new (release notes)</Label>
-                <Button type="button" size="sm" variant="ghost" onClick={runAiReleaseNotes}
-                  disabled={aiBusy === "notes"} className="h-7 gap-1 text-xs">
-                  {aiBusy === "notes" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  AI generate
-                </Button>
-              </div>
-              <Textarea id="notes" rows={5} maxLength={2000} value={form.releaseNotes}
-                onChange={(e) => set("releaseNotes", e.target.value)}
-                placeholder="Initial release — welcome!" className="mt-1 resize-none" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <Label>Content rating</Label>
-                <select value={form.contentRating} onChange={(e) => set("contentRating", e.target.value as Rating)}
-                  className={selectCls}>
-                  <option value="everyone">Everyone</option>
-                  <option value="teen">Teen</option>
-                  <option value="mature">Mature</option>
-                </select>
-              </div>
-              <div>
-                <Label>License</Label>
-                <select value={form.license} onChange={(e) => set("license", e.target.value as License)}
-                  className={selectCls}>
-                  <option value="free">Free</option>
-                  <option value="paid">Paid</option>
-                </select>
-              </div>
-              {form.license === "paid" && (
-                <div>
-                  <Label htmlFor="price">Price (₦)</Label>
-                  <Input id="price" type="number" min={0} step="0.01" value={form.priceNaira}
-                    onChange={(e) => set("priceNaira", e.target.value)} className="mt-1" />
-                  {validation.price && <FieldErr>{validation.price}</FieldErr>}
-                </div>
-              )}
-            </div>
-
-            {apkInfo && apkInfo.permissions.length > 0 && (
-              <div>
-                <Label>Permissions detected from APK</Label>
-                <div className="mt-2 flex flex-wrap gap-1.5 rounded-xl border border-border/60 bg-background/50 p-3">
-                  {apkInfo.permissions.slice(0, 40).map((p) => (
-                    <span key={p} className="rounded-md bg-secondary px-1.5 py-0.5 text-[11px] font-mono text-muted-foreground">
-                      {p.replace("android.permission.", "")}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* PREVIEW */}
-        {STEPS[step].id === "preview" && (
-          <section className="space-y-5">
-            <SectionHead title="Preview your listing" subtitle="This is how users will see your app." />
-            <div className="overflow-hidden rounded-2xl border border-border/60">
-              {bannerPreview && (
-                <div className="aspect-[1024/500] w-full overflow-hidden">
-                  <img src={bannerPreview} alt="banner" className="h-full w-full object-cover" />
-                </div>
-              )}
-              <div className="flex gap-4 p-4">
-                {logoPreview && (
-                  <img src={logoPreview} alt="icon" className="h-20 w-20 rounded-2xl object-cover" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-lg font-bold truncate">{form.name || "App name"}</h3>
-                  <p className="text-xs text-muted-foreground truncate">{form.developerName || "Developer"}</p>
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{form.shortDescription || form.tagline}</p>
-                  <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-muted-foreground">
-                    <span className="rounded bg-secondary px-1.5 py-0.5">{form.category}</span>
-                    {form.contentRating && <span className="rounded bg-secondary px-1.5 py-0.5">{form.contentRating}</span>}
-                    <span className="rounded bg-secondary px-1.5 py-0.5">{form.license === "paid" ? `₦${form.priceNaira || 0}` : "Free"}</span>
-                    {apkInfo?.apkSize ? <span className="rounded bg-secondary px-1.5 py-0.5">{formatBytes(apkInfo.apkSize)}</span> : null}
-                  </div>
-                </div>
-              </div>
-              {screenshotPreviews.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto border-t border-border/60 p-3">
-                  {screenshotPreviews.map((src, i) => (
-                    <img key={i} src={src} alt="" className="h-40 w-auto rounded-lg object-cover" />
-                  ))}
-                </div>
-              )}
-              {form.description && (
-                <div className="border-t border-border/60 p-4 text-sm whitespace-pre-wrap">
-                  {form.description}
-                </div>
-              )}
-              {form.releaseNotes && (
-                <div className="border-t border-border/60 p-4 text-sm">
-                  <p className="mb-1 text-xs font-semibold text-muted-foreground">What's new</p>
-                  <p className="whitespace-pre-wrap text-sm">{form.releaseNotes}</p>
-                </div>
-              )}
-            </div>
-
-            {Object.keys(validation).length > 0 && (
-              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
-                <p className="font-semibold">Please fix these before publishing:</p>
-                <ul className="mt-1 list-disc pl-5">
-                  {Object.entries(validation).map(([k, v]) => <li key={k}>{v}</li>)}
-                </ul>
-              </div>
-            )}
-          </section>
-        )}
-
-        {progress && (
-          <div className="mt-5 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{progress.label}</span><span>{progress.pct}%</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-              <div className="h-full bg-primary transition-all" style={{ width: `${progress.pct}%` }} />
-            </div>
+      {progress && (
+        <div className="mt-5">
+          <p className="text-xs text-muted-foreground">{progress.label}</p>
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress.pct}%` }} />
           </div>
-        )}
+        </div>
+      )}
 
-        {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
-
-        {/* Nav */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
-          <Button type="button" variant="outline" onClick={back} disabled={step === 0} className="rounded-full">
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back
+      <div className="mt-8 flex items-center gap-3">
+        {stepIndex > 0 && (
+          <Button variant="outline" className="rounded-full" onClick={back} disabled={busy}>
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
           </Button>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="ghost" onClick={() => submit(true)} disabled={busy}
-              className="rounded-full">
-              <Save className="mr-1 h-4 w-4" /> Save draft
+        )}
+        <div className="ml-auto flex items-center gap-3">
+          {autosaved && (
+            <span className="hidden text-xs text-muted-foreground sm:inline">Saved automatically</span>
+          )}
+          {stepId === "review" ? (
+            <Button className="rounded-full" onClick={submit} disabled={busy}>
+              {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Rocket className="mr-1.5 h-4 w-4" />}
+              Submit for Review
             </Button>
-            {step < STEPS.length - 1 ? (
-              <Button type="button" onClick={next} disabled={!stepValid} className="rounded-full">
-                Next <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button type="button" onClick={() => submit(false)}
-                disabled={busy || Object.keys(validation).length > 0}
-                className="rounded-full">
-                {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Publishing…</> : "Publish"}
-              </Button>
-            )}
-          </div>
+          ) : (
+            <Button className="rounded-full" onClick={next} disabled={!stepValid}>
+              Next <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
   );
-}
 
-const selectCls =
-  "mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
+  // ---------------- Step renderer ----------------
+  function question(title: string, hint?: string) {
+    return (
+      <div className="mb-5">
+        <h2 className="font-display text-xl font-bold sm:text-2xl">{title}</h2>
+        {hint && <p className="mt-1.5 text-sm text-muted-foreground">{hint}</p>}
+      </div>
+    );
+  }
 
-function SectionHead({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <header>
-      <h2 className="font-display text-lg font-semibold">{title}</h2>
-      {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-    </header>
-  );
-}
-function Req() { return <span className="text-destructive"> *</span>; }
-function FieldErr({ children }: { children: React.ReactNode }) {
-  return <p className="mt-1 text-xs text-destructive">{children}</p>;
+  function renderStep() {
+    switch (stepId) {
+      case "platform":
+        return (
+          <div>
+            {question("What type of application are you publishing?", "Each type has its own publishing workflow — you'll only be asked what applies.")}
+            <div className="space-y-2.5">
+              {PLATFORMS.map((p) => {
+                const active = form.platform === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={!p.enabled}
+                    onClick={() => { set("platform", p.id); set("integrationMethod", ""); }}
+                    className={`w-full rounded-2xl border p-4 text-left transition ${
+                      active ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                    } ${p.enabled ? "" : "cursor-not-allowed opacity-55"}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{p.label}</p>
+                      {!p.enabled && (
+                        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          Coming soon
+                        </span>
+                      )}
+                      {active && <Check className="ml-auto h-4 w-4 text-primary" />}
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground">{p.description}</p>
+                    <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+                      {p.bullets.map((b) => <li key={b}>• {b}</li>)}
+                    </ul>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+
+      case "integration":
+        return (
+          <div>
+            {question("How should your hybrid app integrate with Nova?", "Pick one, or both if your application supports both methods.")}
+            <div className="space-y-2.5">
+              {([
+                { id: "sdk", label: "Nova Services SDK", desc: "Integrate natively for install, update and account features." },
+                { id: "link", label: "Link-based integration", desc: "Nova generates the links your application needs — nothing to embed." },
+                { id: "both", label: "Both methods", desc: "Configure the SDK and use Nova-generated links together." },
+              ] as const).map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => set("integrationMethod", o.id)}
+                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                    form.integrationMethod === o.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{o.label}</p>
+                    {form.integrationMethod === o.id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{o.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "name":
+        return (
+          <div>
+            {question("What is your application name?", "This is the name users will see across Nova App Store.")}
+            <Input
+              autoFocus
+              value={form.name}
+              maxLength={80}
+              placeholder="e.g. Nova Notes"
+              onChange={(e) => set("name", e.target.value)}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {nameStatus === "checking" && "Checking availability…"}
+              {nameStatus === "available" && "This name is available."}
+              {nameStatus === "taken" && <span className="text-destructive">You already have an application with this name.</span>}
+            </p>
+          </div>
+        );
+
+      case "short":
+        return (
+          <div>
+            {question("How would you describe it in one line?", "Shown in search results and listings. Max 80 characters.")}
+            <Input
+              autoFocus
+              value={form.shortDescription}
+              maxLength={80}
+              placeholder="e.g. Fast, private notes that sync everywhere"
+              onChange={(e) => set("shortDescription", e.target.value)}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">{form.shortDescription.length}/80</p>
+          </div>
+        );
+
+      case "description":
+        return (
+          <div>
+            {question("Tell users what your application does.", "This is your full store description. The AI assistant can draft or improve it.")}
+            <Textarea
+              rows={10}
+              value={form.description}
+              maxLength={4000}
+              placeholder="Describe your app, its main features and who it is for…"
+              onChange={(e) => set("description", e.target.value)}
+            />
+            <div className="mt-3 flex items-center gap-3">
+              <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={runAiDescription} disabled={aiBusy === "desc"}>
+                {aiBusy === "desc" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+                Enhance
+              </Button>
+              <span className="text-xs text-muted-foreground">You always keep the final say on the wording.</span>
+            </div>
+          </div>
+        );
+
+      case "category":
+        return (
+          <div>
+            {question("Which category fits best?", "Categories and tags power browsing and search.")}
+            <div className="flex gap-2.5">
+              {(["app", "game"] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => set("category", c)}
+                  className={`flex-1 rounded-2xl border p-4 text-center transition ${
+                    form.category === c ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <p className="font-medium">{c === "app" ? "App" : "Game"}</p>
+                </button>
+              ))}
+            </div>
+            <Label className="mt-6 block text-sm">Tags</Label>
+            <div className="mt-2 flex gap-2">
+              <Input
+                value={tagInput}
+                placeholder="Add a tag and press Enter"
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
+              />
+              <Button type="button" variant="outline" className="rounded-full" onClick={runAiKeywords} disabled={aiBusy === "kw"}>
+                {aiBusy === "kw" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              </Button>
+            </div>
+            {form.tags.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {form.tags.map((t) => (
+                  <span key={t} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs">
+                    {t}
+                    <button type="button" onClick={() => set("tags", form.tags.filter((x) => x !== t))} aria-label={`Remove ${t}`}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "icon":
+        return (
+          <div>
+            {question("Upload your application icon.", "Required. A square PNG at 512×512 works best.")}
+            <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-border/70 bg-card p-4">
+              {logoPreview ? (
+                <img src={logoPreview} alt="Icon preview" className="h-20 w-20 rounded-2xl object-cover" />
+              ) : (
+                <span className="grid h-20 w-20 place-items-center rounded-2xl bg-secondary text-muted-foreground">
+                  <ImagePlus className="h-6 w-6" />
+                </span>
+              )}
+              <span className="text-sm text-muted-foreground">
+                {logo ? logo.name : "Choose an image (PNG, JPG or WEBP, max 2MB)"}
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => pickLogo(e.target.files?.[0] ?? null)} />
+            </label>
+          </div>
+        );
+
+      case "media":
+        return (
+          <div>
+            {question("Add screenshots and a promotional image.", "Optional, but screenshots strongly increase installs. Up to 8.")}
+            <label className="block cursor-pointer rounded-2xl border border-dashed border-border/70 bg-card p-4 text-sm text-muted-foreground">
+              {screenshots.length ? `${screenshots.length} screenshot(s) selected` : "Choose screenshots"}
+              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => pickShots(e.target.files)} />
+            </label>
+            {shotPreviews.length > 0 && (
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                {shotPreviews.map((src, i) => (
+                  <div key={src} className="relative shrink-0">
+                    <img src={src} alt={`Screenshot ${i + 1}`} className="h-32 rounded-xl object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeShot(i)}
+                      aria-label="Remove screenshot"
+                      className="absolute right-1 top-1 rounded-full bg-background/90 p-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label className="mt-4 block cursor-pointer rounded-2xl border border-dashed border-border/70 bg-card p-4 text-sm text-muted-foreground">
+              {banner ? banner.name : "Choose a promotional image (wide banner, optional)"}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => pickBanner(e.target.files?.[0] ?? null)} />
+            </label>
+            {bannerPreview && <img src={bannerPreview} alt="Promotional banner preview" className="mt-3 w-full rounded-2xl object-cover" />}
+          </div>
+        );
+
+      case "apk":
+        return (
+          <div>
+            {question(
+              spec.requiresApk ? "Upload your Android APK." : "Do you have an APK to upload?",
+              spec.requiresApk
+                ? "Upload the already-built, signed APK. Nova detects the details automatically."
+                : "Optional for hybrid applications — you can publish with a URL instead.",
+            )}
+            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-border/70 bg-card p-4 text-sm text-muted-foreground">
+              <Package className="h-5 w-5 shrink-0" />
+              {appFile ? appFile.name : "Choose an .apk file (max 75MB)"}
+              <input type="file" accept=".apk" className="hidden" onChange={(e) => pickAppFile(e.target.files?.[0] ?? null)} />
+            </label>
+            {parsing && <p className="mt-3 text-xs text-muted-foreground">Reading APK details…</p>}
+            {apkInfo && !parsing && (
+              <dl className="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-secondary/30 p-4 text-xs">
+                <div><dt className="text-muted-foreground">Package</dt><dd className="truncate">{apkInfo.packageName ?? "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Version</dt><dd>{apkInfo.versionName ?? "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Size</dt><dd>{formatBytes(apkInfo.apkSize)}</dd></div>
+                <div><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
+              </dl>
+            )}
+          </div>
+        );
+
+      case "url":
+        return (
+          <div>
+            {question("Where is your application hosted?", spec.requiresUrl ? "A public HTTPS URL users will be sent to." : "Optional — add the hosted URL if your app has one.")}
+            <Input
+              autoFocus
+              inputMode="url"
+              value={form.appUrl}
+              placeholder="https://yourapp.com"
+              onChange={(e) => set("appUrl", e.target.value)}
+            />
+            {form.appUrl.trim() && !urlOk && (
+              <p className="mt-2 text-xs text-destructive">Enter a full URL starting with https://</p>
+            )}
+          </div>
+        );
+
+      case "android":
+        return (
+          <div>
+            {question("Which Android versions does it support?", "Used to tell users whether their device is compatible.")}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Minimum</Label>
+                <select
+                  className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                  value={form.minAndroidVersion}
+                  onChange={(e) => set("minAndroidVersion", e.target.value)}
+                >
+                  {ANDROID_VERSIONS.map((v) => <option key={v} value={v}>Android {v}</option>)}
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm">Target</Label>
+                <select
+                  className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                  value={form.targetAndroidVersion}
+                  onChange={(e) => set("targetAndroidVersion", e.target.value)}
+                >
+                  {ANDROID_VERSIONS.map((v) => <option key={v} value={v}>Android {v}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "version":
+        return (
+          <div>
+            {question("What version are you releasing?", "Use a number like 1.0.0, then tell users what's in it.")}
+            <Input value={form.version} placeholder="1.0.0" onChange={(e) => set("version", e.target.value)} />
+            {!/^\d+(\.\d+){0,3}$/.test(form.version.trim()) && (
+              <p className="mt-2 text-xs text-destructive">Version must look like 1.0.0</p>
+            )}
+            <Label className="mt-5 block text-sm">Version notes</Label>
+            <Textarea
+              rows={5}
+              className="mt-1.5"
+              value={form.releaseNotes}
+              onChange={(e) => set("releaseNotes", e.target.value)}
+              placeholder="What's new in this version?"
+            />
+          </div>
+        );
+
+      case "privacy":
+        return (
+          <div>
+            {question("Where can users read your privacy policy?", "Required if your application collects any personal data.")}
+            <Input
+              inputMode="url"
+              value={form.privacyPolicyUrl}
+              placeholder="https://yourapp.com/privacy"
+              onChange={(e) => set("privacyPolicyUrl", e.target.value)}
+            />
+          </div>
+        );
+
+      case "contact":
+        return (
+          <div>
+            {question("How can users and Nova reach you?", "Your email is used for review outcomes and support — it is not shown publicly.")}
+            <Label className="text-sm">Developer or studio name</Label>
+            <Input className="mt-1.5" value={form.developerName} onChange={(e) => set("developerName", e.target.value)} placeholder="Nova Labs" />
+            <Label className="mt-4 block text-sm">Contact email</Label>
+            <Input className="mt-1.5" type="email" value={form.developerEmail} onChange={(e) => set("developerEmail", e.target.value)} placeholder="you@example.com" />
+            {!emailOk && <p className="mt-2 text-xs text-destructive">Enter a valid email address.</p>}
+            <Label className="mt-4 block text-sm">Website (optional)</Label>
+            <Input className="mt-1.5" inputMode="url" value={form.websiteUrl} onChange={(e) => set("websiteUrl", e.target.value)} placeholder="https://yourapp.com" />
+          </div>
+        );
+
+      case "release":
+        return (
+          <div>
+            {question("How should this release be published?", "You can switch a development build to a public release later.")}
+            <div className="space-y-2.5">
+              {RELEASE_CHANNELS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => set("releaseChannel", c.id)}
+                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                    form.releaseChannel === c.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{c.label}</p>
+                    {form.releaseChannel === c.id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{c.description}</p>
+                  <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+                    {c.bullets.map((b) => <li key={b}>• {b}</li>)}
+                  </ul>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "review":
+      default:
+        return (
+          <div>
+            {question("Review everything before submitting.", "Use Back and Edit on any row — nothing you entered is lost.")}
+            <div className="rounded-3xl border border-border/60 bg-card p-4">
+              <div className="flex items-center gap-3">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Application icon" className="h-16 w-16 rounded-2xl object-cover" />
+                ) : (
+                  <span className="grid h-16 w-16 place-items-center rounded-2xl bg-secondary text-muted-foreground"><ImagePlus className="h-5 w-5" /></span>
+                )}
+                <div className="min-w-0">
+                  <p className="truncate font-display text-lg font-bold">{form.name || "Untitled"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{form.shortDescription}</p>
+                </div>
+                <Button size="sm" variant="ghost" className="ml-auto rounded-full" onClick={() => goTo("name")}>Edit</Button>
+              </div>
+
+              {shotPreviews.length > 0 && (
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                  {shotPreviews.map((s, i) => (
+                    <img key={s} src={s} alt={`Screenshot ${i + 1}`} className="h-28 shrink-0 rounded-xl object-cover" />
+                  ))}
+                </div>
+              )}
+
+              <dl className="mt-4 space-y-2 text-sm">
+                {[
+                  ["Application type", spec.label, "platform"],
+                  ...(form.integrationMethod ? [["Integration", form.integrationMethod === "both" ? "SDK + link" : form.integrationMethod === "sdk" ? "Nova Services SDK" : "Link-based", "integration"]] : []),
+                  ["Category", form.category === "game" ? "Game" : "App", "category"],
+                  ["Tags", form.tags.join(", ") || "—", "category"],
+                  ["Version", `${form.version} — ${form.releaseNotes.slice(0, 60)}`, "version"],
+                  ...(steps.includes("apk") ? [["APK", appFile ? `${appFile.name} (${formatBytes(apkInfo?.apkSize ?? appFile.size)})` : "None", "apk"]] : []),
+                  ...(steps.includes("url") ? [["Application URL", form.appUrl || "—", "url"]] : []),
+                  ...(steps.includes("android") ? [["Android", `Min ${form.minAndroidVersion} · Target ${form.targetAndroidVersion}`, "android"]] : []),
+                  ["Privacy policy", form.privacyPolicyUrl || "Not provided", "privacy"],
+                  ["Contact", [form.developerName, form.developerEmail].filter(Boolean).join(" · ") || "—", "contact"],
+                  ["Promotional image", banner ? "Provided" : "None", "media"],
+                  ["Release type", form.releaseChannel === "development" ? "Development build (private link)" : "Public release", "release"],
+                ].map(([label, value, target]) => (
+                  <div key={label as string} className="flex items-start gap-3 border-t border-border/50 pt-2">
+                    <dt className="w-32 shrink-0 text-xs text-muted-foreground">{label}</dt>
+                    <dd className="min-w-0 flex-1 break-words text-xs">{value as string}</dd>
+                    <button type="button" className="text-xs text-primary" onClick={() => goTo(target as string)}>Edit</button>
+                  </div>
+                ))}
+              </dl>
+
+              <div className="mt-4 border-t border-border/50 pt-3">
+                <p className="text-xs text-muted-foreground">Full description</p>
+                <p className="mt-1 whitespace-pre-wrap text-xs">{form.description}</p>
+              </div>
+            </div>
+          </div>
+        );
+    }
+  }
 }
