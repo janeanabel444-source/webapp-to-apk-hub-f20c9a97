@@ -12,7 +12,10 @@ const appInput = z.object({
   description: z.string().trim().min(10).max(4000),
   category: z.enum(["app", "game"]),
   subcategory: z.string().trim().max(60).optional().nullable(),
-  platform: z.enum(["web", "pwa", "android"]),
+  platform: z.enum(["web", "pwa", "android", "hybrid", "ios"]),
+  release_channel: z.enum(["development", "public"]).default("public"),
+  integration_method: z.enum(["sdk", "link", "both"]).optional().nullable(),
+
   icon_url: z.string().url(),
   feature_banner_url: z.string().url().optional().nullable(),
   app_url: z.string().url().optional().nullable(),
