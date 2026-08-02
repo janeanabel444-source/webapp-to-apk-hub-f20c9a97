@@ -31,6 +31,18 @@ function DeveloperHome() {
     enabled: !!user, // Only fetch if authenticated
   });
 
+  const qc = useQueryClient();
+  const resubmitFn = useServerFn(resubmitForReview);
+  const resubmit = useMutation({
+    mutationFn: (id: string) => resubmitFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Submitted for review");
+      qc.invalidateQueries({ queryKey: ["developer-apps"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not resubmit"),
+  });
+
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center gap-3">
