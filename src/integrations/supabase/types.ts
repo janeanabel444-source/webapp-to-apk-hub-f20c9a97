@@ -343,6 +343,9 @@ export type Database = {
           rating_avg: number
           rating_count: number
           release_channel: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           screenshots: string[]
           share_token: string
           short_description: string | null
@@ -393,6 +396,9 @@ export type Database = {
           rating_avg?: number
           rating_count?: number
           release_channel?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           screenshots?: string[]
           share_token?: string
           short_description?: string | null
@@ -443,6 +449,9 @@ export type Database = {
           rating_avg?: number
           rating_count?: number
           release_channel?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           screenshots?: string[]
           share_token?: string
           short_description?: string | null

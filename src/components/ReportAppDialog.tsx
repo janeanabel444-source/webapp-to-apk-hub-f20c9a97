@@ -11,13 +11,16 @@ import {
 import { toast } from "sonner";
 
 const REASONS = [
-  { v: "malware", l: "Malware or unsafe behavior" },
+  { v: "malware", l: "Malware or security concern" },
   { v: "broken", l: "App is broken / doesn't work" },
   { v: "inappropriate", l: "Inappropriate content" },
+  { v: "impersonation", l: "Impersonation of another app or brand" },
+  { v: "misleading", l: "Misleading information" },
   { v: "copyright", l: "Copyright / trademark issue" },
-  { v: "spam", l: "Spam or misleading" },
+  { v: "spam", l: "Spam" },
   { v: "other", l: "Something else" },
 ] as const;
+
 
 export function ReportAppDialog({ appId }: { appId: string }) {
   const { user } = useAuth();
