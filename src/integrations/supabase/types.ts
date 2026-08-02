@@ -324,6 +324,7 @@ export type Database = {
           icon_url: string | null
           id: string
           install_count: number
+          integration_method: string | null
           is_draft: boolean
           is_featured: boolean
           is_published: boolean
@@ -341,7 +342,9 @@ export type Database = {
           promo_video_path: string | null
           rating_avg: number
           rating_count: number
+          release_channel: string
           screenshots: string[]
+          share_token: string
           short_description: string | null
           slug: string
           status: string
@@ -371,6 +374,7 @@ export type Database = {
           icon_url?: string | null
           id?: string
           install_count?: number
+          integration_method?: string | null
           is_draft?: boolean
           is_featured?: boolean
           is_published?: boolean
@@ -388,7 +392,9 @@ export type Database = {
           promo_video_path?: string | null
           rating_avg?: number
           rating_count?: number
+          release_channel?: string
           screenshots?: string[]
+          share_token?: string
           short_description?: string | null
           slug: string
           status?: string
@@ -418,6 +424,7 @@ export type Database = {
           icon_url?: string | null
           id?: string
           install_count?: number
+          integration_method?: string | null
           is_draft?: boolean
           is_featured?: boolean
           is_published?: boolean
@@ -435,7 +442,9 @@ export type Database = {
           promo_video_path?: string | null
           rating_avg?: number
           rating_count?: number
+          release_channel?: string
           screenshots?: string[]
+          share_token?: string
           short_description?: string | null
           slug?: string
           status?: string

@@ -12,7 +12,10 @@ const appInput = z.object({
   description: z.string().trim().min(10).max(4000),
   category: z.enum(["app", "game"]),
   subcategory: z.string().trim().max(60).optional().nullable(),
-  platform: z.enum(["web", "pwa", "android"]),
+  platform: z.enum(["web", "pwa", "android", "hybrid", "ios"]),
+  release_channel: z.enum(["development", "public"]).default("public"),
+  integration_method: z.enum(["sdk", "link", "both"]).optional().nullable(),
+
   icon_url: z.string().url(),
   feature_banner_url: z.string().url().optional().nullable(),
   app_url: z.string().url().optional().nullable(),
@@ -78,15 +81,25 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => appInput.parse(input))
   .handler(async ({ data, context }) => {
     const isDraft = data.is_draft === true;
-    // Android apps are APK-only; non-Android still accept a URL or file.
+    const isDevBuild = data.release_channel === "development";
+    // Requirements come from the platform registry so new application types
+    // plug in without changing this handler.
+    const { getPlatform } = await import("@/lib/platforms");
+    const spec = getPlatform(data.platform);
+    if (!spec.enabled) throw new Error(`${spec.label} publishing is not available yet.`);
     // Drafts skip these requirements so developers can save partial work.
     if (!isDraft) {
-      if (data.platform === "android") {
-        if (!data.file_path) throw new Error("Android apps require an APK upload.");
-      } else if (!data.app_url && !data.file_path) {
+      if (spec.requiresApk && !data.file_path) {
+        throw new Error(`${spec.label} requires an APK upload.`);
+      }
+      if (spec.requiresUrl && !data.app_url) {
+        throw new Error(`${spec.label} requires a hosted application URL.`);
+      }
+      if (!spec.requiresApk && !spec.requiresUrl && !data.app_url && !data.file_path) {
         throw new Error("Provide an app URL or upload an app file.");
       }
     }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Duplicate-name guard within a developer's own catalogue.
@@ -120,7 +133,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         platform: data.platform,
         icon_url: data.icon_url,
         feature_banner_url: data.feature_banner_url ?? null,
-        app_url: data.platform === "android" ? null : (data.app_url ?? null),
+        app_url: spec.requiresApk ? null : (data.app_url ?? null),
+        release_channel: data.release_channel ?? "public",
+        integration_method: data.integration_method ?? null,
+
         website_url: data.website_url ?? null,
         privacy_policy_url: data.privacy_policy_url ?? null,
         developer_name: data.developer_name ?? null,
@@ -135,8 +151,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         license: data.license ?? "free",
         price_kobo: data.license === "paid" ? (data.price_kobo ?? 0) : 0,
         is_draft: isDraft,
-        is_published: !isDraft,
-        status: isDraft ? "draft" : "live",
+        // Development builds stay out of the public marketplace; they are only
+        // reachable through their private share link.
+        is_published: !isDraft && !isDevBuild,
+        status: isDraft ? "draft" : isDevBuild ? "development" : "live",
         version: initialVersion,
         latest_release_notes: releaseNotes,
         last_updated_at: new Date().toISOString(),
@@ -145,8 +163,9 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         apk_size: data.apk_size ?? null,
         permissions: data.permissions ?? [],
       })
-      .select("id, slug, status")
+      .select("id, slug, status, share_token")
       .single();
+
     if (error) throw new Error(error.message);
 
     if (!isDraft) {
@@ -349,6 +368,58 @@ export const deleteDeveloperApp = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) throw new Error("Not found");
     const { error } = await supabaseAdmin.from("apps").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Public lookup for a development-build testing link. The token is an
+ * unguessable UUID, so anyone holding the link can preview the listing.
+ * Only listing-safe columns are returned.
+ */
+export const getAppByShareToken = createServerFn({ method: "GET" })
+  .inputValidator((input: { token: string }) =>
+    z.object({ token: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("apps")
+      .select(
+        "id, slug, name, tagline, short_description, description, category, subcategory, platform, icon_url, feature_banner_url, screenshots, app_url, file_path, version, latest_release_notes, package_name, apk_size, permissions, developer_name, website_url, privacy_policy_url, release_channel, status, is_draft",
+      )
+      .eq("share_token", data.token)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) return null;
+    return row;
+  });
+
+/** Switch an existing listing between a private testing build and a public release. */
+export const setReleaseChannel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ id: z.string().uuid(), release_channel: z.enum(["development", "public"]) })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("apps")
+      .select("developer_id, is_draft")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!existing || existing.developer_id !== context.userId) throw new Error("Not found");
+    const dev = data.release_channel === "development";
+    const { error } = await supabaseAdmin
+      .from("apps")
+      .update({
+        release_channel: data.release_channel,
+        is_published: !existing.is_draft && !dev,
+        status: existing.is_draft ? "draft" : dev ? "development" : "live",
+      })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
