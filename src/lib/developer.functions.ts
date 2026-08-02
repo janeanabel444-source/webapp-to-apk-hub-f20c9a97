@@ -151,8 +151,10 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         license: data.license ?? "free",
         price_kobo: data.license === "paid" ? (data.price_kobo ?? 0) : 0,
         is_draft: isDraft,
-        is_published: !isDraft,
-        status: isDraft ? "draft" : "live",
+        // Development builds stay out of the public marketplace; they are only
+        // reachable through their private share link.
+        is_published: !isDraft && !isDevBuild,
+        status: isDraft ? "draft" : isDevBuild ? "development" : "live",
         version: initialVersion,
         latest_release_notes: releaseNotes,
         last_updated_at: new Date().toISOString(),
@@ -161,8 +163,9 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         apk_size: data.apk_size ?? null,
         permissions: data.permissions ?? [],
       })
-      .select("id, slug, status")
+      .select("id, slug, status, share_token")
       .single();
+
     if (error) throw new Error(error.message);
 
     if (!isDraft) {
