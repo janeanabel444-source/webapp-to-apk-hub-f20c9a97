@@ -81,15 +81,25 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => appInput.parse(input))
   .handler(async ({ data, context }) => {
     const isDraft = data.is_draft === true;
-    // Android apps are APK-only; non-Android still accept a URL or file.
+    const isDevBuild = data.release_channel === "development";
+    // Requirements come from the platform registry so new application types
+    // plug in without changing this handler.
+    const { getPlatform } = await import("@/lib/platforms");
+    const spec = getPlatform(data.platform);
+    if (!spec.enabled) throw new Error(`${spec.label} publishing is not available yet.`);
     // Drafts skip these requirements so developers can save partial work.
     if (!isDraft) {
-      if (data.platform === "android") {
-        if (!data.file_path) throw new Error("Android apps require an APK upload.");
-      } else if (!data.app_url && !data.file_path) {
+      if (spec.requiresApk && !data.file_path) {
+        throw new Error(`${spec.label} requires an APK upload.`);
+      }
+      if (spec.requiresUrl && !data.app_url) {
+        throw new Error(`${spec.label} requires a hosted application URL.`);
+      }
+      if (!spec.requiresApk && !spec.requiresUrl && !data.app_url && !data.file_path) {
         throw new Error("Provide an app URL or upload an app file.");
       }
     }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Duplicate-name guard within a developer's own catalogue.
