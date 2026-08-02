@@ -81,7 +81,7 @@ export const adminSetAppStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       appId: z.string().uuid(),
-      status: z.enum(["live", "pending", "rejected", "suspended", "draft"]),
+      status: z.enum(["live", "pending", "rejected", "suspended", "draft", "changes_requested", "development"]),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
