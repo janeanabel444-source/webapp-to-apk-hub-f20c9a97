@@ -371,3 +371,55 @@ export const deleteDeveloperApp = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Public lookup for a development-build testing link. The token is an
+ * unguessable UUID, so anyone holding the link can preview the listing.
+ * Only listing-safe columns are returned.
+ */
+export const getAppByShareToken = createServerFn({ method: "GET" })
+  .inputValidator((input: { token: string }) =>
+    z.object({ token: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("apps")
+      .select(
+        "id, slug, name, tagline, short_description, description, category, subcategory, platform, icon_url, feature_banner_url, screenshots, app_url, file_path, version, latest_release_notes, package_name, apk_size, permissions, developer_name, website_url, privacy_policy_url, release_channel, status, is_draft",
+      )
+      .eq("share_token", data.token)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) return null;
+    return row;
+  });
+
+/** Switch an existing listing between a private testing build and a public release. */
+export const setReleaseChannel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ id: z.string().uuid(), release_channel: z.enum(["development", "public"]) })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("apps")
+      .select("developer_id, is_draft")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!existing || existing.developer_id !== context.userId) throw new Error("Not found");
+    const dev = data.release_channel === "development";
+    const { error } = await supabaseAdmin
+      .from("apps")
+      .update({
+        release_channel: data.release_channel,
+        is_published: !existing.is_draft && !dev,
+        status: existing.is_draft ? "draft" : dev ? "development" : "live",
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
