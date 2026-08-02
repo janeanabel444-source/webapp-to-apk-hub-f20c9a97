@@ -75,40 +75,85 @@ function DeveloperHome() {
             </Button>
           </div>
         ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-3">
             {apps.map((a) => {
-              const s = statusBadge[a.status as string] ?? statusBadge.pending;
+              const st = REVIEW_STATES[a.status as string] ?? REVIEW_STATES.pending;
+              const isDev = (a as any).release_channel === "development";
+              const note = (a as any).review_note as string | null;
               return (
-                <li key={a.id} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3">
-                  {a.icon_url ? (
-                    <img src={a.icon_url} alt="" className="h-14 w-14 rounded-xl object-cover" />
-                  ) : (
-                    <div className="h-14 w-14 rounded-xl bg-secondary" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate font-medium">{a.name}</p>
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${s.cls}`}>
-                        <s.Icon className="h-3 w-3" /> {s.label}
-                      </span>
+                <li key={a.id} className="rounded-2xl border border-border/60 bg-card p-3">
+                  <div className="flex items-center gap-3">
+                    {a.icon_url ? (
+                      <img src={a.icon_url} alt="" className="h-14 w-14 rounded-xl object-cover" />
+                    ) : (
+                      <div className="h-14 w-14 rounded-xl bg-secondary" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate font-medium">{a.name}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${toneCls[st.tone]}`}>
+                          {st.label}
+                        </span>
+                        {isDev && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            <FlaskConical className="h-3 w-3" /> Private
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{st.description}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {a.category === "game" ? "Game" : "App"} · {a.platform ?? "—"} ·{" "}
+                        <span className="inline-flex items-center gap-1"><Download className="h-3 w-3" />{a.install_count}</span>
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {a.category === "game" ? "Game" : "App"} · {a.platform ?? "—"} ·{" "}
-                      <span className="inline-flex items-center gap-1"><Download className="h-3 w-3" />{a.install_count}</span>
-                    </p>
+                    <div className="flex flex-col gap-1.5 sm:flex-row">
+                      <Button asChild size="sm" className="rounded-full">
+                        <Link to="/developer/$appId/update" params={{ appId: a.id }}>Update</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="outline" className="rounded-full">
+                        <Link to="/developer/$appId/edit" params={{ appId: a.id }}>Edit</Link>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1.5 sm:flex-row">
-                    <Button asChild size="sm" className="rounded-full">
-                      <Link to="/developer/$appId/update" params={{ appId: a.id }}>Update</Link>
-                    </Button>
-                    <Button asChild size="sm" variant="outline" className="rounded-full">
-                      <Link to="/developer/$appId/edit" params={{ appId: a.id }}>Edit</Link>
-                    </Button>
+
+                  {note && (
+                    <div className="mt-3 rounded-xl bg-orange-500/10 p-3 text-xs text-orange-700">
+                      <p className="font-medium">Reviewer feedback</p>
+                      <p className="mt-1 whitespace-pre-wrap">{note}</p>
+                    </div>
+                  )}
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {["changes_requested", "rejected"].includes(a.status as string) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        disabled={resubmit.isPending}
+                        onClick={() => resubmit.mutate(a.id)}
+                      >
+                        <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Resubmit for review
+                      </Button>
+                    )}
+                    {isDev && (a as any).share_token && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(`${window.location.origin}/testing/${(a as any).share_token}`);
+                          toast.success("Testing link copied");
+                        }}
+                      >
+                        <Copy className="mr-1.5 h-3.5 w-3.5" /> Copy testing link
+                      </Button>
+                    )}
                   </div>
                 </li>
               );
             })}
           </ul>
+
         )}
       </div>
     </div>
