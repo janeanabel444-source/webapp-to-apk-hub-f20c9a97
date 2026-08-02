@@ -100,6 +100,39 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       }
     }
 
+    // ---- Automated security & metadata review (server-side, cannot be bypassed) ----
+    if (!isDraft) {
+      const { validateSubmission, summarizeIssues } = await import("@/lib/review");
+      const issues = validateSubmission({
+        platform: data.platform,
+        name: data.name,
+        shortDescription: data.short_description ?? null,
+        description: data.description,
+        category: data.category,
+        tags: data.tags ?? [],
+        iconUrl: data.icon_url,
+        screenshotCount: data.screenshots?.length ?? 0,
+        appUrl: data.app_url ?? null,
+        hasBinary: !!data.file_path,
+        fileName: data.file_path ?? null,
+        fileSize: data.apk_size ?? null,
+        version: (data.version_name && data.version_name.trim()) || "1.0.0",
+        releaseNotes: data.release_notes ?? "Initial release",
+        privacyPolicyUrl: data.privacy_policy_url ?? null,
+        developerEmail: data.developer_email ?? null,
+        packageName: data.package_name ?? null,
+        permissions: data.permissions ?? [],
+      });
+      const { errors, blocked } = summarizeIssues(issues);
+      if (blocked) {
+        throw new Error(
+          `Your submission did not pass Nova's automated checks:\n${errors
+            .map((e) => `• ${e.message} ${e.fix}`)
+            .join("\n")}`,
+        );
+      }
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Duplicate-name guard within a developer's own catalogue.
@@ -111,9 +144,26 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       .maybeSingle();
     if (dup) throw new Error("You already have an app with this name.");
 
+    // Duplicate-package guard across the whole marketplace: the same Android
+    // package identifier may not be claimed by two different developers.
+    if (data.package_name) {
+      const { data: pkgDup } = await supabaseAdmin
+        .from("apps")
+        .select("id, developer_id")
+        .eq("package_name", data.package_name)
+        .neq("developer_id", context.userId)
+        .maybeSingle();
+      if (pkgDup) {
+        throw new Error(
+          `The package identifier ${data.package_name} is already published on Nova by another developer. Rebuild your application with your own unique package identifier.`,
+        );
+      }
+    }
+
     if (data.file_path && !isDraft) {
       await scanAppBinaryOrThrow(data.file_path);
     }
+
 
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
