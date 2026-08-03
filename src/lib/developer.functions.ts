@@ -59,12 +59,28 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+/** Permanent primary administrator accounts — trusted publishers. */
+const ADMIN_EMAILS = ["novaservices.org1@gmail.com", "paschalsoromtochukwu@gmail.com"];
+
+/** True when the caller is a trusted administrator publisher. */
+async function isTrustedPublisher(userId: string, email: string | undefined) {
+  if (ADMIN_EMAILS.includes((email ?? "").toLowerCase())) return true;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
+
 /**
  * Scan an uploaded app binary with VirusTotal. Throws on malicious; returns
- * silently on clean/unknown. Shared by create + update so both paths are
+ * the report otherwise. Shared by create + update so both paths are
  * protected against malware bypass.
  */
-async function scanAppBinaryOrThrow(filePath: string) {
+async function scanAppBinaryOrThrow(filePath: string): Promise<{ status: string; detail: string }> {
   const { scanStorageFileWithVirusTotal } = await import("@/lib/virustotal.server");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const scan = await scanStorageFileWithVirusTotal("app-files", filePath);
@@ -74,7 +90,15 @@ async function scanAppBinaryOrThrow(filePath: string) {
       `This file was flagged by ${scan.positives} of ${scan.total} antivirus engines and cannot be published.`,
     );
   }
+  return {
+    status: scan.status,
+    detail:
+      scan.status === "clean"
+        ? "VirusTotal: no engine flagged this package."
+        : "VirusTotal: this package has not been analysed before, so no verdict is available.",
+  };
 }
+
 
 export const createDeveloperApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
