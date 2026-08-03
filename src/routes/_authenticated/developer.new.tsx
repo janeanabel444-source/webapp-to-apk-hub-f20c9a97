@@ -1092,7 +1092,7 @@ function NewAppPage() {
                 <div><dt className="text-muted-foreground">Min SDK</dt><dd>{apkInfo.minSdk ? `${apkInfo.minSdk} (Android ${apiLevelToAndroidVersion(apkInfo.minSdk)})` : "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Target SDK</dt><dd>{apkInfo.targetSdk ? `${apkInfo.targetSdk} (Android ${apiLevelToAndroidVersion(apkInfo.targetSdk)})` : "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Architectures</dt><dd className="truncate">{apkInfo.abis.length ? apkInfo.abis.join(", ") : "Universal"}</dd></div>
-                <div><dt className="text-muted-foreground">Signed</dt><dd>{apkInfo.certificate?.signed ? `Yes (${apkInfo.certificate.scheme})` : "Not detected"}</dd></div>
+                <div><dt className="text-muted-foreground">Signed</dt><dd>{apkInfo.certificate?.schemes?.length ? `Yes (${apkInfo.certificate.schemes.join(", ")})` : "Not detected"}</dd></div>
                 <div className="col-span-2"><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
               </dl>
             )}
