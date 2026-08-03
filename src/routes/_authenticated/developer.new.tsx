@@ -231,6 +231,21 @@ function NewAppPage() {
   const [appFile, setAppFile] = useState<File | null>(null);
   const [apkInfo, setApkInfo] = useState<ParsedApk | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [apkError, setApkError] = useState<string | null>(null);
+  const [versionWarning, setVersionWarning] = useState<string | null>(null);
+
+  // ---- AI Upload Assistant ----
+  const aiAssist = useServerFn(generateListingSuggestions);
+  const checkVersion = useServerFn(checkPackageVersion);
+  const [suggestions, setSuggestions] = useState<ListingSuggestions | null>(null);
+  const [assistBusy, setAssistBusy] = useState(false);
+  const [assistError, setAssistError] = useState<string | null>(null);
+  const [approved, setApproved] = useState<Record<string, boolean>>({});
+  /** Short description the approved content was generated from. */
+  const [approvedFor, setApprovedFor] = useState<string | null>(null);
+  const [staleDismissed, setStaleDismissed] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
 
   const [tagInput, setTagInput] = useState("");
   const [nameStatus, setNameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
