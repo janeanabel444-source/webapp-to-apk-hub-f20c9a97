@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS authenticated_reads_active_campaigns ON public.ad_campaigns;
