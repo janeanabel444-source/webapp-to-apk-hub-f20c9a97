@@ -925,20 +925,25 @@ function NewAppPage() {
                   rows={2}
                   busy={assistBusy}
                   approved={approved["tagline"]}
-                  onApprove={(t) => approve("tagline", () => set("tagline", t.slice(0, 120)))}
+                  onApprove={(t) => approve("tagline", () => set("shortDescription", t.slice(0, 80)))}
                   onRegenerate={runAssistant}
                 />
                 <AiChipSuggestion
                   title="Suggested tags & keywords"
                   items={Array.from(new Set([...suggestions.tags, ...suggestions.keywords]))}
+                  selected={selectedTags}
+                  busy={assistBusy}
                   approved={approved["tags"]}
-                  onApprove={(picked) =>
-                    approve("tags", () => set("tags", Array.from(new Set([...form.tags, ...picked])).slice(0, 12)))
+                  onToggle={(item) =>
+                    setSelectedTags((p) => (p.includes(item) ? p.filter((t) => t !== item) : [...p, item]))
+                  }
+                  onApprove={() =>
+                    approve("tags", () => set("tags", Array.from(new Set([...form.tags, ...selectedTags])).slice(0, 12)))
                   }
                   onRegenerate={runAssistant}
                 />
                 <div className="rounded-2xl border border-border/60 bg-secondary/20 p-4 text-xs">
-                  <p className="font-medium">Suggested category &amp; age rating</p>
+                  <p className="font-medium">Suggested category</p>
                   <p className="mt-1 text-muted-foreground">
                     Category: <span className="text-foreground">{suggestions.category}</span> · Age rating:{" "}
                     <span className="text-foreground">{suggestions.ageRating}</span>
@@ -949,23 +954,12 @@ function NewAppPage() {
                     variant="outline"
                     className="mt-3 rounded-full"
                     disabled={approved["meta"]}
-                    onClick={() =>
-                      approve("meta", () => {
-                        set("category", suggestions.category);
-                        set(
-                          "contentRating",
-                          suggestions.ageRating === "everyone"
-                            ? "Everyone"
-                            : suggestions.ageRating === "teen"
-                              ? "Teen"
-                              : "Mature 17+",
-                        );
-                      })
-                    }
+                    onClick={() => approve("meta", () => set("category", suggestions.category))}
                   >
                     {approved["meta"] ? "Approved" : "Approve"}
                   </Button>
                 </div>
+
               </div>
             )}
           </div>
