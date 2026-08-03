@@ -125,6 +125,8 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     }
 
     // ---- Automated security & metadata review (server-side, cannot be bypassed) ----
+    const admin = await isTrustedPublisher(context.userId, (context.claims as any)?.email);
+    const marketplaceWarnings: string[] = [];
     if (!isDraft) {
       const { validateSubmission, summarizeIssues } = await import("@/lib/review");
       const issues = validateSubmission({
@@ -147,7 +149,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         packageName: data.package_name ?? null,
         permissions: data.permissions ?? [],
       });
-      const { errors, blocked } = summarizeIssues(issues);
+      const { errors, warnings, blocked } = summarizeIssues(issues);
       if (blocked) {
         throw new Error(
           `Your submission did not pass Nova's automated checks:\n${errors
@@ -155,7 +157,9 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
             .join("\n")}`,
         );
       }
+      marketplaceWarnings.push(...warnings.map((w) => `${w.message} ${w.fix}`));
     }
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
