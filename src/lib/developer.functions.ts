@@ -449,9 +449,15 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       throw new Error("Provide a new app file or an updated app URL.");
     }
 
-    if (data.file_path && data.file_path !== existing.file_path) {
+    // Administrator releases are trusted and skip scanning.
+    if (
+      data.file_path &&
+      data.file_path !== existing.file_path &&
+      !(await isTrustedPublisher(context.userId, (context.claims as any)?.email))
+    ) {
       await scanAppBinaryOrThrow(data.file_path);
     }
+
 
     const prevPerms: string[] = (existing.permissions as string[] | null) ?? [];
     const nextPerms = data.permissions ?? [];
