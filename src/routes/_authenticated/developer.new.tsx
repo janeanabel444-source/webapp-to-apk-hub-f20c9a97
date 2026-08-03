@@ -12,8 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
 import { createDeveloperApp, checkAppNameAvailable } from "@/lib/developer.functions";
-import { generateAppDescription, generateAppKeywords } from "@/lib/app-listing-ai.functions";
-import { parseApkFile, formatBytes, type ParsedApk } from "@/lib/apk-parser";
+import { generateAppDescription, generateAppKeywords, generateListingSuggestions, type ListingSuggestions } from "@/lib/app-listing-ai.functions";
+import { checkPackageVersion } from "@/lib/developer.functions";
+import { AiSuggestionCard, AiChipSuggestion } from "@/components/AiSuggestionCard";
+import { parseApkFileSafe, formatBytes, apiLevelToAndroidVersion, type ParsedApk } from "@/lib/apk-parser";
 import {
   PLATFORMS, RELEASE_CHANNELS, getPlatform,
   type PlatformId, type ReleaseChannel, type IntegrationMethod,
@@ -229,6 +231,21 @@ function NewAppPage() {
   const [appFile, setAppFile] = useState<File | null>(null);
   const [apkInfo, setApkInfo] = useState<ParsedApk | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [apkError, setApkError] = useState<string | null>(null);
+  const [versionWarning, setVersionWarning] = useState<string | null>(null);
+
+  // ---- AI Upload Assistant ----
+  const aiAssist = useServerFn(generateListingSuggestions);
+  const checkVersion = useServerFn(checkPackageVersion);
+  const [suggestions, setSuggestions] = useState<ListingSuggestions | null>(null);
+  const [assistBusy, setAssistBusy] = useState(false);
+  const [assistError, setAssistError] = useState<string | null>(null);
+  const [approved, setApproved] = useState<Record<string, boolean>>({});
+  /** Short description the approved content was generated from. */
+  const [approvedFor, setApprovedFor] = useState<string | null>(null);
+  const [staleDismissed, setStaleDismissed] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
 
   const [tagInput, setTagInput] = useState("");
   const [nameStatus, setNameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
@@ -322,16 +339,38 @@ function NewAppPage() {
   async function pickAppFile(f: File | null) {
     setAppFile(f);
     setApkInfo(null);
+    setApkError(null);
+    setVersionWarning(null);
     if (!f) return;
     setParsing(true);
-    try {
-      const info = await parseApkFile(f);
-      setApkInfo(info);
-      if (info.versionName) set("version", info.versionName);
-    } catch {
-      setApkInfo({ packageName: null, versionName: null, versionCode: null, apkSize: f.size, permissions: [] });
-    } finally { setParsing(false); }
+    // Never leaves the developer stuck: parseApkFileSafe always settles.
+    const { info, error } = await parseApkFileSafe(f);
+    setApkInfo(info);
+    setApkError(error);
+    setParsing(false);
+
+    if (info.versionName) set("version", info.versionName);
+    if (info.appName && !form.name.trim()) set("name", info.appName);
+    const min = apiLevelToAndroidVersion(info.minSdk);
+    if (min && ANDROID_VERSIONS.includes(min)) set("minAndroidVersion", min);
+    const target = apiLevelToAndroidVersion(info.targetSdk);
+    if (target && ANDROID_VERSIONS.includes(target)) set("targetAndroidVersion", target);
+
+    // Automatic version comparison against anything already on Nova.
+    if (info.packageName) {
+      try {
+        const res: any = await checkVersion({
+          data: {
+            packageName: info.packageName,
+            versionName: info.versionName ?? null,
+            versionCode: info.versionCode ?? null,
+          },
+        });
+        setVersionWarning(res?.warning ?? null);
+      } catch { /* non-blocking */ }
+    }
   }
+
   function addTag() {
     const t = tagInput.trim().toLowerCase();
     if (!t) return;
@@ -366,6 +405,50 @@ function NewAppPage() {
     } catch (e: any) { setErr(e?.message ?? "The AI assistant is unavailable right now."); }
     finally { setAiBusy(null); }
   }
+
+  /**
+   * AI Upload Assistant: turns the app name + one-line description into a full
+   * draft listing the developer can review, edit, approve or regenerate.
+   */
+  async function runAssistant() {
+    if (!form.name.trim() || !form.shortDescription.trim()) {
+      setAssistError("Add an application name and a one-line description first.");
+      return;
+    }
+    setAssistBusy(true);
+    setAssistError(null);
+    try {
+      const res = (await aiAssist({
+        data: {
+          name: form.name.trim(),
+          shortDescription: form.shortDescription.trim(),
+          platform: form.platform,
+          category: form.category,
+        },
+      })) as ListingSuggestions;
+      setSuggestions(res);
+      setApproved({});
+      setApprovedFor(form.shortDescription.trim());
+      setStaleDismissed(false);
+    } catch (e: any) {
+      setAssistError(e?.message ?? "The AI assistant is unavailable right now.");
+    } finally {
+      setAssistBusy(false);
+    }
+  }
+
+  /** Approved AI content no longer matches the short description it came from. */
+  const suggestionsStale =
+    !!suggestions &&
+    !staleDismissed &&
+    approvedFor !== null &&
+    approvedFor !== form.shortDescription.trim();
+
+  function approve(key: string, apply: () => void) {
+    apply();
+    setApproved((p) => ({ ...p, [key]: true }));
+  }
+
 
   const emailOk = !form.developerEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.developerEmail);
   const urlOk = /^https?:\/\/.+\..+/.test(form.appUrl.trim());
@@ -759,7 +842,7 @@ function NewAppPage() {
       case "description":
         return (
           <div>
-            {question("Tell users what your application does.", "This is your full store description. The AI assistant can draft or improve it.")}
+            {question("Tell users what your application does.", "This is your full store description. The AI assistant can draft the whole listing from your one-line description.")}
             <Textarea
               rows={10}
               value={form.description}
@@ -767,15 +850,121 @@ function NewAppPage() {
               placeholder="Describe your app, its main features and who it is for…"
               onChange={(e) => set("description", e.target.value)}
             />
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
               <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={runAiDescription} disabled={aiBusy === "desc"}>
                 {aiBusy === "desc" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
                 Enhance
               </Button>
+              <Button type="button" size="sm" className="rounded-full" onClick={runAssistant} disabled={assistBusy}>
+                {assistBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+                {suggestions ? "Regenerate full listing" : "Generate full listing with AI"}
+              </Button>
               <span className="text-xs text-muted-foreground">You always keep the final say on the wording.</span>
             </div>
+            {assistError && <p className="mt-3 text-xs text-destructive">{assistError}</p>}
+
+            {suggestionsStale && (
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                <span className="flex-1">
+                  Your one-line description changed since these suggestions were generated. Update them?
+                </span>
+                <Button type="button" size="sm" className="rounded-full" onClick={runAssistant} disabled={assistBusy}>
+                  Update suggestions
+                </Button>
+                <Button type="button" size="sm" variant="ghost" className="rounded-full" onClick={() => setStaleDismissed(true)}>
+                  Keep mine
+                </Button>
+              </div>
+            )}
+
+            {suggestions && (
+              <div className="mt-5 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Review each suggestion below. Edit anything you like, then Approve to apply it to your listing.
+                  {suggestions.source === "fallback" && " (AI was unavailable, so these are basic starter drafts.)"}
+                </p>
+                <AiSuggestionCard
+                  title="Long store description"
+                  value={suggestions.description}
+                  rows={10}
+                  busy={assistBusy}
+                  approved={approved["description"]}
+                  onApprove={(t) => approve("description", () => set("description", t))}
+                  onRegenerate={runAssistant}
+                />
+                <AiSuggestionCard
+                  title="Release notes"
+                  value={suggestions.releaseNotes}
+                  rows={4}
+                  busy={assistBusy}
+                  approved={approved["notes"]}
+                  onApprove={(t) => approve("notes", () => set("releaseNotes", t))}
+                  onRegenerate={runAssistant}
+                />
+                <AiSuggestionCard
+                  title="Key features"
+                  hint="One per line."
+                  value={suggestions.features.join("\n")}
+                  rows={4}
+                  busy={assistBusy}
+                  approved={approved["features"]}
+                  onApprove={(t) =>
+                    approve("features", () =>
+                      set("description", `${form.description.trim()}\n\nKey features:\n${t
+                        .split("\n")
+                        .filter(Boolean)
+                        .map((l) => `• ${l.replace(/^[•\-*]\s*/, "")}`)
+                        .join("\n")}`),
+                    )
+                  }
+                  onRegenerate={runAssistant}
+                />
+                <AiSuggestionCard
+                  title="Marketing tagline"
+                  value={suggestions.marketing}
+                  rows={2}
+                  busy={assistBusy}
+                  approved={approved["tagline"]}
+                  onApprove={(t) => approve("tagline", () => set("shortDescription", t.slice(0, 80)))}
+                  onRegenerate={runAssistant}
+                />
+                <AiChipSuggestion
+                  title="Suggested tags & keywords"
+                  items={Array.from(new Set([...suggestions.tags, ...suggestions.keywords]))}
+                  selected={selectedTags}
+                  busy={assistBusy}
+                  approved={approved["tags"]}
+                  onToggle={(item) =>
+                    setSelectedTags((p) => (p.includes(item) ? p.filter((t) => t !== item) : [...p, item]))
+                  }
+                  onApprove={() =>
+                    approve("tags", () => set("tags", Array.from(new Set([...form.tags, ...selectedTags])).slice(0, 12)))
+                  }
+                  onRegenerate={runAssistant}
+                />
+                <div className="rounded-2xl border border-border/60 bg-secondary/20 p-4 text-xs">
+                  <p className="font-medium">Suggested category</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Category: <span className="text-foreground">{suggestions.category}</span> · Age rating:{" "}
+                    <span className="text-foreground">{suggestions.ageRating}</span>
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-3 rounded-full"
+                    disabled={approved["meta"]}
+                    onClick={() => approve("meta", () => set("category", suggestions.category))}
+                  >
+                    {approved["meta"] ? "Approved" : "Approve"}
+                  </Button>
+                </div>
+
+              </div>
+            )}
           </div>
         );
+
 
       case "category":
         return (
@@ -890,14 +1079,24 @@ function NewAppPage() {
               <input type="file" accept=".apk" className="hidden" onChange={(e) => pickAppFile(e.target.files?.[0] ?? null)} />
             </label>
             {parsing && <p className="mt-3 text-xs text-muted-foreground">Reading APK details…</p>}
+            {apkError && !parsing && <p className="mt-3 text-xs text-amber-500">{apkError}</p>}
+            {versionWarning && !parsing && (
+              <p className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">{versionWarning}</p>
+            )}
             {apkInfo && !parsing && (
               <dl className="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-secondary/30 p-4 text-xs">
+                <div><dt className="text-muted-foreground">App name</dt><dd className="truncate">{apkInfo.appName ?? "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Package</dt><dd className="truncate">{apkInfo.packageName ?? "—"}</dd></div>
-                <div><dt className="text-muted-foreground">Version</dt><dd>{apkInfo.versionName ?? "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Version</dt><dd>{apkInfo.versionName ?? "—"}{apkInfo.versionCode ? ` (${apkInfo.versionCode})` : ""}</dd></div>
                 <div><dt className="text-muted-foreground">Size</dt><dd>{formatBytes(apkInfo.apkSize)}</dd></div>
-                <div><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
+                <div><dt className="text-muted-foreground">Min SDK</dt><dd>{apkInfo.minSdk ? `${apkInfo.minSdk} (Android ${apiLevelToAndroidVersion(apkInfo.minSdk)})` : "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Target SDK</dt><dd>{apkInfo.targetSdk ? `${apkInfo.targetSdk} (Android ${apiLevelToAndroidVersion(apkInfo.targetSdk)})` : "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Architectures</dt><dd className="truncate">{apkInfo.abis.length ? apkInfo.abis.join(", ") : "Universal"}</dd></div>
+                <div><dt className="text-muted-foreground">Signed</dt><dd>{apkInfo.certificate?.schemes?.length ? `Yes (${apkInfo.certificate.schemes.join(", ")})` : "Not detected"}</dd></div>
+                <div className="col-span-2"><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
               </dl>
             )}
+
           </div>
         );
 

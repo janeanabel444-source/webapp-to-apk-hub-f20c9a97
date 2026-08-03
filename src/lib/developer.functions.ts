@@ -59,12 +59,28 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+/** Permanent primary administrator accounts — trusted publishers. */
+const ADMIN_EMAILS = ["novaservices.org1@gmail.com", "paschalsoromtochukwu@gmail.com"];
+
+/** True when the caller is a trusted administrator publisher. */
+async function isTrustedPublisher(userId: string, email: string | undefined) {
+  if (ADMIN_EMAILS.includes((email ?? "").toLowerCase())) return true;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
+
 /**
  * Scan an uploaded app binary with VirusTotal. Throws on malicious; returns
- * silently on clean/unknown. Shared by create + update so both paths are
+ * the report otherwise. Shared by create + update so both paths are
  * protected against malware bypass.
  */
-async function scanAppBinaryOrThrow(filePath: string) {
+async function scanAppBinaryOrThrow(filePath: string): Promise<{ status: string; detail: string }> {
   const { scanStorageFileWithVirusTotal } = await import("@/lib/virustotal.server");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const scan = await scanStorageFileWithVirusTotal("app-files", filePath);
@@ -74,7 +90,15 @@ async function scanAppBinaryOrThrow(filePath: string) {
       `This file was flagged by ${scan.positives} of ${scan.total} antivirus engines and cannot be published.`,
     );
   }
+  return {
+    status: scan.status,
+    detail:
+      scan.status === "clean"
+        ? "VirusTotal: no engine flagged this package."
+        : "VirusTotal: this package has not been analysed before, so no verdict is available.",
+  };
 }
+
 
 export const createDeveloperApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -101,6 +125,8 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     }
 
     // ---- Automated security & metadata review (server-side, cannot be bypassed) ----
+    const admin = await isTrustedPublisher(context.userId, (context.claims as any)?.email);
+    const marketplaceWarnings: string[] = [];
     if (!isDraft) {
       const { validateSubmission, summarizeIssues } = await import("@/lib/review");
       const issues = validateSubmission({
@@ -123,7 +149,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         packageName: data.package_name ?? null,
         permissions: data.permissions ?? [],
       });
-      const { errors, blocked } = summarizeIssues(issues);
+      const { errors, warnings, blocked } = summarizeIssues(issues);
       if (blocked) {
         throw new Error(
           `Your submission did not pass Nova's automated checks:\n${errors
@@ -131,7 +157,9 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
             .join("\n")}`,
         );
       }
+      marketplaceWarnings.push(...warnings.map((w) => `${w.message} ${w.fix}`));
     }
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -160,15 +188,50 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       }
     }
 
-    if (data.file_path && !isDraft) {
-      await scanAppBinaryOrThrow(data.file_path);
+    // ---- VirusTotal + marketplace validation -> automatic publishing decision ----
+    // Administrator releases are trusted: they skip scanning and the review
+    // queue and go live as soon as the package itself validates.
+    let scanReport: { status: string; detail: string } | null = null;
+    if (data.file_path && !isDraft && !admin) {
+      scanReport = await scanAppBinaryOrThrow(data.file_path);
     }
 
+    const { SENSITIVE_PERMISSIONS } = await import("@/lib/review");
+    const sensitive = (data.permissions ?? []).filter((p) => SENSITIVE_PERMISSIONS[p]);
+    // "Critical" = anything that needs a human before it reaches users.
+    const criticalReasons: string[] = [];
+    if (!admin && !isDraft) {
+      if (sensitive.length > 0 && !data.privacy_policy_url) {
+        criticalReasons.push(
+          `This build requests ${sensitive.length} sensitive permission(s) but no privacy policy was provided.`,
+        );
+      }
+      if (sensitive.length >= 5) {
+        criticalReasons.push("This build requests an unusually high number of sensitive permissions.");
+      }
+      if ((data.permissions?.length ?? 0) > 40) {
+        criticalReasons.push("This build requests an unusually large number of permissions.");
+      }
+    }
+
+    const autoPublish = !isDraft && !isDevBuild && criticalReasons.length === 0;
+    const reviewNote = isDraft
+      ? null
+      : [
+          scanReport ? scanReport.detail : admin ? "Administrator release — scanning skipped." : null,
+          criticalReasons.length ? `Held for review:\n${criticalReasons.map((r) => `• ${r}`).join("\n")}` : null,
+          marketplaceWarnings.length
+            ? `Marketplace validation notes:\n${marketplaceWarnings.map((w) => `• ${w}`).join("\n")}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || null;
 
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
     const initialVersion = (data.version_name && data.version_name.trim()) || "1.0.0";
     const releaseNotes = (data.release_notes && data.release_notes.trim()) || "Initial release";
+
     const { data: row, error } = await supabaseAdmin
       .from("apps")
       .insert({
@@ -201,10 +264,13 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         license: data.license ?? "free",
         price_kobo: data.license === "paid" ? (data.price_kobo ?? 0) : 0,
         is_draft: isDraft,
-        // Development builds stay out of the public marketplace (private link
-        // only); public releases enter the review queue before going live.
-        is_published: false,
-        status: isDraft ? "draft" : isDevBuild ? "development" : "pending",
+        // Development builds stay private (link only). Public releases publish
+        // automatically once scanning + validation pass; anything critical is
+        // held in the administrator review queue.
+        is_published: autoPublish,
+        status: isDraft ? "draft" : isDevBuild ? "development" : autoPublish ? "live" : "pending",
+        review_note: reviewNote,
+
 
         version: initialVersion,
         latest_release_notes: releaseNotes,
@@ -252,6 +318,57 @@ export const checkAppNameAvailable = createServerFn({ method: "POST" })
       .ilike("name", data.name)
       .maybeSingle();
     return { available: !existing };
+  });
+
+/**
+ * Compare a freshly analysed APK against anything already published under the
+ * same Android package identifier, so the wizard can warn about downgrades.
+ */
+export const checkPackageVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        packageName: z.string().trim().min(1).max(255),
+        versionName: z.string().trim().max(64).optional().nullable(),
+        versionCode: z.number().int().nonnegative().optional().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("apps")
+      .select("id, name, version, version_code, developer_id")
+      .eq("package_name", data.packageName)
+      .order("last_updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!existing) return { existing: false, warning: null as string | null };
+
+    if (existing.developer_id !== context.userId) {
+      return {
+        existing: true,
+        warning: `The package identifier ${data.packageName} is already published on Nova by another developer.`,
+      };
+    }
+
+    let warning: string | null = null;
+    if (
+      typeof data.versionCode === "number" &&
+      typeof existing.version_code === "number" &&
+      data.versionCode <= existing.version_code
+    ) {
+      warning = `This APK has version code ${data.versionCode}, which is not newer than the published version code ${existing.version_code}.`;
+    } else if (data.versionName && existing.version && compareVersions(data.versionName, existing.version) < 0) {
+      warning = `This APK is version ${data.versionName}, which is older than the published version ${existing.version}.`;
+    }
+    return {
+      existing: true,
+      currentVersion: existing.version,
+      currentVersionCode: existing.version_code,
+      warning,
+    };
   });
 
 
@@ -332,9 +449,15 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       throw new Error("Provide a new app file or an updated app URL.");
     }
 
-    if (data.file_path && data.file_path !== existing.file_path) {
+    // Administrator releases are trusted and skip scanning.
+    if (
+      data.file_path &&
+      data.file_path !== existing.file_path &&
+      !(await isTrustedPublisher(context.userId, (context.claims as any)?.email))
+    ) {
       await scanAppBinaryOrThrow(data.file_path);
     }
+
 
     const prevPerms: string[] = (existing.permissions as string[] | null) ?? [];
     const nextPerms = data.permissions ?? [];
