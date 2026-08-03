@@ -12,8 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
 import { createDeveloperApp, checkAppNameAvailable } from "@/lib/developer.functions";
-import { generateAppDescription, generateAppKeywords } from "@/lib/app-listing-ai.functions";
-import { parseApkFile, formatBytes, type ParsedApk } from "@/lib/apk-parser";
+import { generateAppDescription, generateAppKeywords, generateListingSuggestions, type ListingSuggestions } from "@/lib/app-listing-ai.functions";
+import { checkPackageVersion } from "@/lib/developer.functions";
+import { AiSuggestionCard, AiChipSuggestion } from "@/components/AiSuggestionCard";
+import { parseApkFileSafe, formatBytes, apiLevelToAndroidVersion, type ParsedApk } from "@/lib/apk-parser";
 import {
   PLATFORMS, RELEASE_CHANNELS, getPlatform,
   type PlatformId, type ReleaseChannel, type IntegrationMethod,
