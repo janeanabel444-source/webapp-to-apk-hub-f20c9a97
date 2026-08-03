@@ -842,7 +842,7 @@ function NewAppPage() {
       case "description":
         return (
           <div>
-            {question("Tell users what your application does.", "This is your full store description. The AI assistant can draft or improve it.")}
+            {question("Tell users what your application does.", "This is your full store description. The AI assistant can draft the whole listing from your one-line description.")}
             <Textarea
               rows={10}
               value={form.description}
@@ -850,15 +850,127 @@ function NewAppPage() {
               placeholder="Describe your app, its main features and who it is for…"
               onChange={(e) => set("description", e.target.value)}
             />
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
               <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={runAiDescription} disabled={aiBusy === "desc"}>
                 {aiBusy === "desc" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
                 Enhance
               </Button>
+              <Button type="button" size="sm" className="rounded-full" onClick={runAssistant} disabled={assistBusy}>
+                {assistBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+                {suggestions ? "Regenerate full listing" : "Generate full listing with AI"}
+              </Button>
               <span className="text-xs text-muted-foreground">You always keep the final say on the wording.</span>
             </div>
+            {assistError && <p className="mt-3 text-xs text-destructive">{assistError}</p>}
+
+            {suggestionsStale && (
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                <span className="flex-1">
+                  Your one-line description changed since these suggestions were generated. Update them?
+                </span>
+                <Button type="button" size="sm" className="rounded-full" onClick={runAssistant} disabled={assistBusy}>
+                  Update suggestions
+                </Button>
+                <Button type="button" size="sm" variant="ghost" className="rounded-full" onClick={() => setStaleDismissed(true)}>
+                  Keep mine
+                </Button>
+              </div>
+            )}
+
+            {suggestions && (
+              <div className="mt-5 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Review each suggestion below. Edit anything you like, then Approve to apply it to your listing.
+                  {suggestions.source === "fallback" && " (AI was unavailable, so these are basic starter drafts.)"}
+                </p>
+                <AiSuggestionCard
+                  title="Long store description"
+                  value={suggestions.description}
+                  rows={10}
+                  busy={assistBusy}
+                  approved={approved["description"]}
+                  onApprove={(t) => approve("description", () => set("description", t))}
+                  onRegenerate={runAssistant}
+                />
+                <AiSuggestionCard
+                  title="Release notes"
+                  value={suggestions.releaseNotes}
+                  rows={4}
+                  busy={assistBusy}
+                  approved={approved["notes"]}
+                  onApprove={(t) => approve("notes", () => set("releaseNotes", t))}
+                  onRegenerate={runAssistant}
+                />
+                <AiSuggestionCard
+                  title="Key features"
+                  hint="One per line."
+                  value={suggestions.features.join("\n")}
+                  rows={4}
+                  busy={assistBusy}
+                  approved={approved["features"]}
+                  onApprove={(t) =>
+                    approve("features", () =>
+                      set("description", `${form.description.trim()}\n\nKey features:\n${t
+                        .split("\n")
+                        .filter(Boolean)
+                        .map((l) => `• ${l.replace(/^[•\-*]\s*/, "")}`)
+                        .join("\n")}`),
+                    )
+                  }
+                  onRegenerate={runAssistant}
+                />
+                <AiSuggestionCard
+                  title="Marketing tagline"
+                  value={suggestions.marketing}
+                  rows={2}
+                  busy={assistBusy}
+                  approved={approved["tagline"]}
+                  onApprove={(t) => approve("tagline", () => set("tagline", t.slice(0, 120)))}
+                  onRegenerate={runAssistant}
+                />
+                <AiChipSuggestion
+                  title="Suggested tags & keywords"
+                  items={Array.from(new Set([...suggestions.tags, ...suggestions.keywords]))}
+                  approved={approved["tags"]}
+                  onApprove={(picked) =>
+                    approve("tags", () => set("tags", Array.from(new Set([...form.tags, ...picked])).slice(0, 12)))
+                  }
+                  onRegenerate={runAssistant}
+                />
+                <div className="rounded-2xl border border-border/60 bg-secondary/20 p-4 text-xs">
+                  <p className="font-medium">Suggested category &amp; age rating</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Category: <span className="text-foreground">{suggestions.category}</span> · Age rating:{" "}
+                    <span className="text-foreground">{suggestions.ageRating}</span>
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-3 rounded-full"
+                    disabled={approved["meta"]}
+                    onClick={() =>
+                      approve("meta", () => {
+                        set("category", suggestions.category);
+                        set(
+                          "contentRating",
+                          suggestions.ageRating === "everyone"
+                            ? "Everyone"
+                            : suggestions.ageRating === "teen"
+                              ? "Teen"
+                              : "Mature 17+",
+                        );
+                      })
+                    }
+                  >
+                    {approved["meta"] ? "Approved" : "Approve"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         );
+
 
       case "category":
         return (
