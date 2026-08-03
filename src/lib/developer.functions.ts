@@ -320,6 +320,57 @@ export const checkAppNameAvailable = createServerFn({ method: "POST" })
     return { available: !existing };
   });
 
+/**
+ * Compare a freshly analysed APK against anything already published under the
+ * same Android package identifier, so the wizard can warn about downgrades.
+ */
+export const checkPackageVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        packageName: z.string().trim().min(1).max(255),
+        versionName: z.string().trim().max(64).optional().nullable(),
+        versionCode: z.number().int().nonnegative().optional().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("apps")
+      .select("id, name, version, version_code, developer_id")
+      .eq("package_name", data.packageName)
+      .order("last_updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!existing) return { existing: false, warning: null as string | null };
+
+    if (existing.developer_id !== context.userId) {
+      return {
+        existing: true,
+        warning: `The package identifier ${data.packageName} is already published on Nova by another developer.`,
+      };
+    }
+
+    let warning: string | null = null;
+    if (
+      typeof data.versionCode === "number" &&
+      typeof existing.version_code === "number" &&
+      data.versionCode <= existing.version_code
+    ) {
+      warning = `This APK has version code ${data.versionCode}, which is not newer than the published version code ${existing.version_code}.`;
+    } else if (data.versionName && existing.version && compareVersions(data.versionName, existing.version) < 0) {
+      warning = `This APK is version ${data.versionName}, which is older than the published version ${existing.version}.`;
+    }
+    return {
+      existing: true,
+      currentVersion: existing.version,
+      currentVersionCode: existing.version_code,
+      warning,
+    };
+  });
+
 
 
 // Edits to metadata only. file_path changes here are also scanned (defense in
