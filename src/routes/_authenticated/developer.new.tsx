@@ -339,16 +339,38 @@ function NewAppPage() {
   async function pickAppFile(f: File | null) {
     setAppFile(f);
     setApkInfo(null);
+    setApkError(null);
+    setVersionWarning(null);
     if (!f) return;
     setParsing(true);
-    try {
-      const info = await parseApkFile(f);
-      setApkInfo(info);
-      if (info.versionName) set("version", info.versionName);
-    } catch {
-      setApkInfo({ packageName: null, versionName: null, versionCode: null, apkSize: f.size, permissions: [] });
-    } finally { setParsing(false); }
+    // Never leaves the developer stuck: parseApkFileSafe always settles.
+    const { info, error } = await parseApkFileSafe(f);
+    setApkInfo(info);
+    setApkError(error);
+    setParsing(false);
+
+    if (info.versionName) set("version", info.versionName);
+    if (info.appName && !form.name.trim()) set("name", info.appName);
+    const min = apiLevelToAndroidVersion(info.minSdk);
+    if (min && ANDROID_VERSIONS.includes(min)) set("minAndroidVersion", min);
+    const target = apiLevelToAndroidVersion(info.targetSdk);
+    if (target && ANDROID_VERSIONS.includes(target)) set("targetAndroidVersion", target);
+
+    // Automatic version comparison against anything already on Nova.
+    if (info.packageName) {
+      try {
+        const res: any = await checkVersion({
+          data: {
+            packageName: info.packageName,
+            versionName: info.versionName ?? null,
+            versionCode: info.versionCode ?? null,
+          },
+        });
+        setVersionWarning(res?.warning ?? null);
+      } catch { /* non-blocking */ }
+    }
   }
+
   function addTag() {
     const t = tagInput.trim().toLowerCase();
     if (!t) return;
