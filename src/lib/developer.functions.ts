@@ -264,10 +264,13 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         license: data.license ?? "free",
         price_kobo: data.license === "paid" ? (data.price_kobo ?? 0) : 0,
         is_draft: isDraft,
-        // Development builds stay out of the public marketplace (private link
-        // only); public releases enter the review queue before going live.
-        is_published: false,
-        status: isDraft ? "draft" : isDevBuild ? "development" : "pending",
+        // Development builds stay private (link only). Public releases publish
+        // automatically once scanning + validation pass; anything critical is
+        // held in the administrator review queue.
+        is_published: autoPublish,
+        status: isDraft ? "draft" : isDevBuild ? "development" : autoPublish ? "live" : "pending",
+        review_note: reviewNote,
+
 
         version: initialVersion,
         latest_release_notes: releaseNotes,
