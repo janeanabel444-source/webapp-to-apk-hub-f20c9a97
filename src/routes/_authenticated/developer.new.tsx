@@ -1079,14 +1079,24 @@ function NewAppPage() {
               <input type="file" accept=".apk" className="hidden" onChange={(e) => pickAppFile(e.target.files?.[0] ?? null)} />
             </label>
             {parsing && <p className="mt-3 text-xs text-muted-foreground">Reading APK details…</p>}
+            {apkError && !parsing && <p className="mt-3 text-xs text-amber-500">{apkError}</p>}
+            {versionWarning && !parsing && (
+              <p className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">{versionWarning}</p>
+            )}
             {apkInfo && !parsing && (
               <dl className="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-secondary/30 p-4 text-xs">
+                <div><dt className="text-muted-foreground">App name</dt><dd className="truncate">{apkInfo.appName ?? "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Package</dt><dd className="truncate">{apkInfo.packageName ?? "—"}</dd></div>
-                <div><dt className="text-muted-foreground">Version</dt><dd>{apkInfo.versionName ?? "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Version</dt><dd>{apkInfo.versionName ?? "—"}{apkInfo.versionCode ? ` (${apkInfo.versionCode})` : ""}</dd></div>
                 <div><dt className="text-muted-foreground">Size</dt><dd>{formatBytes(apkInfo.apkSize)}</dd></div>
-                <div><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
+                <div><dt className="text-muted-foreground">Min SDK</dt><dd>{apkInfo.minSdk ? `${apkInfo.minSdk} (Android ${apiLevelToAndroidVersion(apkInfo.minSdk)})` : "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Target SDK</dt><dd>{apkInfo.targetSdk ? `${apkInfo.targetSdk} (Android ${apiLevelToAndroidVersion(apkInfo.targetSdk)})` : "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Architectures</dt><dd className="truncate">{apkInfo.abis.length ? apkInfo.abis.join(", ") : "Universal"}</dd></div>
+                <div><dt className="text-muted-foreground">Signed</dt><dd>{apkInfo.certificate?.signed ? `Yes (${apkInfo.certificate.scheme})` : "Not detected"}</dd></div>
+                <div className="col-span-2"><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
               </dl>
             )}
+
           </div>
         );
 
