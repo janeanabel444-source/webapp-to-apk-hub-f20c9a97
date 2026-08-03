@@ -188,15 +188,50 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       }
     }
 
-    if (data.file_path && !isDraft) {
-      await scanAppBinaryOrThrow(data.file_path);
+    // ---- VirusTotal + marketplace validation -> automatic publishing decision ----
+    // Administrator releases are trusted: they skip scanning and the review
+    // queue and go live as soon as the package itself validates.
+    let scanReport: { status: string; detail: string } | null = null;
+    if (data.file_path && !isDraft && !admin) {
+      scanReport = await scanAppBinaryOrThrow(data.file_path);
     }
 
+    const { SENSITIVE_PERMISSIONS } = await import("@/lib/review");
+    const sensitive = (data.permissions ?? []).filter((p) => SENSITIVE_PERMISSIONS[p]);
+    // "Critical" = anything that needs a human before it reaches users.
+    const criticalReasons: string[] = [];
+    if (!admin && !isDraft) {
+      if (sensitive.length > 0 && !data.privacy_policy_url) {
+        criticalReasons.push(
+          `This build requests ${sensitive.length} sensitive permission(s) but no privacy policy was provided.`,
+        );
+      }
+      if (sensitive.length >= 5) {
+        criticalReasons.push("This build requests an unusually high number of sensitive permissions.");
+      }
+      if ((data.permissions?.length ?? 0) > 40) {
+        criticalReasons.push("This build requests an unusually large number of permissions.");
+      }
+    }
+
+    const autoPublish = !isDraft && !isDevBuild && criticalReasons.length === 0;
+    const reviewNote = isDraft
+      ? null
+      : [
+          scanReport ? scanReport.detail : admin ? "Administrator release — scanning skipped." : null,
+          criticalReasons.length ? `Held for review:\n${criticalReasons.map((r) => `• ${r}`).join("\n")}` : null,
+          marketplaceWarnings.length
+            ? `Marketplace validation notes:\n${marketplaceWarnings.map((w) => `• ${w}`).join("\n")}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || null;
 
     const base = slugify(data.name) || "app";
     const slug = `${base}-${Math.random().toString(36).slice(2, 7)}`;
     const initialVersion = (data.version_name && data.version_name.trim()) || "1.0.0";
     const releaseNotes = (data.release_notes && data.release_notes.trim()) || "Initial release";
+
     const { data: row, error } = await supabaseAdmin
       .from("apps")
       .insert({
