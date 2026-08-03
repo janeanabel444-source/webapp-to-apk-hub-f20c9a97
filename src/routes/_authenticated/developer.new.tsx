@@ -406,6 +406,50 @@ function NewAppPage() {
     finally { setAiBusy(null); }
   }
 
+  /**
+   * AI Upload Assistant: turns the app name + one-line description into a full
+   * draft listing the developer can review, edit, approve or regenerate.
+   */
+  async function runAssistant() {
+    if (!form.name.trim() || !form.shortDescription.trim()) {
+      setAssistError("Add an application name and a one-line description first.");
+      return;
+    }
+    setAssistBusy(true);
+    setAssistError(null);
+    try {
+      const res = (await aiAssist({
+        data: {
+          name: form.name.trim(),
+          shortDescription: form.shortDescription.trim(),
+          platform: form.platform,
+          category: form.category,
+        },
+      })) as ListingSuggestions;
+      setSuggestions(res);
+      setApproved({});
+      setApprovedFor(form.shortDescription.trim());
+      setStaleDismissed(false);
+    } catch (e: any) {
+      setAssistError(e?.message ?? "The AI assistant is unavailable right now.");
+    } finally {
+      setAssistBusy(false);
+    }
+  }
+
+  /** Approved AI content no longer matches the short description it came from. */
+  const suggestionsStale =
+    !!suggestions &&
+    !staleDismissed &&
+    approvedFor !== null &&
+    approvedFor !== form.shortDescription.trim();
+
+  function approve(key: string, apply: () => void) {
+    apply();
+    setApproved((p) => ({ ...p, [key]: true }));
+  }
+
+
   const emailOk = !form.developerEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.developerEmail);
   const urlOk = /^https?:\/\/.+\..+/.test(form.appUrl.trim());
 
