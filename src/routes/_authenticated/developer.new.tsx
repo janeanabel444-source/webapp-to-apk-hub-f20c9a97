@@ -18,8 +18,10 @@ import { AiSuggestionCard, AiChipSuggestion } from "@/components/AiSuggestionCar
 import { parseApkFileSafe, formatBytes, apiLevelToAndroidVersion, type ParsedApk } from "@/lib/apk-parser";
 import {
   PLATFORMS, RELEASE_CHANNELS, getPlatform,
+  HYBRID_FRAMEWORKS, GAME_CATEGORIES, GAME_TYPES, GAME_ENGINES, GAME_FLAGS, AGE_RATINGS,
   type PlatformId, type ReleaseChannel, type IntegrationMethod,
 } from "@/lib/platforms";
+
 
 export const Route = createFileRoute("/_authenticated/developer/new")({
   head: () => ({
