@@ -6,7 +6,7 @@ export default defineTool({
   name: "search_apps",
   title: "Search apps",
   description:
-    "Search the Nova App Store catalog of published, live apps by name, tagline, short description, or tag. Optionally filter by category.",
+    "Search the Niza App Store catalog of published, live apps by name, tagline, short description, or tag. Optionally filter by category.",
   inputSchema: {
     query: z.string().trim().min(1).max(120).optional().describe("Free-text search term."),
     category: z.enum(["app", "game", "ai_video"]).optional().describe("Filter by app category."),

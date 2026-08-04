@@ -5,7 +5,7 @@ import { AppCard, AppCardSkeleton } from "@/components/AppCard";
 import { TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/trending")({
-  head: () => ({ meta: [{ title: "Trending — Nova App Store" }] }),
+  head: () => ({ meta: [{ title: "Trending — Niza App Store" }] }),
   component: TrendingPage,
 });
 

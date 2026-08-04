@@ -6,7 +6,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
 
 export const Route = createFileRoute("/_authenticated/library")({
-  head: () => ({ meta: [{ title: "My library — Nova App Store" }] }),
+  head: () => ({ meta: [{ title: "My library — Niza App Store" }] }),
   component: Library,
 });
 

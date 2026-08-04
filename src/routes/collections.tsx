@@ -6,10 +6,10 @@ import { Sparkles, ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/collections")({
   head: () => ({
     meta: [
-      { title: "Collections — Nova App Store" },
-      { name: "description", content: "Curated collections of the best apps and games on Nova." },
-      { property: "og:title", content: "Collections — Nova App Store" },
-      { property: "og:description", content: "Curated collections of the best apps and games on Nova." },
+      { title: "Collections — Niza App Store" },
+      { name: "description", content: "Curated collections of the best apps and games on Niza." },
+      { property: "og:title", content: "Collections — Niza App Store" },
+      { property: "og:description", content: "Curated collections of the best apps and games on Niza." },
     ],
   }),
   component: CollectionsPage,
@@ -29,7 +29,7 @@ function CollectionsPage() {
         </span>
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Collections</h1>
-          <p className="text-sm text-muted-foreground">Hand-picked lists from the Nova team.</p>
+          <p className="text-sm text-muted-foreground">Hand-picked lists from the Niza team.</p>
         </div>
       </div>
 

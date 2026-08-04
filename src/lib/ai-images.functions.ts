@@ -53,7 +53,7 @@ export const listGalleryImages = createServerFn({ method: "GET" })
       .from("profiles")
       .select("id, display_name")
       .in("id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]);
-    const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name ?? "Nova user"]));
+    const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name ?? "Niza user"]));
 
     const urls = await signMany((rows ?? []).map((r) => r.storage_path));
 
@@ -63,7 +63,7 @@ export const listGalleryImages = createServerFn({ method: "GET" })
       url: urls[r.storage_path] ?? "",
       createdAt: r.created_at,
       creatorId: r.user_id,
-      creatorName: nameById.get(r.user_id) ?? "Nova user",
+      creatorName: nameById.get(r.user_id) ?? "Niza user",
     }));
     return items;
   });

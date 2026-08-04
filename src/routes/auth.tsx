@@ -16,11 +16,11 @@ const searchSchema = z.object({ redirect: z.string().optional() });
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Sign in — Nova App Store" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Niza App Store" }] }),
   component: AuthPage,
 });
 
-const PENDING_PROMO_KEY = "nova_pending_promo";
+const PENDING_PROMO_KEY = "niza_pending_promo";
 
 function AuthPage() {
   const { user } = useAuth();
@@ -148,7 +148,7 @@ function AuthPage() {
         <span className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
           <Sparkles className="h-4 w-4" />
         </span>
-        Nova
+        Niza
       </Link>
 
       <div className="w-full rounded-3xl border border-border/60 bg-card p-7 shadow-sm">
@@ -156,7 +156,7 @@ function AuthPage() {
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {mode === "signin" ? "Sign in to install apps and generate AI images." : "Join Nova to install apps and generate AI images."}
+          {mode === "signin" ? "Sign in to install apps and generate AI images." : "Join Niza to install apps and generate AI images."}
         </p>
 
         <Button
@@ -212,7 +212,7 @@ function AuthPage() {
         </form>
 
         <p className="mt-5 text-center text-sm text-muted-foreground">
-          {mode === "signin" ? "New to Nova?" : "Already have an account?"}{" "}
+          {mode === "signin" ? "New to Niza?" : "Already have an account?"}{" "}
           <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="font-semibold text-primary hover:underline">
             {mode === "signin" ? "Create an account" : "Sign in"}
           </button>

@@ -31,9 +31,9 @@ export const Route = createFileRoute("/app/$slug")({
   head: ({ loaderData }) => ({
     meta: loaderData
       ? [
-          { title: `${loaderData.app.name} — Nova App Store` },
+          { title: `${loaderData.app.name} — Niza App Store` },
           { name: "description", content: (loaderData.app as any).short_description ?? loaderData.app.tagline ?? loaderData.app.description ?? "" },
-          { property: "og:title", content: `${loaderData.app.name} — Nova App Store` },
+          { property: "og:title", content: `${loaderData.app.name} — Niza App Store` },
           { property: "og:description", content: (loaderData.app as any).short_description ?? loaderData.app.tagline ?? loaderData.app.description ?? "" },
           ...(loaderData.app.icon_url ? [{ property: "og:image", content: loaderData.app.icon_url }] : []),
         ]
@@ -175,7 +175,7 @@ function AppDetail() {
             <span className="rounded-full bg-secondary px-2.5 py-1">{categoryLabel(app.category)}</span>
             {a.subcategory && <span className="rounded-full bg-secondary px-2.5 py-1">{a.subcategory}</span>}
             {ratingLabel && <span className="rounded-full bg-secondary px-2.5 py-1">{ratingLabel}</span>}
-            <span className="inline-flex items-center gap-1"><Shield className="h-3.5 w-3.5 text-success" /> Reviewed by Nova</span>
+            <span className="inline-flex items-center gap-1"><Shield className="h-3.5 w-3.5 text-success" /> Reviewed by Niza</span>
           </div>
           <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">{app.name}</h1>
           {a.developer_name && (

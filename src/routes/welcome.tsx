@@ -20,13 +20,13 @@ import { ShareAppButton, getLandingUrl } from "@/components/ShareAppButton";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Nova Mind AI — Apps, Games & AI Image Generation" },
+      { title: "Niza Mind AI — Apps, Games & AI Image Generation" },
       {
         name: "description",
         content:
-          "Discover apps, games, and AI-powered creativity in one platform. Install Nova Mind AI now.",
+          "Discover apps, games, and AI-powered creativity in one platform. Install Niza Mind AI now.",
       },
-      { property: "og:title", content: "Nova Mind AI" },
+      { property: "og:title", content: "Niza Mind AI" },
       {
         property: "og:description",
         content: "Discover apps, games, and AI-powered creativity in one platform.",
@@ -104,7 +104,7 @@ function Welcome() {
               <Sparkles className="h-8 w-8 text-primary-foreground" />
             </div>
             <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">
-              Nova Mind AI
+              Niza Mind AI
             </h1>
             <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
               Discover apps, games, and AI-powered creativity in one platform.
@@ -129,7 +129,7 @@ function Welcome() {
               </Button>
             </div>
             <div className="mt-4">
-              <ShareAppButton variant="ghost" label="Share Nova Mind AI" />
+              <ShareAppButton variant="ghost" label="Share Niza Mind AI" />
             </div>
           </div>
         </div>
@@ -191,7 +191,7 @@ function Welcome() {
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold sm:text-4xl">See it in action</h2>
-          <p className="mt-2 text-muted-foreground">A peek inside Nova Mind AI.</p>
+          <p className="mt-2 text-muted-foreground">A peek inside Niza Mind AI.</p>
         </div>
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -229,7 +229,7 @@ function Welcome() {
               <Crown className="h-9 w-9" />
               <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">Go Premium</h2>
               <p className="mt-2 text-primary-foreground/90">
-                Unlock the full Nova Mind AI experience.
+                Unlock the full Niza Mind AI experience.
               </p>
               <Button
                 asChild
@@ -264,7 +264,7 @@ function Welcome() {
         <div className="rounded-3xl border border-border/60 bg-card p-8 text-center sm:p-12">
           <h2 className="font-display text-3xl font-bold sm:text-4xl">Ready to get started?</h2>
           <p className="mt-2 text-muted-foreground">
-            Install Nova Mind AI on your device in seconds.
+            Install Niza Mind AI on your device in seconds.
           </p>
 
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -311,11 +311,11 @@ function Welcome() {
                     <QrCode className="h-5 w-5" /> Scan to install
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Scan this QR code with your phone to open Nova Mind AI on mobile.
+                    Scan this QR code with your phone to open Niza Mind AI on mobile.
                   </p>
                   <img
                     src={qrSrc}
-                    alt="QR code to install Nova Mind AI"
+                    alt="QR code to install Niza Mind AI"
                     className="mt-3 h-44 w-44 rounded-xl border border-border bg-white p-2"
                   />
                 </div>
@@ -332,7 +332,7 @@ function Welcome() {
           </div>
 
           <div className="mt-8">
-            <ShareAppButton size="lg" className="rounded-full" label="Share Nova Mind AI" />
+            <ShareAppButton size="lg" className="rounded-full" label="Share Niza Mind AI" />
           </div>
         </div>
       </section>

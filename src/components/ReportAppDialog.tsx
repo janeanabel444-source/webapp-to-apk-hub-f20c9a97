@@ -59,7 +59,7 @@ export function ReportAppDialog({ appId }: { appId: string }) {
         <DialogHeader>
           <DialogTitle>Report app</DialogTitle>
           <DialogDescription>
-            Help us keep Nova safe. All reports are reviewed by the trust & safety team.
+            Help us keep Niza safe. All reports are reviewed by the trust & safety team.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">

@@ -11,10 +11,10 @@ import { formatBytes } from "@/lib/apk-parser";
 export const Route = createFileRoute("/testing/$token")({
   head: () => ({
     meta: [
-      { title: "Private Testing Build — Nova App Store" },
-      { name: "description", content: "A private Nova App Store development build shared for testing. Not listed in the public marketplace." },
-      { property: "og:title", content: "Private Testing Build — Nova App Store" },
-      { property: "og:description", content: "A private development build shared for testing on Nova App Store." },
+      { title: "Private Testing Build — Niza App Store" },
+      { name: "description", content: "A private Niza App Store development build shared for testing. Not listed in the public marketplace." },
+      { property: "og:title", content: "Private Testing Build — Niza App Store" },
+      { property: "og:description", content: "A private development build shared for testing on Niza App Store." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -58,7 +58,7 @@ function TestingBuildPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           This private testing link is invalid or has been removed.
         </p>
-        <Button asChild className="mt-6 rounded-full"><Link to="/">Go to Nova App Store</Link></Button>
+        <Button asChild className="mt-6 rounded-full"><Link to="/">Go to Niza App Store</Link></Button>
       </div>
     );
   }
@@ -120,7 +120,7 @@ function TestingBuildPage() {
       )}
 
       <p className="mt-8 text-xs text-muted-foreground">
-        This build is not listed in the Nova marketplace and does not appear in search or categories.
+        This build is not listed in the Niza marketplace and does not appear in search or categories.
       </p>
     </div>
   );

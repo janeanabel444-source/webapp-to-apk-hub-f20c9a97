@@ -94,7 +94,7 @@ export function AdViewer({ onRewarded, onClose }: { onRewarded: (bonus: number) 
       <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-border/50 px-4 py-2">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {state?.kind === "placeholder" ? "Sponsored · Nova" : "Sponsored"}
+            {state?.kind === "placeholder" ? "Sponsored · Niza" : "Sponsored"}
           </span>
           <button onClick={onClose} className="rounded-full p-1 text-muted-foreground hover:bg-secondary">
             <X className="h-4 w-4" />
@@ -116,7 +116,7 @@ export function AdViewer({ onRewarded, onClose }: { onRewarded: (bonus: number) 
             <div className="relative flex aspect-[9/16] max-h-[60vh] items-center justify-center overflow-hidden bg-gradient-to-br from-primary/90 via-fuchsia-500/80 to-indigo-600 text-primary-foreground">
               <div className="px-8 text-center">
                 <Sparkles className="mx-auto mb-3 h-10 w-10 opacity-90" />
-                <p className="font-display text-2xl font-bold">Nova App Store</p>
+                <p className="font-display text-2xl font-bold">Niza App Store</p>
                 <p className="mt-2 text-sm opacity-90">Discover, install, and update Android apps — powered by AI.</p>
                 <p className="mt-6 text-xs uppercase tracking-widest opacity-70">Sponsored placeholder</p>
               </div>
@@ -174,7 +174,7 @@ export function AdViewer({ onRewarded, onClose }: { onRewarded: (bonus: number) 
               <div className="min-w-0 flex-1">
                 <p className="truncate font-display font-bold">{ad.app.name}</p>
                 <p className="line-clamp-2 text-xs text-muted-foreground">
-                  {ad.app.shortDescription ?? ad.app.tagline ?? "Discover this app on Nova."}
+                  {ad.app.shortDescription ?? ad.app.tagline ?? "Discover this app on Niza."}
                 </p>
               </div>
               <Button size="sm" onClick={onInstall} className="rounded-full">

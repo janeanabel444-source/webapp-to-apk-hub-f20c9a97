@@ -1,5 +1,5 @@
 /**
- * Automated pre-publish validation ("security review") for Nova App Store.
+ * Automated pre-publish validation ("security review") for Niza App Store.
  *
  * Pure, dependency-free rules shared by the upload wizard (so developers see
  * problems before they submit) and by the server (so nothing bypasses them).
@@ -38,7 +38,37 @@ export interface SubmissionForReview {
   developerEmail?: string | null;
   packageName?: string | null;
   permissions?: string[];
+  /** Privacy policy found inside the uploaded package, if any. */
+  detectedPrivacyUrl?: string | null;
+  /** Developer-declared data collection (accounts, chat, online features…). */
+  declaredDataCollection?: string[];
 }
+
+/** Permissions that mean the application can collect personal data. */
+export const DATA_COLLECTION_PERMISSIONS: Record<string, string> = {
+  "android.permission.GET_ACCOUNTS": "accounts",
+  "android.permission.READ_CONTACTS": "contacts",
+  "android.permission.ACCESS_FINE_LOCATION": "precise location",
+  "android.permission.ACCESS_COARSE_LOCATION": "approximate location",
+  "android.permission.CAMERA": "camera",
+  "android.permission.RECORD_AUDIO": "microphone",
+  "android.permission.READ_SMS": "text messages",
+  "android.permission.READ_PHONE_STATE": "device identifiers",
+  "android.permission.READ_CALL_LOG": "call history",
+  "android.permission.AD_ID": "advertising ID",
+  "com.google.android.gms.permission.AD_ID": "advertising ID",
+  "android.permission.READ_EXTERNAL_STORAGE": "user content",
+  "android.permission.READ_MEDIA_IMAGES": "user content",
+};
+
+/** Everything this submission can collect, in plain language. */
+export function collectsPersonalData(s: SubmissionForReview): string[] {
+  const fromPermissions = (s.permissions ?? [])
+    .map((p) => DATA_COLLECTION_PERMISSIONS[p])
+    .filter((x): x is string => !!x);
+  return [...new Set([...fromPermissions, ...(s.declaredDataCollection ?? [])])];
+}
+
 
 /** Permissions that deserve an explanation before a build goes public. */
 export const SENSITIVE_PERMISSIONS: Record<string, string> = {
@@ -104,15 +134,10 @@ export function validateSubmission(s: SubmissionForReview): ReviewIssue[] {
       add("apk", "warning", "The package identifier could not be read from the file.", "Confirm the APK is signed and not corrupted before publishing.");
     }
   }
-  if (spec.requiresUrl && !URL_RE.test((s.appUrl ?? "").trim())) {
-    add("url", "error", `${spec.label} requires a valid public application URL.`, "Enter the full https:// address where your application is hosted.");
-  }
   if (s.appUrl?.trim() && !URL_RE.test(s.appUrl.trim())) {
     add("url", "error", "The application URL is not a valid address.", "Use a full URL starting with https://");
   }
-  if (s.appUrl?.trim().startsWith("http://")) {
-    add("url", "warning", "The application URL is not served over HTTPS.", "Serve your application over https:// — browsers block installs and many features on insecure origins.");
-  }
+
 
   // ---- Permission analysis ----
   const sensitive = (s.permissions ?? []).filter((p) => SENSITIVE_PERMISSIONS[p]);
@@ -140,9 +165,20 @@ export function validateSubmission(s: SubmissionForReview): ReviewIssue[] {
   if (s.privacyPolicyUrl?.trim() && !URL_RE.test(s.privacyPolicyUrl.trim())) {
     add("privacy", "error", "The privacy policy URL is not a valid address.", "Use a full URL starting with https://");
   }
-  if (!s.privacyPolicyUrl?.trim() && (sensitive.length > 0 || !spec.requiresApk)) {
+  // Data-collection rule: if the package can collect personal data, a policy is mandatory.
+  const collects = collectsPersonalData(s);
+  const hasPolicy = !!s.privacyPolicyUrl?.trim() || !!s.detectedPrivacyUrl?.trim();
+  if (collects.length && !hasPolicy) {
+    add(
+      "privacy",
+      "error",
+      `Privacy Policy Required — this submission collects user data (${collects.join(", ")}) but no privacy policy was provided.`,
+      "Add a public privacy policy URL, or include a reachable privacy policy inside your application, then submit again.",
+    );
+  } else if (!hasPolicy) {
     add("privacy", "warning", "No privacy policy was provided.", "Applications that collect any personal data are expected to publish a privacy policy.");
   }
+
   if (s.developerEmail?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.developerEmail.trim())) {
     add("contact", "error", "The contact email is not valid.", "Enter an email address you can be reached at.");
   }
@@ -166,7 +202,7 @@ export const REVIEW_STATES: Record<string, { label: string; description: string;
   pending: { label: "In review", description: "Automated checks passed. A reviewer is looking at your submission.", tone: "pending" },
   changes_requested: { label: "Changes requested", description: "A reviewer found issues you need to fix, then resubmit.", tone: "warn" },
   approved: { label: "Approved", description: "Approved and going live.", tone: "good" },
-  live: { label: "Live", description: "Published and available to everyone on Nova.", tone: "good" },
+  live: { label: "Live", description: "Published and available to everyone on Niza.", tone: "good" },
   rejected: { label: "Rejected", description: "This submission was rejected. See the reviewer's explanation.", tone: "bad" },
   suspended: { label: "Suspended", description: "Removed from the marketplace by an administrator.", tone: "bad" },
 };

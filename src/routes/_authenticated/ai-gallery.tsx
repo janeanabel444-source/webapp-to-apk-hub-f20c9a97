@@ -7,7 +7,7 @@ import { getMyPremiumStatus } from "@/lib/premium.functions";
 import { listGalleryImages } from "@/lib/ai-images.functions";
 
 export const Route = createFileRoute("/_authenticated/ai-gallery")({
-  head: () => ({ meta: [{ title: "AI Images Gallery — Nova" }] }),
+  head: () => ({ meta: [{ title: "AI Images Gallery — Niza" }] }),
   component: GalleryPage,
 });
 
@@ -90,7 +90,7 @@ function GalleryPage() {
                 </div>
                 <a
                   href={img.url}
-                  download={`nova-${img.id}.png`}
+                  download={`niza-${img.id}.png`}
                   className="inline-flex w-full items-center justify-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
                 >
                   <Download className="h-3.5 w-3.5" /> Download

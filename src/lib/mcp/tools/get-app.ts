@@ -6,7 +6,7 @@ export default defineTool({
   name: "get_app",
   title: "Get app details",
   description:
-    "Fetch full details for a single Nova App Store listing by slug, including description, developer info, permissions, and version.",
+    "Fetch full details for a single Niza App Store listing by slug, including description, developer info, permissions, and version.",
   inputSchema: {
     slug: z.string().trim().min(1).max(120).describe("The app's URL slug (e.g. 'my-cool-app')."),
   },

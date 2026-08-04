@@ -11,15 +11,15 @@
   },
   "mcp": {
     "server": {
-      "name": "nova-app-store-mcp",
+      "name": "niza-app-store-mcp",
       "version": "0.1.0",
-      "title": "Nova App Store"
+      "title": "Niza App Store"
     },
     "tools": [
       {
         "name": "search_apps",
         "title": "Search apps",
-        "description": "Search the Nova App Store catalog of published, live apps by name, tagline, short description, or tag. Optionally filter by category.",
+        "description": "Search the Niza App Store catalog of published, live apps by name, tagline, short description, or tag. Optionally filter by category.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -57,7 +57,7 @@
       {
         "name": "get_app",
         "title": "Get app details",
-        "description": "Fetch full details for a single Nova App Store listing by slug, including description, developer info, permissions, and version.",
+        "description": "Fetch full details for a single Niza App Store listing by slug, including description, developer info, permissions, and version.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -83,7 +83,7 @@
       {
         "name": "list_my_library",
         "title": "List my installed apps",
-        "description": "List the apps the signed-in Nova user has installed, including the installed version and install date.",
+        "description": "List the apps the signed-in Niza user has installed, including the installed version and install date.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -99,7 +99,7 @@
       {
         "name": "list_my_developer_apps",
         "title": "List my developer apps",
-        "description": "List apps the signed-in user has published or drafted as a developer on Nova App Store, including status and install count.",
+        "description": "List apps the signed-in user has published or drafted as a developer on Niza App Store, including status and install count.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -115,7 +115,7 @@
       {
         "name": "whoami",
         "title": "Who am I",
-        "description": "Return the signed-in Nova App Store user's profile (display name, avatar, premium status).",
+        "description": "Return the signed-in Niza App Store user's profile (display name, avatar, premium status).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,

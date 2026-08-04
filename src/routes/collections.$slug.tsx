@@ -13,10 +13,10 @@ export const Route = createFileRoute("/collections/$slug")({
   head: ({ loaderData }) => ({
     meta: loaderData
       ? [
-          { title: `${loaderData.collection.title} — Nova App Store` },
-          { name: "description", content: loaderData.collection.description ?? "Curated collection on Nova." },
-          { property: "og:title", content: `${loaderData.collection.title} — Nova` },
-          { property: "og:description", content: loaderData.collection.description ?? "Curated collection on Nova." },
+          { title: `${loaderData.collection.title} — Niza App Store` },
+          { name: "description", content: loaderData.collection.description ?? "Curated collection on Niza." },
+          { property: "og:title", content: `${loaderData.collection.title} — Niza` },
+          { property: "og:description", content: loaderData.collection.description ?? "Curated collection on Niza." },
         ]
       : [],
   }),

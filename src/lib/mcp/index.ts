@@ -10,11 +10,11 @@ import whoami from "./tools/whoami";
 const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 
 export default defineMcp({
-  name: "nova-app-store-mcp",
-  title: "Nova App Store",
+  name: "niza-app-store-mcp",
+  title: "Niza App Store",
   version: "0.1.0",
   instructions:
-    "Tools for Nova App Store — an Android APK marketplace. Use `search_apps` to browse the public catalog, `get_app` for a listing's full details, `list_my_library` for what the signed-in user has installed, `list_my_developer_apps` for apps they publish, and `whoami` for the signed-in profile.",
+    "Tools for Niza App Store — an Android APK marketplace. Use `search_apps` to browse the public catalog, `get_app` for a listing's full details, `list_my_library` for what the signed-in user has installed, `list_my_developer_apps` for apps they publish, and `whoami` for the signed-in profile.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",

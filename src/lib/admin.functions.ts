@@ -201,7 +201,7 @@ export const adminReviewApp = createServerFn({ method: "POST" })
           : data.decision === "changes_requested"
             ? `${app.name} needs changes before it can be published`
             : `${app.name} was rejected`,
-        body: data.note?.trim() || "Your application passed review and is now available on Nova.",
+        body: data.note?.trim() || "Your application passed review and is now available on Niza.",
       });
     }
     return { ok: true };

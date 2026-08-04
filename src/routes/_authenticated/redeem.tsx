@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { redeemPromoCode } from "@/lib/promo.functions";
 
 export const Route = createFileRoute("/_authenticated/redeem")({
-  head: () => ({ meta: [{ title: "Redeem Promo Code — NovaMind AI" }] }),
+  head: () => ({ meta: [{ title: "Redeem Promo Code — NizaMind AI" }] }),
   component: RedeemPage,
 });
 

@@ -9,7 +9,7 @@ import { listMyDeveloperApps, resubmitForReview } from "@/lib/developer.function
 import { REVIEW_STATES } from "@/lib/review";
 
 export const Route = createFileRoute("/_authenticated/developer/")({
-  head: () => ({ meta: [{ title: "Developer Hub — Nova" }] }),
+  head: () => ({ meta: [{ title: "Developer Hub — Niza" }] }),
   component: DeveloperHome,
 });
 
@@ -51,7 +51,7 @@ function DeveloperHome() {
         </span>
         <div>
           <h1 className="font-display text-2xl font-bold">Developer Hub</h1>
-          <p className="text-sm text-muted-foreground">Publish apps and games to Nova.</p>
+          <p className="text-sm text-muted-foreground">Publish apps and games to Niza.</p>
         </div>
         {user && (
           <Button asChild className="ml-auto rounded-full">
@@ -68,7 +68,7 @@ function DeveloperHome() {
             </div>
             <h2 className="font-display text-lg font-semibold">Sign in to publish apps</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Create an account to start publishing your apps and games on Nova.
+              Create an account to start publishing your apps and games on Niza.
             </p>
             <Button asChild className="mt-6 rounded-full">
               <Link to="/auth">Sign in</Link>

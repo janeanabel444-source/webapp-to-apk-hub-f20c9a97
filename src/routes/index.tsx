@@ -7,9 +7,9 @@ import { ArrowRight, Gamepad2, LayoutGrid, TrendingUp, Code2, Sparkles } from "l
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Nova App Store — Discover apps and games" },
-      { name: "description", content: "Welcome to Nova App Store. Discover apps and games in one place. Explore, install, and publish apps easily." },
-      { property: "og:title", content: "Nova App Store" },
+      { title: "Niza App Store — Discover apps and games" },
+      { name: "description", content: "Welcome to Niza App Store. Discover apps and games in one place. Explore, install, and publish apps easily." },
+      { property: "og:title", content: "Niza App Store" },
       { property: "og:description", content: "Discover apps and games in one place." },
     ],
   }),
@@ -64,7 +64,7 @@ function Home() {
       <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-10" style={{ backgroundImage: "var(--gradient-hero)" }}>
         <div className="relative max-w-2xl">
           <span className="inline-flex items-center rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur sm:text-xs">
-            Welcome to Nova App Store
+            Welcome to Niza App Store
           </span>
           <h1 className="mt-3 font-display text-[1.75rem] font-bold leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
             Discover <span style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>apps and games</span> in one place.
@@ -91,9 +91,9 @@ function Home() {
         <Link to="/developer" className="group relative overflow-hidden rounded-3xl border border-border/60 bg-card p-5 transition hover:shadow-md sm:p-6" style={{ backgroundImage: "var(--gradient-primary)" }}>
           <Code2 className="h-5 w-5 text-primary-foreground sm:h-6 sm:w-6" />
           <h3 className="mt-2 font-display text-base font-bold text-primary-foreground sm:text-lg">Are you a developer?</h3>
-          <p className="mt-1 text-xs text-primary-foreground/90 sm:text-sm">Upload your apps and games. Reach Nova's users in minutes.</p>
+          <p className="mt-1 text-xs text-primary-foreground/90 sm:text-sm">Upload your apps and games. Reach Niza's users in minutes.</p>
           <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary-foreground sm:text-sm">
-            Publish on Nova <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            Publish on Niza <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </span>
         </Link>
         <Link to="/ai-tools" className="group rounded-3xl border border-border/60 bg-card p-5 transition hover:shadow-md sm:p-6">

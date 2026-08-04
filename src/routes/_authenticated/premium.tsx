@@ -8,7 +8,7 @@ import { getMyPremiumStatus } from "@/lib/premium.functions";
 import { initPremiumPayment } from "@/lib/paystack.functions";
 
 export const Route = createFileRoute("/_authenticated/premium")({
-  head: () => ({ meta: [{ title: "Go Premium — Nova App Store" }] }),
+  head: () => ({ meta: [{ title: "Go Premium — Niza App Store" }] }),
   component: PremiumPage,
 });
 
@@ -54,7 +54,7 @@ function PremiumPage() {
             <Crown className="h-6 w-6" />
           </span>
           <div>
-            <h1 className="font-display text-3xl font-bold">Nova Premium</h1>
+            <h1 className="font-display text-3xl font-bold">Niza Premium</h1>
             <p className="text-sm text-muted-foreground">
               Unlock AI image generation and everything coming next.
             </p>

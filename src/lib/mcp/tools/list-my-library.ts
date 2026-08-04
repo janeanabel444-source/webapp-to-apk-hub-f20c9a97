@@ -5,7 +5,7 @@ export default defineTool({
   name: "list_my_library",
   title: "List my installed apps",
   description:
-    "List the apps the signed-in Nova user has installed, including the installed version and install date.",
+    "List the apps the signed-in Niza user has installed, including the installed version and install date.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {

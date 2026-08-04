@@ -12,7 +12,7 @@ import { Shield, Flag, Star, Ban } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — Nova" }] }),
+  head: () => ({ meta: [{ title: "Admin — Niza" }] }),
   component: AdminPage,
 });
 

@@ -9,7 +9,7 @@ type BIPEvent = Event & {
 
 /**
  * Registers the app-shell service worker (only in production browser contexts)
- * and shows a small "Install Nova" prompt when the browser fires
+ * and shows a small "Install Niza" prompt when the browser fires
  * beforeinstallprompt.
  */
 export function PwaInstaller() {
@@ -54,8 +54,8 @@ export function PwaInstaller() {
     <div className="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur">
       <img src="/icons/icon-192.png" alt="" className="h-10 w-10 rounded-xl" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">Install Nova App Store</p>
-        <p className="truncate text-xs text-muted-foreground">Add Nova to your home screen.</p>
+        <p className="text-sm font-semibold">Install Niza App Store</p>
+        <p className="truncate text-xs text-muted-foreground">Add Niza to your home screen.</p>
       </div>
       <Button
         size="sm"

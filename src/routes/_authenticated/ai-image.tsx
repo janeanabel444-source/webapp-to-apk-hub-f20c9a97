@@ -12,7 +12,7 @@ import { ShareAppButton } from "@/components/ShareAppButton";
 import { AdViewer } from "@/components/AdViewer";
 
 export const Route = createFileRoute("/_authenticated/ai-image")({
-  head: () => ({ meta: [{ title: "AI Image Generation — Nova" }] }),
+  head: () => ({ meta: [{ title: "AI Image Generation — Niza" }] }),
   component: AiImagePage,
 });
 
@@ -170,7 +170,7 @@ function AiImagePage() {
               <ShareAppButton size="sm" variant="outline" />
               <a
                 href={preview}
-                download={`nova-${Date.now()}.png`}
+                download={`niza-${Date.now()}.png`}
                 className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
               >
                 <Download className="h-3.5 w-3.5" /> Download Image
@@ -194,7 +194,7 @@ function AiImagePage() {
                   <p className="line-clamp-2 text-xs">{img.prompt}</p>
                   <a
                     href={img.url}
-                    download={`nova-${img.id}.png`}
+                    download={`niza-${img.id}.png`}
                     className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                   >
                     <Download className="h-3 w-3" /> Download

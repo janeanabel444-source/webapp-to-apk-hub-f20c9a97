@@ -1,7 +1,7 @@
 {
-  "name": "Nova App Store",
-  "short_name": "Nova",
-  "description": "Download apps, games and AI tools from Nova App Store.",
+  "name": "Niza App Store",
+  "short_name": "Niza",
+  "description": "Download apps, games and AI tools from Niza App Store.",
   "id": "/",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -19,8 +19,8 @@
     { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "Nova App Store home" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "Nova App Store" }
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "Niza App Store home" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "Niza App Store" }
   ],
   "shortcuts": [
     { "name": "Browse apps", "short_name": "Apps", "url": "/apps", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
