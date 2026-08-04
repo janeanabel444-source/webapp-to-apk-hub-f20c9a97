@@ -368,11 +368,11 @@ function NewAppPage() {
     s.push("name", "short", "description", "category", "icon", "media", "apk");
     if (isGame) s.push("gameFlags");
     s.push("android", "version", "privacy", "contact");
-    if (spec.supportsSdk && spec.supportsLink) s.push("integration");
+    if (!isGame && spec.supportsSdk && spec.supportsLink) s.push("integration");
     s.push("release", "review");
-
     return s;
-  }, [isGame, form.platform]);
+  }, [isGame, form.platform, spec]);
+
 
   // Keep the pointer in range if earlier answers removed later steps.
   useEffect(() => {
