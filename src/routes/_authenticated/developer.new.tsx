@@ -367,7 +367,10 @@ function NewAppPage() {
     }
     s.push("name", "short", "description", "category", "icon", "media", "apk");
     if (isGame) s.push("gameFlags");
-    s.push("android", "version", "privacy", "contact", "integration", "release", "review");
+    s.push("android", "version", "privacy", "contact");
+    if (spec.supportsSdk && spec.supportsLink) s.push("integration");
+    s.push("release", "review");
+
     return s;
   }, [isGame, form.platform]);
 
