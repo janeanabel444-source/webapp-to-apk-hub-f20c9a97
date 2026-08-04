@@ -1192,22 +1192,139 @@ function NewAppPage() {
           </div>
         );
 
-      case "url":
+      case "uploadCategory":
         return (
           <div>
-            {question("Where is your application hosted?", spec.requiresUrl ? "A public HTTPS URL users will be sent to." : "Optional — add the hosted URL if your app has one.")}
-            <Input
-              autoFocus
-              inputMode="url"
-              value={form.appUrl}
-              placeholder="https://yourapp.com"
-              onChange={(e) => set("appUrl", e.target.value)}
-            />
-            {form.appUrl.trim() && !urlOk && (
-              <p className="mt-2 text-xs text-destructive">Enter a full URL starting with https://</p>
-            )}
+            {question("What are you uploading?", "Applications and games are published through different workflows.")}
+            <div className="space-y-2.5">
+              {([
+                { id: "app", label: "Application", desc: "Tools, utilities, business, lifestyle and productivity software." },
+                { id: "game", label: "Game", desc: "Anything played for entertainment — you'll be asked about genre and players." },
+              ] as const).map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => { set("contentType", o.id); set("category", o.id); }}
+                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                    form.contentType === o.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{o.label}</p>
+                    {form.contentType === o.id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">{o.desc}</p>
+                </button>
+              ))}
+            </div>
           </div>
         );
+
+      case "framework":
+        return (
+          <div>
+            {question("Which framework is your hybrid package built with?", "An APK is still required — Niza never converts a website into an application.")}
+            <div className="grid grid-cols-2 gap-2.5">
+              {HYBRID_FRAMEWORKS.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => set("hybridFramework", f)}
+                  className={`rounded-xl border p-3 text-left text-sm transition ${
+                    form.hybridFramework === f ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "gameCategory":
+        return (
+          <div>
+            {question("What genre is your game?", "Players browse and search by genre — pick the closest match.")}
+            <div className="grid grid-cols-2 gap-2.5">
+              {GAME_CATEGORIES.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => set("gameCategory", g)}
+                  className={`rounded-xl border p-3 text-left text-sm transition ${
+                    form.gameCategory === g ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "gameType":
+        return (
+          <div>
+            {question("How is your game played?", "This appears on your store page so players know what to expect.")}
+            <div className="space-y-2.5">
+              {GAME_TYPES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => set("gameType", t.id)}
+                  className={`w-full rounded-2xl border p-3.5 text-left text-sm transition ${
+                    form.gameType === t.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <Label className="mt-5 block text-sm">Game engine (optional)</Label>
+            <select
+              className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
+              value={form.gameEngine}
+              onChange={(e) => set("gameEngine", e.target.value)}
+            >
+              <option value="">Not specified</option>
+              {GAME_ENGINES.map((e) => <option key={e} value={e}>{e}</option>)}
+            </select>
+          </div>
+        );
+
+      case "gameFlags":
+        return (
+          <div>
+            {question("Tell players what's inside", "These disclosures show on your store page and feed Niza's automated review.")}
+            <div className="space-y-2">
+              {GAME_FLAGS.map((f) => {
+                const on = !!form.gameFlags[f.id];
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => set("gameFlags", { ...form.gameFlags, [f.id]: !on })}
+                    className={`flex w-full items-center justify-between rounded-xl border p-3 text-left text-sm transition ${
+                      on ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                    }`}
+                  >
+                    {f.label}
+                    {on && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                );
+              })}
+            </div>
+            <Label className="mt-5 block text-sm">Age rating</Label>
+            <select
+              className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
+              value={form.contentRating}
+              onChange={(e) => set("contentRating", e.target.value)}
+            >
+              {AGE_RATINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+            </select>
+          </div>
+        );
+
 
       case "android":
         return (
