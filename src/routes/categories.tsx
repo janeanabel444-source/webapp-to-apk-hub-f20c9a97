@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { LayoutGrid, Gamepad2, Briefcase, Music, MessageSquare, Camera, Book, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/categories")({
-  head: () => ({ meta: [{ title: "Categories — Nova App Store" }] }),
+  head: () => ({ meta: [{ title: "Categories — Niza App Store" }] }),
   component: CategoriesPage,
 });
 

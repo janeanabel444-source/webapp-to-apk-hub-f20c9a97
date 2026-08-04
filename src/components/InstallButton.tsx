@@ -74,7 +74,7 @@ export function InstallButton({
           setProgress(total ? (loaded / total) * 100 : 0);
         });
         if (result.nativeInstalled) {
-          toast.success("Installing via Nova Android…");
+          toast.success("Installing via Niza Android…");
         } else if (isAndroidDevice()) {
           setShowHelper(true);
           toast.success("APK downloaded — tap the notification to install");

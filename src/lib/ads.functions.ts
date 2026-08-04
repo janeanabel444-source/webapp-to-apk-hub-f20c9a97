@@ -9,7 +9,7 @@ const PLACEHOLDER_COOLDOWN_MS = 30_000;
 const placeholderLastClaim = new Map<string, number>();
 
 function placeholderSecret() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.LOVABLE_API_KEY || "nova-placeholder-secret";
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.LOVABLE_API_KEY || "niza-placeholder-secret";
 }
 function signPlaceholder(userId: string, issuedAt: number) {
   const payload = `${userId}.${issuedAt}`;

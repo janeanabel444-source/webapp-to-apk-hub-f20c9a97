@@ -12,9 +12,26 @@ const appInput = z.object({
   description: z.string().trim().min(10).max(4000),
   category: z.enum(["app", "game"]),
   subcategory: z.string().trim().max(60).optional().nullable(),
-  platform: z.enum(["web", "pwa", "android", "hybrid", "ios"]),
-  release_channel: z.enum(["development", "public"]).default("public"),
+  platform: z.enum(["pwa", "android", "hybrid", "ios"]),
+  release_channel: z.enum(["development", "public", "coming_soon"]).default("public"),
   integration_method: z.enum(["sdk", "link", "both"]).optional().nullable(),
+
+  content_type: z.enum(["app", "game"]).default("app"),
+  game_category: z.string().trim().max(40).optional().nullable(),
+  game_type: z.string().trim().max(40).optional().nullable(),
+  game_engine: z.string().trim().max(40).optional().nullable(),
+  contains_ads: z.boolean().default(false),
+  has_iap: z.boolean().default(false),
+  is_multiplayer: z.boolean().default(false),
+  requires_account: z.boolean().default(false),
+  has_chat: z.boolean().default(false),
+  online_features: z.boolean().default(false),
+  offline_mode: z.boolean().default(false),
+  controller_support: z.boolean().default(false),
+  cloud_save: z.boolean().default(false),
+  privacy_policy_source: z.enum(["url", "detected", "skipped"]).optional().nullable(),
+  detected_privacy_url: z.string().url().optional().nullable(),
+
 
   icon_url: z.string().url(),
   feature_banner_url: z.string().url().optional().nullable(),
@@ -112,16 +129,9 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     const spec = getPlatform(data.platform);
     if (!spec.enabled) throw new Error(`${spec.label} publishing is not available yet.`);
     // Drafts skip these requirements so developers can save partial work.
-    if (!isDraft) {
-      if (spec.requiresApk && !data.file_path) {
-        throw new Error(`${spec.label} requires an APK upload.`);
-      }
-      if (spec.requiresUrl && !data.app_url) {
-        throw new Error(`${spec.label} requires a hosted application URL.`);
-      }
-      if (!spec.requiresApk && !spec.requiresUrl && !data.app_url && !data.file_path) {
-        throw new Error("Provide an app URL or upload an app file.");
-      }
+    // Niza distributes installable packages only — every listing needs an APK.
+    if (!isDraft && !data.file_path) {
+      throw new Error(`${spec.label} requires an APK upload.`);
     }
 
     // ---- Automated security & metadata review (server-side, cannot be bypassed) ----
@@ -129,6 +139,12 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     const marketplaceWarnings: string[] = [];
     if (!isDraft) {
       const { validateSubmission, summarizeIssues } = await import("@/lib/review");
+      const declared: string[] = [];
+      if (data.requires_account) declared.push("user accounts");
+      if (data.has_chat) declared.push("chat messages");
+      if (data.online_features) declared.push("online activity");
+      if (data.cloud_save) declared.push("cloud saved data");
+      if (data.contains_ads) declared.push("advertising data");
       const issues = validateSubmission({
         platform: data.platform,
         name: data.name,
@@ -145,14 +161,17 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         version: (data.version_name && data.version_name.trim()) || "1.0.0",
         releaseNotes: data.release_notes ?? "Initial release",
         privacyPolicyUrl: data.privacy_policy_url ?? null,
+        detectedPrivacyUrl: data.detected_privacy_url ?? null,
+        declaredDataCollection: declared,
         developerEmail: data.developer_email ?? null,
         packageName: data.package_name ?? null,
         permissions: data.permissions ?? [],
       });
+
       const { errors, warnings, blocked } = summarizeIssues(issues);
       if (blocked) {
         throw new Error(
-          `Your submission did not pass Nova's automated checks:\n${errors
+          `Your submission did not pass Niza's automated checks:\n${errors
             .map((e) => `• ${e.message} ${e.fix}`)
             .join("\n")}`,
         );
@@ -183,7 +202,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         .maybeSingle();
       if (pkgDup) {
         throw new Error(
-          `The package identifier ${data.package_name} is already published on Nova by another developer. Rebuild your application with your own unique package identifier.`,
+          `The package identifier ${data.package_name} is already published on Niza by another developer. Rebuild your application with your own unique package identifier.`,
         );
       }
     }
@@ -246,9 +265,26 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         platform: data.platform,
         icon_url: data.icon_url,
         feature_banner_url: data.feature_banner_url ?? null,
-        app_url: spec.requiresApk ? null : (data.app_url ?? null),
+        app_url: null,
         release_channel: data.release_channel ?? "public",
         integration_method: data.integration_method ?? null,
+
+        content_type: data.content_type ?? data.category,
+        game_category: data.game_category ?? null,
+        game_type: data.game_type ?? null,
+        game_engine: data.game_engine ?? null,
+        contains_ads: data.contains_ads ?? false,
+        has_iap: data.has_iap ?? false,
+        is_multiplayer: data.is_multiplayer ?? false,
+        requires_account: data.requires_account ?? false,
+        has_chat: data.has_chat ?? false,
+        online_features: data.online_features ?? false,
+        offline_mode: data.offline_mode ?? false,
+        controller_support: data.controller_support ?? false,
+        cloud_save: data.cloud_save ?? false,
+        privacy_policy_source: data.privacy_policy_source ?? null,
+        detected_privacy_url: data.detected_privacy_url ?? null,
+        is_coming_soon: data.release_channel === "coming_soon",
 
         website_url: data.website_url ?? null,
         privacy_policy_url: data.privacy_policy_url ?? null,
@@ -279,6 +315,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         version_code: data.version_code ?? null,
         apk_size: data.apk_size ?? null,
         permissions: data.permissions ?? [],
+
       })
       .select("id, slug, status, share_token")
       .single();
@@ -349,7 +386,7 @@ export const checkPackageVersion = createServerFn({ method: "POST" })
     if (existing.developer_id !== context.userId) {
       return {
         existing: true,
-        warning: `The package identifier ${data.packageName} is already published on Nova by another developer.`,
+        warning: `The package identifier ${data.packageName} is already published on Niza by another developer.`,
       };
     }
 

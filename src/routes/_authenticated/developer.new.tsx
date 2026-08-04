@@ -24,10 +24,10 @@ import {
 export const Route = createFileRoute("/_authenticated/developer/new")({
   head: () => ({
     meta: [
-      { title: "Publish Your Application — Nova Developer Hub" },
-      { name: "description", content: "A guided, step-by-step publishing wizard for Progressive Web Apps, web apps, Android APKs and hybrid applications on Nova App Store." },
-      { property: "og:title", content: "Publish Your Application — Nova Developer Hub" },
-      { property: "og:description", content: "Publish your application on Nova App Store with a guided wizard." },
+      { title: "Publish Your Application — Niza Developer Hub" },
+      { name: "description", content: "A guided, step-by-step publishing wizard for Progressive Web Apps, web apps, Android APKs and hybrid applications on Niza App Store." },
+      { property: "og:title", content: "Publish Your Application — Niza Developer Hub" },
+      { property: "og:description", content: "Publish your application on Niza App Store with a guided wizard." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -38,13 +38,20 @@ export const Route = createFileRoute("/_authenticated/developer/new")({
 type Category = "app" | "game";
 
 interface DraftState {
+  contentType: Category;
   platform: PlatformId;
+  hybridFramework: string;
   integrationMethod: IntegrationMethod | "";
   releaseChannel: ReleaseChannel;
   name: string;
   shortDescription: string;
   description: string;
   category: Category;
+  gameCategory: string;
+  gameType: string;
+  gameEngine: string;
+  gameFlags: Record<string, boolean>;
+  contentRating: string;
   tags: string[];
   appUrl: string;
   minAndroidVersion: string;
@@ -52,22 +59,30 @@ interface DraftState {
   version: string;
   releaseNotes: string;
   privacyPolicyUrl: string;
+  privacyPolicySource: "url" | "detected" | "skipped" | "";
   developerName: string;
   developerEmail: string;
   websiteUrl: string;
 }
 
-const DRAFT_KEY = "nova.developer.wizard.draft";
+const DRAFT_KEY = "niza.developer.wizard.draft.v2";
 const ANDROID_VERSIONS = ["5.0", "6.0", "7.0", "8.0", "9.0", "10", "11", "12", "13", "14", "15"];
 
 const initialDraft: DraftState = {
+  contentType: "app",
   platform: "android",
+  hybridFramework: "",
   integrationMethod: "",
   releaseChannel: "public",
   name: "",
   shortDescription: "",
   description: "",
   category: "app",
+  gameCategory: "",
+  gameType: "",
+  gameEngine: "",
+  gameFlags: {},
+  contentRating: "everyone",
   tags: [],
   appUrl: "",
   minAndroidVersion: "7.0",
@@ -75,33 +90,72 @@ const initialDraft: DraftState = {
   version: "1.0.0",
   releaseNotes: "Initial release",
   privacyPolicyUrl: "",
+  privacyPolicySource: "",
   developerName: "",
   developerEmail: "",
   websiteUrl: "",
 };
 
+
 const HELP: Record<string, { title: string; body: string[] }> = {
+  uploadCategory: {
+    title: "Application or game?",
+    body: [
+      "Niza keeps applications and games apart — they have different store pages, categories and questions.",
+      "Choose Application for tools, utilities, business and lifestyle software.",
+      "Choose Game for anything played for entertainment; you'll be asked about genre, players and game features.",
+    ],
+  },
+  gameCategory: {
+    title: "Game genre",
+    body: [
+      "Pick the genre players would look under when searching for your game.",
+      "Best practice: choose the closest match rather than the broadest one — discovery works better.",
+    ],
+  },
+  gameType: {
+    title: "How your game is played",
+    body: [
+      "Tell players whether the game is single player, multiplayer, online, offline, or a mix.",
+      "This shows on your store page so players know what to expect before installing.",
+    ],
+  },
+  gameFlags: {
+    title: "Game features and disclosures",
+    body: [
+      "These disclosures appear on your store page and feed Niza's automated review.",
+      "Be accurate: undisclosed ads, purchases or chat features can hold your release for manual review.",
+    ],
+  },
+  framework: {
+    title: "Hybrid framework",
+    body: [
+      "Tell us which framework your hybrid package was built with so Niza can check the right things.",
+      "Your APK is still required — Niza never converts a website into an Android application.",
+    ],
+  },
   platform: {
     title: "Choosing an application type",
     body: [
-      "Nova supports several application types, and each one has its own publishing workflow — you'll only be asked for information that applies to your app.",
-      "Nova does not convert websites into Android applications. Upload the application you have already built.",
-      "Common mistake: choosing Native Android APK when you only have a hosted website. Pick Progressive Web App or Web Application instead.",
+      "Niza distributes installable Android packages. Every application type here requires an APK you have already built and signed.",
+      "Niza does not convert websites into Android applications. If you only have a website, build a PWA APK first, then upload it.",
+      "Common mistake: expecting to publish a hosted URL — hosted-only publishing is not supported.",
     ],
   },
+
   integration: {
     title: "SDK vs link integration",
     body: [
-      "Hybrid applications can talk to Nova through the Nova Services SDK, through a Nova-generated link, or through both.",
+      "Hybrid applications can talk to Niza through the Niza Services SDK, through a Niza-generated link, or through both.",
       "SDK integration unlocks in-app features such as native install and update handling.",
-      "Link integration is the fastest way to publish — Nova generates the links your app needs.",
+      "Link integration is the fastest way to publish — Niza generates the links your app needs.",
       "If your app supports both, choose Both; you are never forced to pick one.",
     ],
   },
   name: {
     title: "Your application name",
     body: [
-      "This is the name users see everywhere in Nova — search, categories and your store page.",
+      "This is the name users see everywhere in Niza — search, categories and your store page.",
       "Best practice: keep it short, memorable and free of keyword stuffing.",
       "Common mistake: adding 'free', 'best' or version numbers to the name.",
       "You can't publish two applications with the same name under one developer account.",
@@ -150,7 +204,7 @@ const HELP: Record<string, { title: string; body: string[] }> = {
   apk: {
     title: "Uploading your APK",
     body: [
-      "Upload the already-built, signed APK. Nova reads the package name, version, size and permissions automatically.",
+      "Upload the already-built, signed APK. Niza reads the package name, version, size and permissions automatically.",
       "Every binary is scanned for malware before it can be published.",
       "Common mistake: uploading an .aab bundle or a .zip — only .apk files are accepted.",
     ],
@@ -187,7 +241,7 @@ const HELP: Record<string, { title: string; body: string[] }> = {
   contact: {
     title: "Contact information",
     body: [
-      "Users and Nova reviewers use this to reach you about your listing.",
+      "Users and Niza reviewers use this to reach you about your listing.",
       "Your email is used for review outcomes and support requests; it is not shown publicly.",
     ],
   },
@@ -233,6 +287,9 @@ function NewAppPage() {
   const [parsing, setParsing] = useState(false);
   const [apkError, setApkError] = useState<string | null>(null);
   const [versionWarning, setVersionWarning] = useState<string | null>(null);
+  /** Privacy policy address found inside the uploaded package, if any. */
+  const [detectedPrivacyUrl, setDetectedPrivacyUrl] = useState<string | null>(null);
+
 
   // ---- AI Upload Assistant ----
   const aiAssist = useServerFn(generateListingSuggestions);
@@ -298,25 +355,30 @@ function NewAppPage() {
     return () => clearTimeout(t);
   }, [form.name, checkName]);
 
-  // ---- Dynamic step list: adapts to the selected application type ----
+  // ---- Dynamic step list: category first, then the path for that category ----
+  const isGame = form.contentType === "game";
   const steps = useMemo(() => {
-    const s: string[] = ["platform"];
-    if (spec.supportsSdk && spec.supportsLink) s.push("integration");
-    s.push("name", "short", "description", "category", "icon", "media");
-    if (spec.requiresApk || form.platform === "hybrid") s.push("apk");
-    if (spec.requiresUrl || (form.platform === "hybrid" && form.integrationMethod !== "sdk")) s.push("url");
-    if (spec.androidDetails && (spec.requiresApk || appFile)) s.push("android");
-    s.push("version", "privacy", "contact", "release", "review");
+    const s: string[] = ["uploadCategory"];
+    if (isGame) {
+      s.push("gameCategory", "gameType");
+    } else {
+      s.push("platform");
+      if (form.platform === "hybrid") s.push("framework");
+    }
+    s.push("name", "short", "description", "category", "icon", "media", "apk");
+    if (isGame) s.push("gameFlags");
+    s.push("android", "version", "privacy", "contact", "integration", "release", "review");
     return s;
-  }, [spec, form.platform, form.integrationMethod, appFile]);
+  }, [isGame, form.platform]);
 
   // Keep the pointer in range if earlier answers removed later steps.
   useEffect(() => {
     setStepIndex((i) => Math.min(i, steps.length - 1));
   }, [steps.length]);
 
-  const stepId = steps[stepIndex] ?? "platform";
-  const help = HELP[stepId === "url" ? "url" : stepId];
+  const stepId = steps[stepIndex] ?? "uploadCategory";
+  const help = HELP[stepId];
+
 
   function pickLogo(f: File | null) {
     setLogo(f);
@@ -356,7 +418,7 @@ function NewAppPage() {
     const target = apiLevelToAndroidVersion(info.targetSdk);
     if (target && ANDROID_VERSIONS.includes(target)) set("targetAndroidVersion", target);
 
-    // Automatic version comparison against anything already on Nova.
+    // Automatic version comparison against anything already on Niza.
     if (info.packageName) {
       try {
         const res: any = await checkVersion({
@@ -455,25 +517,35 @@ function NewAppPage() {
 
   const stepValid = useMemo(() => {
     switch (stepId) {
+      case "uploadCategory": return !!form.contentType;
       case "platform": return spec.enabled;
-      case "integration": return form.integrationMethod !== "";
+      case "framework": return !!form.hybridFramework;
+      case "gameCategory": return !!form.gameCategory;
+      case "gameType": return !!form.gameType;
+      case "gameFlags": return true;
+      case "integration": return !spec.supportsSdk || !spec.supportsLink || form.integrationMethod !== "";
       case "name": return form.name.trim().length >= 2 && nameStatus !== "taken" && nameStatus !== "checking";
       case "short": return form.shortDescription.trim().length > 0 && form.shortDescription.length <= 80;
       case "description": return form.description.trim().length >= 10;
       case "category": return !!form.category;
       case "icon": return !!logo;
       case "media": return true;
-      case "apk": return spec.requiresApk ? !!appFile && !parsing : !parsing;
-      case "url": return spec.requiresUrl ? urlOk : (!form.appUrl.trim() || urlOk);
+      // Niza distributes installable packages only — an APK is always required.
+      case "apk": return !!appFile && !parsing;
       case "android": return true;
       case "version": return /^\d+(\.\d+){0,3}$/.test(form.version.trim()) && form.releaseNotes.trim().length >= 3;
-      case "privacy": return !form.privacyPolicyUrl.trim() || /^https?:\/\/.+\..+/.test(form.privacyPolicyUrl.trim());
+      // Skip is only allowed when the URL field is empty.
+      case "privacy":
+        return form.privacyPolicyUrl.trim()
+          ? /^https?:\/\/.+\..+/.test(form.privacyPolicyUrl.trim())
+          : form.privacyPolicySource === "skipped" || form.privacyPolicySource === "detected";
       case "contact": return emailOk;
       case "release": return !!form.releaseChannel;
       case "review": return true;
       default: return true;
     }
-  }, [stepId, spec, form, nameStatus, logo, appFile, parsing, emailOk, urlOk]);
+  }, [stepId, spec, form, nameStatus, logo, appFile, parsing, emailOk]);
+
 
   function next() {
     if (!stepValid) return;
@@ -520,9 +592,25 @@ function NewAppPage() {
           platform: form.platform,
           integration_method: (form.integrationMethod || null) as any,
           release_channel: form.releaseChannel,
+          content_type: form.contentType,
+          game_category: isGame ? form.gameCategory || null : null,
+          game_type: isGame ? form.gameType || null : null,
+          game_engine: isGame ? form.gameEngine || null : form.hybridFramework || null,
+          contains_ads: !!form.gameFlags["contains_ads"],
+          has_iap: !!form.gameFlags["has_iap"],
+          is_multiplayer: !!form.gameFlags["is_multiplayer"],
+          requires_account: !!form.gameFlags["requires_account"],
+          has_chat: !!form.gameFlags["has_chat"],
+          online_features: !!form.gameFlags["online_features"],
+          offline_mode: !!form.gameFlags["offline_mode"],
+          controller_support: !!form.gameFlags["controller_support"],
+          cloud_save: !!form.gameFlags["cloud_save"],
+          privacy_policy_source: (form.privacyPolicySource || null) as any,
+          detected_privacy_url: detectedPrivacyUrl,
+          content_rating: form.contentRating || null,
           icon_url: logoUp.url,
           feature_banner_url: bannerUrl,
-          app_url: form.appUrl.trim() || null,
+          app_url: null,
           website_url: form.websiteUrl.trim() || null,
           privacy_policy_url: form.privacyPolicyUrl.trim() || null,
           developer_name: form.developerName.trim() || null,
@@ -531,8 +619,9 @@ function NewAppPage() {
           screenshots: shots.map((s) => s.url),
           tags: form.tags,
           languages: ["English"],
-          min_android_version: spec.androidDetails ? form.minAndroidVersion : null,
-          target_android_version: spec.androidDetails ? form.targetAndroidVersion : null,
+          min_android_version: form.minAndroidVersion,
+          target_android_version: form.targetAndroidVersion,
+
           license: "free",
           price_kobo: 0,
           is_draft: false,
@@ -569,7 +658,7 @@ function NewAppPage() {
           </span>
           <h1 className="mt-5 font-display text-2xl font-bold sm:text-3xl">Publish Your Application</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Welcome to Nova App Store. This publishing wizard will guide you through every step
+            Welcome to Niza App Store. This publishing wizard will guide you through every step
             required to publish your application.
           </p>
           <p className="mt-5 text-sm font-medium">You will provide:</p>
@@ -610,7 +699,7 @@ function NewAppPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {result.dev
               ? "Your build is private. Share the testing link below with your testers — it will not appear in search or categories."
-              : "Your application has been submitted. It will appear across Nova once it clears review."}
+              : "Your application has been submitted. It will appear across Niza once it clears review."}
           </p>
           {result.dev && (
             <div className="mt-6 flex items-center gap-2 rounded-2xl border border-border/60 bg-secondary/40 p-3">
@@ -779,12 +868,12 @@ function NewAppPage() {
       case "integration":
         return (
           <div>
-            {question("How should your hybrid app integrate with Nova?", "Pick one, or both if your application supports both methods.")}
+            {question("How should your hybrid app integrate with Niza?", "Pick one, or both if your application supports both methods.")}
             <div className="space-y-2.5">
               {([
-                { id: "sdk", label: "Nova Services SDK", desc: "Integrate natively for install, update and account features." },
-                { id: "link", label: "Link-based integration", desc: "Nova generates the links your application needs — nothing to embed." },
-                { id: "both", label: "Both methods", desc: "Configure the SDK and use Nova-generated links together." },
+                { id: "sdk", label: "Niza Services SDK", desc: "Integrate natively for install, update and account features." },
+                { id: "link", label: "Link-based integration", desc: "Niza generates the links your application needs — nothing to embed." },
+                { id: "both", label: "Both methods", desc: "Configure the SDK and use Niza-generated links together." },
               ] as const).map((o) => (
                 <button
                   key={o.id}
@@ -808,12 +897,12 @@ function NewAppPage() {
       case "name":
         return (
           <div>
-            {question("What is your application name?", "This is the name users will see across Nova App Store.")}
+            {question("What is your application name?", "This is the name users will see across Niza App Store.")}
             <Input
               autoFocus
               value={form.name}
               maxLength={80}
-              placeholder="e.g. Nova Notes"
+              placeholder="e.g. Niza Notes"
               onChange={(e) => set("name", e.target.value)}
             />
             <p className="mt-2 text-xs text-muted-foreground">
@@ -1070,7 +1159,7 @@ function NewAppPage() {
             {question(
               spec.requiresApk ? "Upload your Android APK." : "Do you have an APK to upload?",
               spec.requiresApk
-                ? "Upload the already-built, signed APK. Nova detects the details automatically."
+                ? "Upload the already-built, signed APK. Niza detects the details automatically."
                 : "Optional for hybrid applications — you can publish with a URL instead.",
             )}
             <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-border/70 bg-card p-4 text-sm text-muted-foreground">
@@ -1181,9 +1270,9 @@ function NewAppPage() {
       case "contact":
         return (
           <div>
-            {question("How can users and Nova reach you?", "Your email is used for review outcomes and support — it is not shown publicly.")}
+            {question("How can users and Niza reach you?", "Your email is used for review outcomes and support — it is not shown publicly.")}
             <Label className="text-sm">Developer or studio name</Label>
-            <Input className="mt-1.5" value={form.developerName} onChange={(e) => set("developerName", e.target.value)} placeholder="Nova Labs" />
+            <Input className="mt-1.5" value={form.developerName} onChange={(e) => set("developerName", e.target.value)} placeholder="Niza Labs" />
             <Label className="mt-4 block text-sm">Contact email</Label>
             <Input className="mt-1.5" type="email" value={form.developerEmail} onChange={(e) => set("developerEmail", e.target.value)} placeholder="you@example.com" />
             {!emailOk && <p className="mt-2 text-xs text-destructive">Enter a valid email address.</p>}
@@ -1250,7 +1339,7 @@ function NewAppPage() {
               <dl className="mt-4 space-y-2 text-sm">
                 {[
                   ["Application type", spec.label, "platform"],
-                  ...(form.integrationMethod ? [["Integration", form.integrationMethod === "both" ? "SDK + link" : form.integrationMethod === "sdk" ? "Nova Services SDK" : "Link-based", "integration"]] : []),
+                  ...(form.integrationMethod ? [["Integration", form.integrationMethod === "both" ? "SDK + link" : form.integrationMethod === "sdk" ? "Niza Services SDK" : "Link-based", "integration"]] : []),
                   ["Category", form.category === "game" ? "Game" : "App", "category"],
                   ["Tags", form.tags.join(", ") || "—", "category"],
                   ["Version", `${form.version} — ${form.releaseNotes.slice(0, 60)}`, "version"],

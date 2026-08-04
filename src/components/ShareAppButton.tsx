@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const SHARE_TEXT =
-  "Try Nova Mind AI — discover apps, games, and AI image generation in one place. Download now.";
+  "Try Niza Mind AI — discover apps, games, and AI image generation in one place. Download now.";
 
 export function getLandingUrl() {
   if (typeof window === "undefined") return "https://webapp-to-apk-hub.lovable.app/welcome";
@@ -23,7 +23,7 @@ export function ShareAppButton({ variant = "outline", size = "sm", className, la
   const url = getLandingUrl();
 
   async function onShare() {
-    const shareData = { title: "Nova Mind AI", text: SHARE_TEXT, url };
+    const shareData = { title: "Niza Mind AI", text: SHARE_TEXT, url };
     try {
       if (typeof navigator !== "undefined" && (navigator as any).share) {
         await (navigator as any).share(shareData);

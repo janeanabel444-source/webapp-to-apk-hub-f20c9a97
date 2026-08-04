@@ -5,7 +5,7 @@ export default defineTool({
   name: "list_my_developer_apps",
   title: "List my developer apps",
   description:
-    "List apps the signed-in user has published or drafted as a developer on Nova App Store, including status and install count.",
+    "List apps the signed-in user has published or drafted as a developer on Niza App Store, including status and install count.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {

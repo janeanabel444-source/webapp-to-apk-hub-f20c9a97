@@ -7,7 +7,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-border/60 bg-background/60">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="text-muted-foreground">
-          © {new Date().getFullYear()} Nova App Store ·{" "}
+          © {new Date().getFullYear()} Niza App Store ·{" "}
           <Link to="/contact" className="font-medium text-foreground hover:underline">
             Contact &amp; Support
           </Link>

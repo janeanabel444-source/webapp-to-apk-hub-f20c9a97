@@ -10,8 +10,8 @@ export const CONTACT_WHATSAPP = CONTACT_LINKTREE;
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact & Support — Nova App Store" },
-      { name: "description", content: "Get in touch with the Nova App Store team via WhatsApp, email or Linktree." },
+      { title: "Contact & Support — Niza App Store" },
+      { name: "description", content: "Get in touch with the Niza App Store team via WhatsApp, email or Linktree." },
     ],
   }),
   component: ContactPage,

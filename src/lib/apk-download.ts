@@ -1,10 +1,10 @@
 // Helper to download an APK from Supabase Storage. When the app is running
-// inside the Nova Android wrapper we hand the signed URL to the native
+// inside the Niza Android wrapper we hand the signed URL to the native
 // bridge, which downloads the file and opens the system package installer.
 // In a normal browser we stream the download and rely on Android Chrome's
 // download notification to launch the installer.
 import { supabase } from "@/integrations/supabase/client";
-import { nativeBridge, isNovaAndroid } from "@/lib/native-bridge";
+import { nativeBridge, isNizaAndroid } from "@/lib/native-bridge";
 
 export async function getApkSignedUrl(filePath: string) {
   if (!filePath) throw new Error("This app has no APK file attached yet.");
@@ -34,7 +34,7 @@ export async function getApkSignedUrl(filePath: string) {
 
 
 /**
- * Downloads an APK. Inside the Nova Android wrapper, hands off to the native
+ * Downloads an APK. Inside the Niza Android wrapper, hands off to the native
  * installer. In a browser, streams with progress and triggers the download.
  */
 export async function downloadApkWithProgress(
@@ -45,7 +45,7 @@ export async function downloadApkWithProgress(
   const signed = await getApkSignedUrl(filePath);
 
   // Native path — Android wrapper handles download + installer intent.
-  if (isNovaAndroid()) {
+  if (isNizaAndroid()) {
     onProgress(1, 1);
     try {
       const res = await nativeBridge.installApk({
@@ -89,5 +89,5 @@ export async function downloadApkWithProgress(
 
 export function isAndroidDevice() {
   if (typeof navigator === "undefined") return false;
-  return /Android/i.test(navigator.userAgent) || isNovaAndroid();
+  return /Android/i.test(navigator.userAgent) || isNizaAndroid();
 }

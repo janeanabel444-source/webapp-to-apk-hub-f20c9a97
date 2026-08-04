@@ -12,7 +12,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/_authenticated/payment-callback")({
   validateSearch: (s) => searchSchema.parse(s),
-  head: () => ({ meta: [{ title: "Verifying payment — Nova" }] }),
+  head: () => ({ meta: [{ title: "Verifying payment — Niza" }] }),
   component: Callback,
 });
 

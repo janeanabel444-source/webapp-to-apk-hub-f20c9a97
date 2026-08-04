@@ -1,6 +1,6 @@
-// Nova App Store — app-shell service worker.
+// Niza App Store — app-shell service worker.
 // Network-first for navigations, cache-first for hashed assets, offline fallback.
-const CACHE = "nova-v2";
+const CACHE = "niza-v2";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",

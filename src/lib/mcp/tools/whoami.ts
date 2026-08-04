@@ -5,7 +5,7 @@ export default defineTool({
   name: "whoami",
   title: "Who am I",
   description:
-    "Return the signed-in Nova App Store user's profile (display name, avatar, premium status).",
+    "Return the signed-in Niza App Store user's profile (display name, avatar, premium status).",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {

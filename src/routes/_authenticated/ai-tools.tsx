@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getMyAiQuota } from "@/lib/ai-quota.functions";
 
 export const Route = createFileRoute("/_authenticated/ai-tools")({
-  head: () => ({ meta: [{ title: "AI Tools — Nova" }] }),
+  head: () => ({ meta: [{ title: "AI Tools — Niza" }] }),
   component: AiToolsHub,
 });
 
@@ -25,7 +25,7 @@ function AiToolsHub() {
         </span>
         <div>
           <h1 className="font-display text-2xl font-bold">AI Tools</h1>
-          <p className="text-sm text-muted-foreground">Optional AI features for Nova members.</p>
+          <p className="text-sm text-muted-foreground">Optional AI features for Niza members.</p>
         </div>
       </div>
 

@@ -10,7 +10,7 @@ const ALLOWED_IMAGE_MIME = new Set([
 ]);
 const ALLOWED_IMAGE_EXT = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
 
-// APK ONLY — Nova is an Android APK marketplace. Web URLs, PWA links,
+// APK ONLY — Niza is an Android APK marketplace. Web URLs, PWA links,
 // GitHub Pages, and any other web bundle are not accepted.
 const ALLOWED_APP_FILE_MIME = new Set([
   "application/vnd.android.package-archive",

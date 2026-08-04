@@ -92,11 +92,11 @@ function Consent() {
         >
           <Sparkles className="h-4 w-4" />
         </span>
-        Nova App Store
+        Niza App Store
       </div>
 
       <div className="rounded-3xl border border-border/60 bg-card p-7 shadow-sm">
-        <h1 className="font-display text-2xl font-bold">Connect {clientName} to your Nova account</h1>
+        <h1 className="font-display text-2xl font-bold">Connect {clientName} to your Niza account</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {clientName} will be able to call this app's enabled tools while you are signed in — searching apps,
           reading your library, and reading your developer listings.
@@ -104,10 +104,10 @@ function Consent() {
         <ul className="mt-4 space-y-1.5 text-sm">
           <li>• Share your basic profile</li>
           <li>• Share your email address</li>
-          <li>• Use Nova App Store as you</li>
+          <li>• Use Niza App Store as you</li>
         </ul>
         <p className="mt-4 text-xs text-muted-foreground">
-          This does not bypass Nova's permissions or backend policies.
+          This does not bypass Niza's permissions or backend policies.
         </p>
 
         {err && (

@@ -311,9 +311,14 @@ export type Database = {
           apk_size: number | null
           app_url: string | null
           category: Database["public"]["Enums"]["app_category"]
+          cloud_save: boolean
+          contains_ads: boolean
           content_rating: string | null
+          content_type: string
+          controller_support: boolean
           created_at: string
           description: string | null
+          detected_privacy_url: string | null
           developer_email: string | null
           developer_id: string | null
           developer_name: string | null
@@ -321,12 +326,19 @@ export type Database = {
           feature_banner_url: string | null
           featured_at: string | null
           file_path: string | null
+          game_category: string | null
+          game_engine: string | null
+          game_type: string | null
+          has_chat: boolean
+          has_iap: boolean
           icon_url: string | null
           id: string
           install_count: number
           integration_method: string | null
+          is_coming_soon: boolean
           is_draft: boolean
           is_featured: boolean
+          is_multiplayer: boolean
           is_published: boolean
           languages: string[]
           last_updated_at: string
@@ -334,15 +346,19 @@ export type Database = {
           license: string
           min_android_version: string | null
           name: string
+          offline_mode: boolean
+          online_features: boolean
           package_name: string | null
           permissions: string[] | null
           platform: string | null
           price_kobo: number
+          privacy_policy_source: string | null
           privacy_policy_url: string | null
           promo_video_path: string | null
           rating_avg: number
           rating_count: number
           release_channel: string
+          requires_account: boolean
           review_note: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -364,9 +380,14 @@ export type Database = {
           apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
+          cloud_save?: boolean
+          contains_ads?: boolean
           content_rating?: string | null
+          content_type?: string
+          controller_support?: boolean
           created_at?: string
           description?: string | null
+          detected_privacy_url?: string | null
           developer_email?: string | null
           developer_id?: string | null
           developer_name?: string | null
@@ -374,12 +395,19 @@ export type Database = {
           feature_banner_url?: string | null
           featured_at?: string | null
           file_path?: string | null
+          game_category?: string | null
+          game_engine?: string | null
+          game_type?: string | null
+          has_chat?: boolean
+          has_iap?: boolean
           icon_url?: string | null
           id?: string
           install_count?: number
           integration_method?: string | null
+          is_coming_soon?: boolean
           is_draft?: boolean
           is_featured?: boolean
+          is_multiplayer?: boolean
           is_published?: boolean
           languages?: string[]
           last_updated_at?: string
@@ -387,15 +415,19 @@ export type Database = {
           license?: string
           min_android_version?: string | null
           name: string
+          offline_mode?: boolean
+          online_features?: boolean
           package_name?: string | null
           permissions?: string[] | null
           platform?: string | null
           price_kobo?: number
+          privacy_policy_source?: string | null
           privacy_policy_url?: string | null
           promo_video_path?: string | null
           rating_avg?: number
           rating_count?: number
           release_channel?: string
+          requires_account?: boolean
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -417,9 +449,14 @@ export type Database = {
           apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
+          cloud_save?: boolean
+          contains_ads?: boolean
           content_rating?: string | null
+          content_type?: string
+          controller_support?: boolean
           created_at?: string
           description?: string | null
+          detected_privacy_url?: string | null
           developer_email?: string | null
           developer_id?: string | null
           developer_name?: string | null
@@ -427,12 +464,19 @@ export type Database = {
           feature_banner_url?: string | null
           featured_at?: string | null
           file_path?: string | null
+          game_category?: string | null
+          game_engine?: string | null
+          game_type?: string | null
+          has_chat?: boolean
+          has_iap?: boolean
           icon_url?: string | null
           id?: string
           install_count?: number
           integration_method?: string | null
+          is_coming_soon?: boolean
           is_draft?: boolean
           is_featured?: boolean
+          is_multiplayer?: boolean
           is_published?: boolean
           languages?: string[]
           last_updated_at?: string
@@ -440,15 +484,19 @@ export type Database = {
           license?: string
           min_android_version?: string | null
           name?: string
+          offline_mode?: boolean
+          online_features?: boolean
           package_name?: string | null
           permissions?: string[] | null
           platform?: string | null
           price_kobo?: number
+          privacy_policy_source?: string | null
           privacy_policy_url?: string | null
           promo_video_path?: string | null
           rating_avg?: number
           rating_count?: number
           release_channel?: string
+          requires_account?: boolean
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -604,6 +652,41 @@ export type Database = {
           },
         ]
       }
+      moderation_violations: {
+        Row: {
+          app_id: string | null
+          created_at: string
+          details: string | null
+          developer_id: string
+          id: string
+          kind: string
+        }
+        Insert: {
+          app_id?: string | null
+          created_at?: string
+          details?: string | null
+          developer_id: string
+          id?: string
+          kind: string
+        }
+        Update: {
+          app_id?: string | null
+          created_at?: string
+          details?: string | null
+          developer_id?: string
+          id?: string
+          kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_violations_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           app_id: string | null
@@ -687,6 +770,35 @@ export type Database = {
         }
         Relationships: []
       }
+      pre_registrations: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_registrations_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -696,6 +808,7 @@ export type Database = {
           display_name: string | null
           id: string
           is_premium: boolean
+          is_suspended: boolean
           premium_expires_at: string | null
           premium_since: string | null
         }
@@ -707,6 +820,7 @@ export type Database = {
           display_name?: string | null
           id: string
           is_premium?: boolean
+          is_suspended?: boolean
           premium_expires_at?: string | null
           premium_since?: string | null
         }
@@ -718,6 +832,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_premium?: boolean
+          is_suspended?: boolean
           premium_expires_at?: string | null
           premium_since?: string | null
         }

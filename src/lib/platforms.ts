@@ -1,12 +1,14 @@
 /**
- * Extensible platform registry for Nova App Store.
+ * Extensible publishing registry for Niza App Store.
  *
- * Add a new application type by appending an entry here — the upload wizard,
- * validation and store listing all read from this registry, so no other file
- * needs to change to support a new platform.
+ * The upload wizard, validation and store listing all read from this registry,
+ * so adding a new application type or game option only requires an entry here.
+ *
+ * Niza distributes installable Android packages only — websites are never
+ * converted into applications, and hosted/URL-only publishing is not offered.
  */
 
-export type PlatformId = "pwa" | "web" | "android" | "hybrid" | "ios";
+export type PlatformId = "pwa" | "android" | "hybrid" | "ios";
 
 export interface PlatformSpec {
   id: PlatformId;
@@ -17,13 +19,11 @@ export interface PlatformSpec {
   bullets: string[];
   /** Requires an uploaded APK binary. */
   requiresApk: boolean;
-  /** Requires a hosted application URL. */
-  requiresUrl: boolean;
   /** Ask for Android-specific fields (min/target SDK, permissions…). */
   androidDetails: boolean;
-  /** Can be integrated through the Nova Services SDK. */
+  /** Can be integrated through the Niza Services SDK. */
   supportsSdk: boolean;
-  /** Can be integrated through a Nova-generated link. */
+  /** Can be integrated through a Niza-generated link. */
   supportsLink: boolean;
   /** Disabled types are shown as "coming soon" and cannot be selected. */
   enabled: boolean;
@@ -32,38 +32,19 @@ export interface PlatformSpec {
 export const PLATFORMS: PlatformSpec[] = [
   {
     id: "pwa",
-    label: "Progressive Web App (PWA)",
-    short: "PWA",
+    label: "Progressive Web App (PWA APK)",
+    short: "PWA APK",
     description:
-      "A Progressive Web App is a web application that behaves like an installable application. It runs from the web, can be installed on supported devices, and updates automatically whenever you deploy your website.",
+      "A Progressive Web App that you have already packaged into an Android APK (for example with Bubblewrap or PWABuilder). Upload the finished APK — Niza does not convert websites into Android applications.",
     bullets: [
-      "Runs from the web — no APK required",
-      "Installable on supported devices",
-      "Updates through your web application",
-      "No Android-specific publishing information needed",
+      "Upload the APK you generated from your PWA",
+      "Installed directly on the device like any Android app",
+      "Package details are detected automatically from the APK",
+      "Every binary is virus-scanned before publishing",
     ],
-    requiresApk: false,
-    requiresUrl: true,
-    androidDetails: false,
-    supportsSdk: false,
-    supportsLink: true,
-    enabled: true,
-  },
-  {
-    id: "web",
-    label: "Web Application",
-    short: "Web",
-    description:
-      "A standard web application that users open in their browser. Nova lists it, handles discovery and reviews, and sends users straight to your hosted application.",
-    bullets: [
-      "Opens in the browser",
-      "No installation step for users",
-      "You keep full control of hosting and updates",
-    ],
-    requiresApk: false,
-    requiresUrl: true,
-    androidDetails: false,
-    supportsSdk: false,
+    requiresApk: true,
+    androidDetails: true,
+    supportsSdk: true,
     supportsLink: true,
     enabled: true,
   },
@@ -72,7 +53,7 @@ export const PLATFORMS: PlatformSpec[] = [
     label: "Native Android APK",
     short: "Android",
     description:
-      "A native Android application installed directly on Android devices. Upload the APK you have already built and signed — Nova does not convert websites into Android applications.",
+      "A native Android application installed directly on Android devices. Upload the APK you have already built and signed.",
     bullets: [
       "Upload an already-built, signed APK",
       "Installed directly on the device",
@@ -80,25 +61,24 @@ export const PLATFORMS: PlatformSpec[] = [
       "Every binary is virus-scanned before publishing",
     ],
     requiresApk: true,
-    requiresUrl: false,
     androidDetails: true,
     supportsSdk: true,
-    supportsLink: false,
+    supportsLink: true,
     enabled: true,
   },
   {
     id: "hybrid",
-    label: "Hybrid Application",
+    label: "Hybrid Android APK",
     short: "Hybrid",
     description:
-      "A hybrid application combines a web experience with a native shell. You can integrate with Nova through the Nova Services SDK, through a Nova-generated link, or through both.",
+      "An application built with a cross-platform framework such as Flutter, React Native, Capacitor, Ionic or Cordova and packaged as an Android APK.",
     bullets: [
-      "Upload an APK, provide a hosted URL, or both",
+      "Upload the packaged Android APK",
+      "Tell us which framework you used",
       "Choose SDK integration, link integration, or both",
-      "Android details are collected only when an APK is provided",
+      "Every binary is virus-scanned before publishing",
     ],
-    requiresApk: false,
-    requiresUrl: false,
+    requiresApk: true,
     androidDetails: true,
     supportsSdk: true,
     supportsLink: true,
@@ -112,7 +92,6 @@ export const PLATFORMS: PlatformSpec[] = [
       "Native iOS publishing is being prepared. The publishing workflow is already architected for it and will be enabled once distribution is available.",
     bullets: ["Coming soon"],
     requiresApk: false,
-    requiresUrl: false,
     androidDetails: false,
     supportsSdk: false,
     supportsLink: false,
@@ -120,11 +99,75 @@ export const PLATFORMS: PlatformSpec[] = [
   },
 ];
 
-export function getPlatform(id: PlatformId): PlatformSpec {
-  return PLATFORMS.find((p) => p.id === id) ?? PLATFORMS[0];
+export function getPlatform(id: PlatformId | string): PlatformSpec {
+  return PLATFORMS.find((p) => p.id === id) ?? PLATFORMS[1]!;
 }
 
-export type ReleaseChannel = "development" | "public";
+/** Frameworks offered for hybrid Android packages. */
+export const HYBRID_FRAMEWORKS = [
+  "Flutter",
+  "React Native",
+  "Capacitor",
+  "Ionic",
+  "Cordova",
+  "Other",
+] as const;
+
+/** Top-level upload category — the very first question in the wizard. */
+export type UploadCategory = "app" | "game";
+
+export const GAME_CATEGORIES = [
+  "Action",
+  "Adventure",
+  "Arcade",
+  "Board",
+  "Card",
+  "Casual",
+  "Educational",
+  "Music",
+  "Puzzle",
+  "Racing",
+  "Role Playing",
+  "Simulation",
+  "Sports",
+  "Strategy",
+  "Trivia",
+  "Word",
+  "Other",
+] as const;
+
+export const GAME_TYPES = [
+  { id: "single", label: "Single player" },
+  { id: "multiplayer", label: "Multiplayer" },
+  { id: "online", label: "Online" },
+  { id: "offline", label: "Offline" },
+  { id: "online_offline", label: "Online + Offline" },
+] as const;
+
+export const GAME_ENGINES = ["Unity", "Unreal Engine", "Godot", "GameMaker", "Custom", "Other"] as const;
+
+/** Optional game feature flags shown as toggles in the wizard. */
+export const GAME_FLAGS = [
+  { id: "contains_ads", label: "Contains ads" },
+  { id: "has_iap", label: "In-app purchases" },
+  { id: "is_multiplayer", label: "Multiplayer" },
+  { id: "requires_account", label: "Requires a user account" },
+  { id: "has_chat", label: "In-game chat" },
+  { id: "online_features", label: "Online features" },
+  { id: "offline_mode", label: "Offline mode" },
+  { id: "controller_support", label: "Controller support" },
+  { id: "cloud_save", label: "Cloud save" },
+] as const;
+
+export type GameFlagId = (typeof GAME_FLAGS)[number]["id"];
+
+export const AGE_RATINGS = [
+  { id: "everyone", label: "Everyone" },
+  { id: "teen", label: "Teen" },
+  { id: "mature", label: "Mature 17+" },
+] as const;
+
+export type ReleaseChannel = "development" | "public" | "coming_soon";
 
 export const RELEASE_CHANNELS: {
   id: ReleaseChannel;
@@ -146,12 +189,23 @@ export const RELEASE_CHANNELS: {
   {
     id: "public",
     label: "Public release",
-    description: "Release your application to everyone on Nova.",
+    description: "Release to everyone on Niza.",
     bullets: [
-      "Visible throughout Nova App Store",
+      "Visible throughout Niza App Store",
       "Searchable and listed in categories",
-      "Has a public application page",
+      "Has a public store page",
       "Can be downloaded by all users",
+    ],
+  },
+  {
+    id: "coming_soon",
+    label: "Coming soon",
+    description: "Publish the store page now, release the download later.",
+    bullets: [
+      "Store page is live immediately",
+      "Install is replaced with Pre-register",
+      "Users who pre-register are notified the moment you release",
+      "Switch to a public release whenever you are ready",
     ],
   },
 ];

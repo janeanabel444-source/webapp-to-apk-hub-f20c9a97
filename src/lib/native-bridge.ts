@@ -1,27 +1,27 @@
-// Native bridge to the Nova Android wrapper.
+// Native bridge to the Niza Android wrapper.
 //
-// The Android app injects a JS interface named `NovaAndroid` and (optionally)
-// dispatches `nova-android-response` CustomEvents for async replies. Every
+// The Android app injects a JS interface named `NizaAndroid` and (optionally)
+// dispatches `niza-android-response` CustomEvents for async replies. Every
 // method is optional — we probe for it and gracefully fall back to the
 // standard web behaviour when running in a normal browser.
 //
 // Android side (Kotlin) should expose something like:
-//   webView.addJavascriptInterface(NovaBridge(activity), "NovaAndroid")
+//   webView.addJavascriptInterface(NizaBridge(activity), "NizaAndroid")
 // with @JavascriptInterface methods matching the names below. Async replies
-// travel back via: webView.evaluateJavascript("window.__novaResolve(id, json)")
+// travel back via: webView.evaluateJavascript("window.__nizaResolve(id, json)")
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> };
 const pending = new Map<string, Pending>();
 
 declare global {
   interface Window {
-    NovaAndroid?: Record<string, (...args: unknown[]) => unknown>;
-    __novaResolve?: (id: string, payload: string) => void;
+    NizaAndroid?: Record<string, (...args: unknown[]) => unknown>;
+    __nizaResolve?: (id: string, payload: string) => void;
   }
 }
 
-if (typeof window !== "undefined" && !window.__novaResolve) {
-  window.__novaResolve = (id, payload) => {
+if (typeof window !== "undefined" && !window.__nizaResolve) {
+  window.__nizaResolve = (id, payload) => {
     const p = pending.get(id);
     if (!p) return;
     pending.delete(id);
@@ -36,14 +36,14 @@ if (typeof window !== "undefined" && !window.__novaResolve) {
   };
 }
 
-export function isNovaAndroid(): boolean {
-  return typeof window !== "undefined" && !!window.NovaAndroid;
+export function isNizaAndroid(): boolean {
+  return typeof window !== "undefined" && !!window.NizaAndroid;
 }
 
 function call<T = unknown>(method: string, args: Record<string, unknown> = {}, timeoutMs = 30_000): Promise<T> {
   return new Promise((resolve, reject) => {
-    if (!isNovaAndroid()) return reject(new Error("Native bridge not available"));
-    const fn = window.NovaAndroid?.[method];
+    if (!isNizaAndroid()) return reject(new Error("Native bridge not available"));
+    const fn = window.NizaAndroid?.[method];
     if (typeof fn !== "function") return reject(new Error(`Native method ${method} not implemented`));
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const timer = setTimeout(() => {
@@ -52,8 +52,8 @@ function call<T = unknown>(method: string, args: Record<string, unknown> = {}, t
     }, timeoutMs);
     pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timer });
     try {
-      // The Android side receives (id, argsJson) and later calls __novaResolve.
-      fn.call(window.NovaAndroid, id, JSON.stringify(args));
+      // The Android side receives (id, argsJson) and later calls __nizaResolve.
+      fn.call(window.NizaAndroid, id, JSON.stringify(args));
     } catch (e) {
       pending.delete(id);
       clearTimeout(timer);
@@ -64,7 +64,7 @@ function call<T = unknown>(method: string, args: Record<string, unknown> = {}, t
 
 /** High-level API — every method is a graceful no-op / rejection on non-wrapper browsers. */
 export const nativeBridge = {
-  isAvailable: isNovaAndroid,
+  isAvailable: isNizaAndroid,
 
   /** Download an APK to device storage and hand it to the package installer. */
   installApk: (opts: { url: string; fileName: string; appId?: string }) =>

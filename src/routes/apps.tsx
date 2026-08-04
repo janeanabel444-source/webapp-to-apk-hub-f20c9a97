@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 export const Route = createFileRoute("/apps")({
   head: () => ({
     meta: [
-      { title: "Apps — NovaMind AI" },
-      { name: "description", content: "Browse the best apps on NovaMind AI." },
+      { title: "Apps — NizaMind AI" },
+      { name: "description", content: "Browse the best apps on NizaMind AI." },
     ],
   }),
   component: AppsPage,
