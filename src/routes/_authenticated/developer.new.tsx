@@ -1384,10 +1384,31 @@ function NewAppPage() {
               inputMode="url"
               value={form.privacyPolicyUrl}
               placeholder="https://yourapp.com/privacy"
-              onChange={(e) => set("privacyPolicyUrl", e.target.value)}
+              onChange={(e) => { set("privacyPolicyUrl", e.target.value); set("privacyPolicySource", e.target.value.trim() ? "url" : ""); }}
             />
+            {detectedPrivacyUrl && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                A privacy policy was detected inside your package: <span className="text-foreground">{detectedPrivacyUrl}</span>
+              </p>
+            )}
+            {/* Skip is only offered while the URL field is empty. */}
+            {!form.privacyPolicyUrl.trim() && (
+              <button
+                type="button"
+                onClick={() => set("privacyPolicySource", form.privacyPolicySource === "skipped" ? "" : "skipped")}
+                className={`mt-3 rounded-full border px-4 py-2 text-xs transition ${
+                  form.privacyPolicySource === "skipped" ? "border-primary bg-primary/5 text-primary" : "border-border/60 text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                {form.privacyPolicySource === "skipped" ? "Skipped — my app collects no personal data" : "Skip — my app collects no personal data"}
+              </button>
+            )}
+            <p className="mt-3 text-xs text-muted-foreground">
+              If your package requests permissions that can collect personal data, Niza will still require a policy before publishing.
+            </p>
           </div>
         );
+
 
       case "contact":
         return (
