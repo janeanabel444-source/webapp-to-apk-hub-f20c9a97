@@ -1,107 +1,68 @@
-# Nova App Store — Play Store Repositioning Plan
+# Niza App Store — rebrand, split app/game publishing, privacy & install fixes
 
-Reframes the app around Apps + Games + Developer Hub, with AI image generation pushed into a secondary "AI Tools" area gated by role-based daily limits.
+Nothing existing gets removed except web/URL-only publishing, which you asked to drop. All current features (ads, AI tools, premium, admin, reviews, MCP) stay intact.
 
-## 1. Information architecture & navigation
+## 1. Rebrand to Niza App Store
 
-Rework `Header.tsx` nav to:
-`Apps · Games · Trending · Categories · Developer Hub · AI Tools · Profile`
+- Replace every user-visible "Nova" with "Niza": header, footer, landing/welcome page, auth, store pages, developer hub, admin dashboard, upload wizard, notifications, share/testing links, contact page, PWA manifest, service worker, page titles and meta descriptions.
+- Rename the Android wrapper interface from `NovaAndroid` to `NizaAndroid` (your choice — the current wrapper build will need a rebuild to regain install/open features).
+- "Nova Services SDK" / "Nova Review Link" become "Niza Services SDK" / "Niza Review Link".
 
-- "Developer Hub" rendered as a prominent pill (primary color / outline) so it visually stands apart from the rest.
-- "AI Tools" replaces the current "Create AI Image" + "AI Gallery" top-level entries; those move into a single `/ai-tools` hub page that links to `/ai-image` and `/ai-gallery`.
-- Profile dropdown gains "Developer Hub" link (only visible to authed users).
+## 2. Upload wizard: category first, then type
 
-## 2. Home page redesign (`src/routes/index.tsx`)
+New first step after the intro screen: **Choose Upload Category** — Application or Game. The two paths then diverge.
 
-Replace current AI-forward layout with Play Store–style sections, in order:
+Application types (APK required in all cases, no URL fields anywhere):
+1. Progressive Web App (PWA APK)
+2. Native Android APK
+3. Hybrid Android APK (Flutter, React Native, Capacitor, Ionic, Cordova, other)
+4. iOS Application — shown as Coming Soon, disabled
 
-1. Hero: "Welcome to Nova App Store — Discover apps and games in one place".
-2. Featured Apps (carousel, `is_featured=true` + `category='app'`).
-3. Featured Games (carousel, `is_featured=true` + `category='game'`).
-4. Trending Apps (top by `install_count`, last 30 days).
-5. Trending Games (same, category=game).
-6. Categories grid (Productivity, Social, Games – Action, Puzzle, etc.).
-7. Small "Are you a developer? Publish on Nova" CTA card linking to `/developer`.
-8. Tiny "AI Tools" card at the bottom (secondary, no longer the hero).
+Removed entirely: Web App / hosted app / "runs from the web" / "no APK required" / URL-install options, in the wizard, the platform registry, validation, and store pages.
 
-## 3. Trending & Categories routes
+Game path asks its own questions: game name, short and long description, game category (Action … Other, full list), game type (single/multiplayer/online/offline/online+offline), optional engine (Unity, Unreal, Godot, Other), then game media (icon, feature graphic, screenshots, gameplay video) and game flags: age rating, contains ads, in-app purchases, multiplayer, user accounts, chat, online features, offline mode, controller support, cloud save.
 
-- `src/routes/trending.tsx` — combined trending list with tabs (Apps / Games), sorted by `install_count` desc.
-- `src/routes/categories.tsx` — grid of category chips. Clicking filters via `/apps?category=` or `/games?category=`. Update `apps.tsx` / `games.tsx` to read `category` search param via TanStack search.
+## 3. Game store page
 
-## 4. Developer Hub (core new feature)
+Games get their own detail layout: "About this game", "Similar games", "More games from this developer", plus genre, age rating, gameplay video, screenshots, downloads, ratings and reviews.
 
-New routes under `_authenticated/developer/`:
+## 4. APK analysis
 
-- `developer/index.tsx` — dashboard listing the developer's uploaded apps, with download counts and status badges (Pending / Approved / Live). "Upload new app" CTA.
-- `developer/new.tsx` — upload form.
-- `developer/$appId.edit.tsx` — edit existing app.
+Keep the current in-browser analyzer (name, package, version name/code, size, permissions, min/target Android) and fix the "Reading APK" stall: run analysis in a worker-safe path with a hard timeout, always show either results or a readable error with a manual-continue option. Extracted fields are never re-asked.
 
-Upload form fields:
-- App Name (required)
-- App Logo (required; blocks submit if missing — uploaded to new `app-logos` storage bucket, public)
-- Description (required)
-- Category: App | Game (required)
-- Subcategory (free text / select)
-- Platform: Web | PWA | Android wrapper (required)
-- App URL OR uploaded app file (one required; file → `app-files` private bucket)
-- Screenshots (optional, multi-upload → `app-screenshots` public bucket)
+## 5. Privacy policy system
 
-DB schema changes (single migration):
-- Extend `apps` table: add `developer_id uuid references auth.users`, `status text default 'pending'` (`pending|approved|live|rejected`), `platform text`, `app_url text`, `file_path text`, `screenshots text[]`. Keep existing `icon_url` as the logo.
-- RLS: developers can `INSERT` rows where `developer_id = auth.uid()`; can `UPDATE/DELETE` own rows while `status != 'live'`; can `SELECT` own rows always. Public `SELECT` restricted to `status='live'` (so pending apps don't show on home).
-- Admin role (via existing `has_role`) can update any row's status (approval workflow).
-- New storage buckets: `app-logos` (public), `app-screenshots` (public), `app-files` (private). RLS scoped to `developer_id` folder.
+- Every workflow includes a Privacy Policy URL step. Initially Skip is enabled and Next is disabled; entering a valid URL enables Next and hides Skip.
+- After APK analysis, scan the package for privacy/terms/legal links. If found: "Privacy Policy Detected — We found a Privacy Policy inside your application", with Use Detected / Review Policy / Keep Existing Choice.
+- Data-collection check from permissions and declared flags (account, email, location, camera, microphone, contacts, analytics, ad IDs, cloud data, user content). If data is collected and there is no URL and no detected in-app policy, publishing is blocked with "Privacy Policy Required" and an explanation.
 
-Server functions (`src/lib/developer.functions.ts`):
-- `createApp`, `updateApp`, `listMyApps`, `getAppForEdit`, `submitForReview`.
-- All require `requireSupabaseAuth`.
+## 6. Niza SDK / Review link step
 
-## 5. Role-based AI limits
+Before final submission the developer must pick Niza Services SDK or Niza Review Link, with generated Review, Store, App Page and Share links plus the integration explanation.
 
-Roles already exist (`user`, plus we add `developer`, `jasper_ai`, `admin` to the `app_role` enum).
+## 7. Security scan and publishing flow
 
-Daily limits:
-- `user` → 0/day (must upgrade or redeem promo)
-- `jasper_ai` → 20/day
-- `developer` → 0/day (no AI perk by default)
-- `admin` → unlimited
-- Premium subscribers → keep existing premium allowance (treated as 20/day too).
+- Submit for Review sends the APK to VirusTotal; malware, suspicious files, dangerous permissions and threats block publishing and return the scan findings and required fixes to the developer, who can resubmit.
+- Final review page keeps Back / edit-any-answer / Submit for Review.
+- Success screen: "Application Published Successfully" (or "Game Published Successfully") with Public App Page, Download, Share, Review and Developer URLs, each with Copy, Open and Share buttons.
 
-Implementation:
-- New table `ai_image_usage(user_id, used_on date, count int, primary key(user_id, used_on))` with RLS owner-only select; service-role writes.
-- Update `generateImage` server fn (`src/lib/stability.functions.ts`):
-  1. Resolve highest role for user.
-  2. Compute daily quota.
-  3. Upsert today's row, increment, reject if over quota.
-  4. Admin short-circuits the check.
-- Promo code "Jasper AI" (case-sensitive) in existing `promo_codes` flow now grants the `jasper_ai` role via `user_roles` insert instead of (or in addition to) premium flag. Update `redeemPromoCode` accordingly; keep existing JASPER AI permanent-premium code as a separate row or migrate it.
+## 8. Admin
 
-## 6. AI Tools area
+- Both `novaservices.org1@gmail.com` and `paschalsoromtochukwu@gmail.com` stay permanent super admins (granted only on verified email, no other account can be promoted from the client).
+- Admin dashboard gains explicit Game Management alongside App, Developer, Review, Security and Approval controls.
+- Admin uploads skip the approval queue and publish immediately, but still run the security scan.
 
-- New `src/routes/_authenticated/ai-tools.tsx` — hub page describing AI features with cards linking to `/ai-image` (generate) and `/ai-gallery` (browse). Shows remaining daily quota for current user.
-- `/ai-image` page updated to show "X of Y generations remaining today" and clear messaging when quota = 0 (with "Redeem promo code" + "Go Premium" buttons).
+## 9. Install / open / uninstall
 
-## 7. Auth & profile touches
-
-- Auth flow unchanged (Google + email), but on signup default role stays `user`.
-- Profile menu shows current role badge.
-
-## 8. Out of scope (intentionally deferred)
-
-- Actual malware scanning beyond VirusTotal hook (already wired) — keep current behavior.
-- Android wrapper build pipeline — store the URL only.
-- Manual admin approval UI — schema + status field land now; admin review screen can be a follow-up.
-
----
+- Install triggers the APK install immediately (native installer inside the wrapper, download+installer hint in the browser).
+- Once installed, show Open and Uninstall: Open launches the package, Uninstall goes through the Android uninstall flow and then clears local install state.
+- Fix stale "installed" detection and the Install button lingering after install by verifying package state through the bridge and refreshing install queries.
+- Fix the spurious "sign in again" errors on install by reusing the live session instead of a stale token.
 
 ## Technical notes
 
-- All schema work goes in one migration with explicit `GRANT`s and RLS per project rules.
-- Storage buckets created via `supabase--storage_create_bucket` (not SQL).
-- Role checks use existing `has_role` security-definer function; extend `app_role` enum with `developer` and `jasper_ai`.
-- Search-param filtering on `/apps` and `/games` uses TanStack Router `validateSearch`.
-- All server functions live in `src/lib/*.functions.ts`; protected functions called from `_authenticated/` routes only.
-- Header reorders nav; the AI top-level links are removed in favor of a single "AI Tools" entry to enforce the "AI is secondary" rule.
-
-Once you approve, I'll start with the migration + storage buckets, then Developer Hub, then the home/nav redesign, then the AI quota system.
+- Migration: add game-specific columns to `apps` (`content_type` app/game, `game_category`, `game_type`, `game_engine`, and the boolean feature flags), plus `privacy_policy_source` / `detected_privacy_url`; keep existing columns and RLS untouched, with grants for the new state.
+- `src/lib/platforms.ts` becomes the single registry for both application types and game types; `requiresUrl` and the web/PWA-URL specs are removed.
+- Wizard work is in `src/routes/_authenticated/developer.new.tsx` (split into category → type → path-specific steps) with server validation mirrored in `src/lib/review.ts` and `src/lib/developer.functions.ts`.
+- Install logic in `src/components/InstallButton.tsx`, `src/lib/apk-download.ts` and `src/lib/native-bridge.ts` (adds `uninstallPackage`, uses `NizaAndroid`).
+- Also fixing a hydration mismatch on the app detail page caused by locale date formatting.
