@@ -86,6 +86,11 @@ export const nativeBridge = {
   launchPackage: (packageName: string) =>
     call<{ launched: boolean }>("launchPackage", { packageName }),
 
+  /** Ask Android to uninstall a package (system dialog confirms). */
+  uninstallPackage: (packageName: string) =>
+    call<{ uninstalled: boolean }>("uninstallPackage", { packageName }, 5 * 60_000),
+
+
   /** Get device info (androidVersion, sdkInt, model, abis). */
   getDeviceInfo: () => call<{ androidVersion: string; sdkInt: number; model: string; abis: string[] }>("getDeviceInfo"),
 };

@@ -329,6 +329,7 @@ export type Database = {
           game_category: string | null
           game_engine: string | null
           game_type: string | null
+          game_types: string[]
           has_chat: boolean
           has_iap: boolean
           icon_url: string | null
@@ -398,6 +399,7 @@ export type Database = {
           game_category?: string | null
           game_engine?: string | null
           game_type?: string | null
+          game_types?: string[]
           has_chat?: boolean
           has_iap?: boolean
           icon_url?: string | null
@@ -467,6 +469,7 @@ export type Database = {
           game_category?: string | null
           game_engine?: string | null
           game_type?: string | null
+          game_types?: string[]
           has_chat?: boolean
           has_iap?: boolean
           icon_url?: string | null

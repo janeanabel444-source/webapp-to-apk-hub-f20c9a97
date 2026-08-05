@@ -1,0 +1,2 @@
+ALTER TABLE public.apps ADD COLUMN IF NOT EXISTS game_types text[] NOT NULL DEFAULT '{}'::text[];
+UPDATE public.apps SET game_types = ARRAY[game_type] WHERE game_type IS NOT NULL AND game_type <> '' AND cardinality(game_types) = 0;

@@ -19,6 +19,7 @@ const appInput = z.object({
   content_type: z.enum(["app", "game"]).default("app"),
   game_category: z.string().trim().max(40).optional().nullable(),
   game_type: z.string().trim().max(40).optional().nullable(),
+  game_types: z.array(z.string().trim().max(40)).max(8).default([]),
   game_engine: z.string().trim().max(40).optional().nullable(),
   contains_ads: z.boolean().default(false),
   has_iap: z.boolean().default(false),
@@ -271,7 +272,8 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
 
         content_type: data.content_type ?? data.category,
         game_category: data.game_category ?? null,
-        game_type: data.game_type ?? null,
+        game_type: data.game_type ?? data.game_types?.[0] ?? null,
+        game_types: data.game_types ?? [],
         game_engine: data.game_engine ?? null,
         contains_ads: data.contains_ads ?? false,
         has_iap: data.has_iap ?? false,

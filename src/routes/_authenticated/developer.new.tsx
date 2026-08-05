@@ -50,7 +50,7 @@ interface DraftState {
   description: string;
   category: Category;
   gameCategory: string;
-  gameType: string;
+  gameTypes: string[];
   gameEngine: string;
   gameFlags: Record<string, boolean>;
   contentRating: string;
@@ -81,7 +81,7 @@ const initialDraft: DraftState = {
   description: "",
   category: "app",
   gameCategory: "",
-  gameType: "",
+  gameTypes: [],
   gameEngine: "",
   gameFlags: {},
   contentRating: "everyone",
@@ -118,7 +118,7 @@ const HELP: Record<string, { title: string; body: string[] }> = {
   gameType: {
     title: "How your game is played",
     body: [
-      "Tell players whether the game is single player, multiplayer, online, offline, or a mix.",
+      "Select every mode that applies — single player, multiplayer, online, offline. A game can be more than one.",
       "This shows on your store page so players know what to expect before installing.",
     ],
   },
@@ -313,7 +313,7 @@ function NewAppPage() {
   const [progress, setProgress] = useState<{ label: string; pct: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [autosaved, setAutosaved] = useState<Date | null>(null);
-  const [result, setResult] = useState<{ slug: string; shareToken: string; dev: boolean } | null>(null);
+  const [result, setResult] = useState<{ id: string; slug: string; shareToken: string; dev: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const spec = getPlatform(form.platform);
@@ -526,7 +526,7 @@ function NewAppPage() {
       case "platform": return spec.enabled;
       case "framework": return !!form.hybridFramework;
       case "gameCategory": return !!form.gameCategory;
-      case "gameType": return !!form.gameType;
+      case "gameType": return form.gameTypes.length > 0;
       case "gameFlags": return true;
       case "integration": return !spec.supportsSdk || !spec.supportsLink || form.integrationMethod !== "";
       case "name": return form.name.trim().length >= 2 && nameStatus !== "taken" && nameStatus !== "checking";
@@ -599,15 +599,16 @@ function NewAppPage() {
           release_channel: form.releaseChannel,
           content_type: form.contentType,
           game_category: isGame ? form.gameCategory || null : null,
-          game_type: isGame ? form.gameType || null : null,
+          game_type: isGame ? form.gameTypes[0] ?? null : null,
+          game_types: isGame ? form.gameTypes : [],
           game_engine: isGame ? form.gameEngine || null : form.hybridFramework || null,
           contains_ads: !!form.gameFlags["contains_ads"],
           has_iap: !!form.gameFlags["has_iap"],
-          is_multiplayer: !!form.gameFlags["is_multiplayer"],
+          is_multiplayer: !!form.gameFlags["is_multiplayer"] || (isGame && form.gameTypes.includes("multiplayer")),
           requires_account: !!form.gameFlags["requires_account"],
           has_chat: !!form.gameFlags["has_chat"],
-          online_features: !!form.gameFlags["online_features"],
-          offline_mode: !!form.gameFlags["offline_mode"],
+          online_features: !!form.gameFlags["online_features"] || (isGame && form.gameTypes.includes("online")),
+          offline_mode: !!form.gameFlags["offline_mode"] || (isGame && form.gameTypes.includes("offline")),
           controller_support: !!form.gameFlags["controller_support"],
           cloud_save: !!form.gameFlags["cloud_save"],
           privacy_policy_source: (form.privacyPolicySource || null) as any,
@@ -640,6 +641,7 @@ function NewAppPage() {
       });
       localStorage.removeItem(DRAFT_KEY);
       setResult({
+        id: row.id,
         slug: row.slug,
         shareToken: row.share_token,
         dev: form.releaseChannel === "development",
@@ -689,9 +691,17 @@ function NewAppPage() {
 
   // ---------------- Success ----------------
   if (phase === "done" && result) {
-    const shareUrl = typeof window !== "undefined"
-      ? `${window.location.origin}/testing/${result.shareToken}`
-      : "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const shareUrl = `${origin}/testing/${result.shareToken}`;
+    const links: { label: string; url: string; hint: string }[] = result.dev
+      ? [{ label: "Private testing link", url: shareUrl, hint: "Only people with this link can install the build." }]
+      : [
+          { label: "Public store page", url: `${origin}/app/${result.slug}`, hint: "Your app's listing on Niza." },
+          { label: "Download link", url: `${origin}/app/${result.slug}#install`, hint: "Opens the listing with the install button in view." },
+          { label: "Review link", url: `${origin}/app/${result.slug}#reviews`, hint: "Ask players to rate and review here." },
+          { label: "Share link", url: `${origin}/app/${result.slug}?ref=share`, hint: "Use in your own promotion." },
+          { label: "Private testing link", url: shareUrl, hint: "Still works for your testers." },
+        ];
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
         <div className="wizard-forward rounded-3xl border border-border/60 bg-card p-6 text-center sm:p-9">
@@ -706,29 +716,47 @@ function NewAppPage() {
               ? "Your build is private. Share the testing link below with your testers — it will not appear in search or categories."
               : "Your application has been submitted. It will appear across Niza once it clears review."}
           </p>
-          {result.dev && (
-            <div className="mt-6 flex items-center gap-2 rounded-2xl border border-border/60 bg-secondary/40 p-3">
-              <code className="min-w-0 flex-1 truncate text-left text-xs">{shareUrl}</code>
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-full"
-                onClick={() => {
-                  navigator.clipboard?.writeText(shareUrl);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1800);
-                }}
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-          )}
+
+          <div className="mt-6 space-y-2 text-left">
+            <p className="text-xs font-medium text-muted-foreground">Your links — copy and verify each one</p>
+            {links.map((l) => (
+              <div key={l.label} className="rounded-2xl border border-border/60 bg-secondary/30 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">{l.label}</p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 rounded-full px-2"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(l.url);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1800);
+                      }}
+                      aria-label={`Copy ${l.label}`}
+                    >
+                      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    </Button>
+                    <a href={l.url} target="_blank" rel="noreferrer" className="rounded-full p-1.5 text-muted-foreground hover:text-foreground" aria-label={`Open ${l.label}`}>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+                <code className="mt-1 block truncate font-mono text-[11px] text-muted-foreground">{l.url}</code>
+                <p className="mt-0.5 text-[11px] text-muted-foreground/80">{l.hint}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button className="rounded-full" onClick={() => navigate({ to: "/developer" })}>
-              Go to Developer Hub
+            <Button className="rounded-full" onClick={() => navigate({ to: "/developer/$appId", params: { appId: result.id } })}>
+              View app details
+            </Button>
+            <Button variant="outline" className="rounded-full" onClick={() => navigate({ to: "/developer" })}>
+              Developer Hub
             </Button>
             {!result.dev && (
-              <Button asChild variant="outline" className="rounded-full">
+              <Button asChild variant="ghost" className="rounded-full">
                 <Link to="/app/$slug" params={{ slug: result.slug }}>View store page</Link>
               </Button>
             )}
@@ -1267,20 +1295,33 @@ function NewAppPage() {
       case "gameType":
         return (
           <div>
-            {question("How is your game played?", "This appears on your store page so players know what to expect.")}
+            {question("How is your game played?", "Select every mode that applies — you can pick more than one.")}
             <div className="space-y-2.5">
-              {GAME_TYPES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => set("gameType", t.id)}
-                  className={`w-full rounded-2xl border p-3.5 text-left text-sm transition ${
-                    form.gameType === t.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
+              {GAME_TYPES.map((t) => {
+                const on = form.gameTypes.includes(t.id);
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() =>
+                      set(
+                        "gameTypes",
+                        on ? form.gameTypes.filter((x) => x !== t.id) : [...form.gameTypes, t.id],
+                      )
+                    }
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3.5 text-left text-sm transition ${
+                      on ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                    }`}
+                  >
+                    <span>
+                      <span className="font-medium">{t.label}</span>
+                      <span className="block text-xs text-muted-foreground">{t.hint}</span>
+                    </span>
+                    {on && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                  </button>
+                );
+              })}
             </div>
             <Label className="mt-5 block text-sm">Game engine (optional)</Label>
             <select

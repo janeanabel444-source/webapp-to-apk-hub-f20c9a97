@@ -40,6 +40,7 @@ import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/publi
 import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authenticated/developer.new'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as AuthenticatedDeveloperAppIdIndexRouteImport } from './routes/_authenticated/developer.$appId.index'
 import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
 import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
 
@@ -205,6 +206,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDeveloperAppIdIndexRoute =
+  AuthenticatedDeveloperAppIdIndexRouteImport.update({
+    id: '/developer/$appId/',
+    path: '/developer/$appId/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDeveloperAppIdUpdateRoute =
   AuthenticatedDeveloperAppIdUpdateRouteImport.update({
     id: '/developer/$appId/update',
@@ -251,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
+  '/developer/$appId/': typeof AuthenticatedDeveloperAppIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -285,6 +293,7 @@ export interface FileRoutesByTo {
   '/developer': typeof AuthenticatedDeveloperIndexRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
+  '/developer/$appId': typeof AuthenticatedDeveloperAppIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -321,6 +330,7 @@ export interface FileRoutesById {
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/_authenticated/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/_authenticated/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
+  '/_authenticated/developer/$appId/': typeof AuthenticatedDeveloperAppIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/developer/'
     | '/developer/$appId/edit'
     | '/developer/$appId/update'
+    | '/developer/$appId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/developer/$appId/edit'
     | '/developer/$appId/update'
+    | '/developer/$appId'
   id:
     | '__root__'
     | '/'
@@ -426,6 +438,7 @@ export interface FileRouteTypes {
     | '/_authenticated/developer/'
     | '/_authenticated/developer/$appId/edit'
     | '/_authenticated/developer/$appId/update'
+    | '/_authenticated/developer/$appId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -668,6 +681,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/developer/$appId/': {
+      id: '/_authenticated/developer/$appId/'
+      path: '/developer/$appId'
+      fullPath: '/developer/$appId/'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/developer/$appId/update': {
       id: '/_authenticated/developer/$appId/update'
       path: '/developer/$appId/update'
@@ -700,6 +720,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDeveloperIndexRoute: typeof AuthenticatedDeveloperIndexRoute
   AuthenticatedDeveloperAppIdEditRoute: typeof AuthenticatedDeveloperAppIdEditRoute
   AuthenticatedDeveloperAppIdUpdateRoute: typeof AuthenticatedDeveloperAppIdUpdateRoute
+  AuthenticatedDeveloperAppIdIndexRoute: typeof AuthenticatedDeveloperAppIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -718,6 +739,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDeveloperAppIdEditRoute: AuthenticatedDeveloperAppIdEditRoute,
   AuthenticatedDeveloperAppIdUpdateRoute:
     AuthenticatedDeveloperAppIdUpdateRoute,
+  AuthenticatedDeveloperAppIdIndexRoute: AuthenticatedDeveloperAppIdIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -93,31 +93,37 @@ function DeveloperHome() {
               const isDev = (a as any).release_channel === "development";
               const note = (a as any).review_note as string | null;
               return (
-                <li key={a.id} className="rounded-2xl border border-border/60 bg-card p-3">
+                <li key={a.id} className="rounded-2xl border border-border/60 bg-card p-3 transition hover:border-primary/40">
                   <div className="flex items-center gap-3">
-                    {a.icon_url ? (
-                      <img src={a.icon_url} alt="" className="h-14 w-14 rounded-xl object-cover" />
-                    ) : (
-                      <div className="h-14 w-14 rounded-xl bg-secondary" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate font-medium">{a.name}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${toneCls[st.tone]}`}>
-                          {st.label}
-                        </span>
-                        {isDev && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                            <FlaskConical className="h-3 w-3" /> Private
+                    <Link
+                      to="/developer/$appId"
+                      params={{ appId: a.id }}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      {a.icon_url ? (
+                        <img src={a.icon_url} alt="" className="h-14 w-14 rounded-xl object-cover" />
+                      ) : (
+                        <div className="h-14 w-14 rounded-xl bg-secondary" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate font-medium">{a.name}</p>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${toneCls[st.tone]}`}>
+                            {st.label}
                           </span>
-                        )}
+                          {isDev && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                              <FlaskConical className="h-3 w-3" /> Private
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{st.description}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {a.category === "game" ? "Game" : "App"} · {a.platform ?? "—"} ·{" "}
+                          <span className="inline-flex items-center gap-1"><Download className="h-3 w-3" />{a.install_count}</span>
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">{st.description}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {a.category === "game" ? "Game" : "App"} · {a.platform ?? "—"} ·{" "}
-                        <span className="inline-flex items-center gap-1"><Download className="h-3 w-3" />{a.install_count}</span>
-                      </p>
-                    </div>
+                    </Link>
                     <div className="flex flex-col gap-1.5 sm:flex-row">
                       <Button asChild size="sm" className="rounded-full">
                         <Link to="/developer/$appId/update" params={{ appId: a.id }}>Update</Link>

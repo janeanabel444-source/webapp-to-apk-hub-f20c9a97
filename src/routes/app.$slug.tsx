@@ -218,6 +218,7 @@ function AppDetail() {
               appName={app.name}
               filePath={app.file_path}
               appUrl={app.app_url}
+              packageName={a.package_name}
               apkSize={a.apk_size}
               license={a.license ?? "free"}
               priceKobo={a.price_kobo ?? 0}
