@@ -19,6 +19,7 @@ const appInput = z.object({
   content_type: z.enum(["app", "game"]).default("app"),
   game_category: z.string().trim().max(40).optional().nullable(),
   game_type: z.string().trim().max(40).optional().nullable(),
+  game_types: z.array(z.string().trim().max(40)).max(8).default([]),
   game_engine: z.string().trim().max(40).optional().nullable(),
   contains_ads: z.boolean().default(false),
   has_iap: z.boolean().default(false),

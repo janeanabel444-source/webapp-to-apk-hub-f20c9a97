@@ -136,13 +136,23 @@ export const GAME_CATEGORIES = [
   "Other",
 ] as const;
 
+/**
+ * How a game is played. Multi-select — a game can be, for example, both
+ * multiplayer and offline.
+ */
 export const GAME_TYPES = [
-  { id: "single", label: "Single player" },
-  { id: "multiplayer", label: "Multiplayer" },
-  { id: "online", label: "Online" },
-  { id: "offline", label: "Offline" },
-  { id: "online_offline", label: "Online + Offline" },
+  { id: "single", label: "Single player", hint: "Playable solo from start to finish" },
+  { id: "multiplayer", label: "Multiplayer", hint: "Play with or against other people" },
+  { id: "online", label: "Online", hint: "Needs an internet connection for core features" },
+  { id: "offline", label: "Offline", hint: "Fully playable without an internet connection" },
 ] as const;
+
+export type GameTypeId = (typeof GAME_TYPES)[number]["id"];
+
+/** Human label for a stored gameplay-mode id. */
+export function gameTypeLabel(id: string) {
+  return GAME_TYPES.find((t) => t.id === id)?.label ?? id;
+}
 
 export const GAME_ENGINES = ["Unity", "Unreal Engine", "Godot", "GameMaker", "Custom", "Other"] as const;
 

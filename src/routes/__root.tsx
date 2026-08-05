@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Niza App Store" },
       { name: "twitter:description", content: "Discover great apps, games, and AI tools on Niza." },
-      { name: "theme-color", content: "#3730a3" },
+      { name: "theme-color", content: "#12101f" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "Niza" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
