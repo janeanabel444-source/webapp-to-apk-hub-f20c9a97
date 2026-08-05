@@ -60,6 +60,8 @@ function Library() {
               </div>
               <InstallButton
                 appId={app.id}
+                appName={app.name}
+                packageName={(app as any).package_name}
                 initialInstalled={true}
                 variant="compact"
                 installedVersion={row.installed_version}
