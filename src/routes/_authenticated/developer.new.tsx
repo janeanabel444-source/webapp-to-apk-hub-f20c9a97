@@ -50,7 +50,7 @@ interface DraftState {
   description: string;
   category: Category;
   gameCategory: string;
-  gameType: string;
+  gameTypes: string[];
   gameEngine: string;
   gameFlags: Record<string, boolean>;
   contentRating: string;
@@ -81,7 +81,7 @@ const initialDraft: DraftState = {
   description: "",
   category: "app",
   gameCategory: "",
-  gameType: "",
+  gameTypes: [],
   gameEngine: "",
   gameFlags: {},
   contentRating: "everyone",
@@ -118,7 +118,7 @@ const HELP: Record<string, { title: string; body: string[] }> = {
   gameType: {
     title: "How your game is played",
     body: [
-      "Tell players whether the game is single player, multiplayer, online, offline, or a mix.",
+      "Select every mode that applies — single player, multiplayer, online, offline. A game can be more than one.",
       "This shows on your store page so players know what to expect before installing.",
     ],
   },
@@ -526,7 +526,7 @@ function NewAppPage() {
       case "platform": return spec.enabled;
       case "framework": return !!form.hybridFramework;
       case "gameCategory": return !!form.gameCategory;
-      case "gameType": return !!form.gameType;
+      case "gameType": return form.gameTypes.length > 0;
       case "gameFlags": return true;
       case "integration": return !spec.supportsSdk || !spec.supportsLink || form.integrationMethod !== "";
       case "name": return form.name.trim().length >= 2 && nameStatus !== "taken" && nameStatus !== "checking";
