@@ -33,7 +33,7 @@ export function Header() {
           <span className="grid h-7 w-7 place-items-center rounded-xl text-primary-foreground sm:h-8 sm:w-8" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-pop)" }}>
             <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </span>
-          Niza
+          Niza Store
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           {navItems.map((n) => {
