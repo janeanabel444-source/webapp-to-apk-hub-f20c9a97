@@ -1268,20 +1268,33 @@ function NewAppPage() {
       case "gameType":
         return (
           <div>
-            {question("How is your game played?", "This appears on your store page so players know what to expect.")}
+            {question("How is your game played?", "Select every mode that applies — you can pick more than one.")}
             <div className="space-y-2.5">
-              {GAME_TYPES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => set("gameType", t.id)}
-                  className={`w-full rounded-2xl border p-3.5 text-left text-sm transition ${
-                    form.gameType === t.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
+              {GAME_TYPES.map((t) => {
+                const on = form.gameTypes.includes(t.id);
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() =>
+                      set(
+                        "gameTypes",
+                        on ? form.gameTypes.filter((x) => x !== t.id) : [...form.gameTypes, t.id],
+                      )
+                    }
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3.5 text-left text-sm transition ${
+                      on ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                    }`}
+                  >
+                    <span>
+                      <span className="font-medium">{t.label}</span>
+                      <span className="block text-xs text-muted-foreground">{t.hint}</span>
+                    </span>
+                    {on && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                  </button>
+                );
+              })}
             </div>
             <Label className="mt-5 block text-sm">Game engine (optional)</Label>
             <select
