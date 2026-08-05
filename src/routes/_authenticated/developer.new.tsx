@@ -313,7 +313,7 @@ function NewAppPage() {
   const [progress, setProgress] = useState<{ label: string; pct: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [autosaved, setAutosaved] = useState<Date | null>(null);
-  const [result, setResult] = useState<{ slug: string; shareToken: string; dev: boolean } | null>(null);
+  const [result, setResult] = useState<{ id: string; slug: string; shareToken: string; dev: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const spec = getPlatform(form.platform);
@@ -641,6 +641,7 @@ function NewAppPage() {
       });
       localStorage.removeItem(DRAFT_KEY);
       setResult({
+        id: row.id,
         slug: row.slug,
         shareToken: row.share_token,
         dev: form.releaseChannel === "development",
