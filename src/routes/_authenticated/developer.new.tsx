@@ -1281,12 +1281,12 @@ function NewAppPage() {
                   type="button"
                   onClick={() => selectContentType(o.id)}
                   className={`w-full rounded-2xl border p-4 text-left transition ${
-                    form.contentType === o.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                    activeType === o.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{o.label}</p>
-                    {form.contentType === o.id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                    {activeType === o.id && <Check className="ml-auto h-4 w-4 text-primary" />}
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">{o.desc}</p>
                 </button>
