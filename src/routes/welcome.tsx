@@ -1,3 +1,4 @@
+import { NizaLogo } from "@/components/NizaLogo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {

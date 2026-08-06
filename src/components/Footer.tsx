@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { NizaLogo } from "@/components/NizaLogo";
 import { Mail, MessageCircle, LinkIcon } from "lucide-react";
 import { CONTACT_EMAIL, CONTACT_LINKTREE, CONTACT_WHATSAPP } from "@/routes/contact";
 
@@ -7,7 +8,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-border/60 bg-background/60">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="text-muted-foreground">
-          © {new Date().getFullYear()} Niza App Store ·{" "}
+          <NizaLogo size={18} className="mr-1.5 inline-block align-text-bottom" />© {new Date().getFullYear()} Niza App Store ·{" "}
           <Link to="/contact" className="font-medium text-foreground hover:underline">
             Contact &amp; Support
           </Link>
