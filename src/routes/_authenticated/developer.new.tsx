@@ -594,7 +594,7 @@ function NewAppPage() {
       case "review": return true;
       default: return true;
     }
-  }, [stepId, spec, form, nameStatus, logo, appFile, parsing, emailOk]);
+  }, [stepId, spec, form, nameStatus, logo, appFile, parsing, emailOk, activeType]);
 
 
   function next() {
