@@ -261,9 +261,23 @@ export const recordAdClick = createServerFn({ method: "POST" })
   .inputValidator((i: { campaignId: string }) => z.object({ campaignId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Only count a click when this user actually has a real view session for
+    // this campaign — prevents fabricated clicks inflating campaign metrics.
+    const { data: session } = await supabaseAdmin
+      .from("ad_view_sessions")
+      .select("id")
+      .eq("campaign_id", data.campaignId)
+      .eq("user_id", context.userId)
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!session) throw new Error("No active ad session for this campaign.");
+
     await supabaseAdmin.from("ad_clicks").insert({ campaign_id: data.campaignId, user_id: context.userId });
     return { ok: true };
   });
+
 
 export const claimAdReward = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
