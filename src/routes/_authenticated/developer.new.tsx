@@ -8,6 +8,10 @@ import {
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
@@ -67,7 +71,9 @@ interface DraftState {
   websiteUrl: string;
 }
 
-const DRAFT_KEY = "niza.developer.wizard.draft.v2";
+/** Applications and games keep completely separate, isolated drafts. */
+const LEGACY_DRAFT_KEY = "niza.developer.wizard.draft.v2";
+const draftKey = (t: Category) => `niza.developer.wizard.draft.v3.${t}`;
 const ANDROID_VERSIONS = ["5.0", "6.0", "7.0", "8.0", "9.0", "10", "11", "12", "13", "14", "15"];
 
 const initialDraft: DraftState = {
@@ -274,6 +280,9 @@ function NewAppPage() {
 
   const [phase, setPhase] = useState<"intro" | "wizard" | "done">("intro");
   const [form, setForm] = useState<DraftState>(initialDraft);
+  /** Which workflow's draft is currently loaded — null until a category is picked. */
+  const [activeType, setActiveType] = useState<Category | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
   const [showHelp, setShowHelp] = useState(false);
@@ -322,26 +331,66 @@ function NewAppPage() {
     setForm((f) => ({ ...f, [k]: v }));
   }, []);
 
-  // Restore draft
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) setForm({ ...initialDraft, ...JSON.parse(raw) });
-    } catch { /* ignore */ }
+  /** Clears everything that lives outside the persisted draft (files, AI output, checks). */
+  const resetSessionState = useCallback(() => {
+    setLogo(null); setLogoPreview(null);
+    setBanner(null); setBannerPreview(null);
+    setScreenshots([]); setShotPreviews([]);
+    setAppFile(null); setApkInfo(null); setParsing(false); setApkError(null);
+    setVersionWarning(null); setDetectedPrivacyUrl(null);
+    setSuggestions(null); setAssistBusy(false); setAssistError(null);
+    setApproved({}); setApprovedFor(null); setStaleDismissed(false);
+    setSelectedTags([]); setTagInput(""); setNameStatus("idle");
+    setErr(null); setProgress(null); setAutosaved(null);
   }, []);
 
-  // Autosave every answer
+  /** Switches workflow: persists the current draft, then restores the other one. */
+  const selectContentType = useCallback((id: Category) => {
+    if (activeType === id) return;
+    if (activeType) {
+      try { localStorage.setItem(draftKey(activeType), JSON.stringify(form)); } catch { /* ignore */ }
+    }
+    let restored: Partial<DraftState> = {};
+    try {
+      const raw = localStorage.getItem(draftKey(id));
+      if (raw) restored = JSON.parse(raw);
+    } catch { /* ignore */ }
+    setActiveType(id);
+    setForm({ ...initialDraft, ...restored, contentType: id, category: id });
+    resetSessionState();
+  }, [activeType, form, resetSessionState]);
+
+  // Legacy shared draft is discarded — app and game drafts are separate now.
+  useEffect(() => {
+    try { localStorage.removeItem(LEGACY_DRAFT_KEY); } catch { /* ignore */ }
+  }, []);
+
+  // Autosave every answer into the active workflow's own draft
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
+    if (!activeType) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+        localStorage.setItem(draftKey(activeType), JSON.stringify(form));
         setAutosaved(new Date());
       } catch { /* ignore */ }
     }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [form]);
+  }, [form, activeType]);
+
+  function cancelUpload() {
+    const t = activeType ?? form.contentType;
+    try { localStorage.removeItem(draftKey(t)); } catch { /* ignore */ }
+    setCancelOpen(false);
+    setActiveType(null);
+    setForm(initialDraft);
+    resetSessionState();
+    setStepIndex(0);
+    setDir(-1);
+    setPhase("intro");
+  }
+
 
   // Duplicate name check
   useEffect(() => {
@@ -522,7 +571,7 @@ function NewAppPage() {
 
   const stepValid = useMemo(() => {
     switch (stepId) {
-      case "uploadCategory": return !!form.contentType;
+      case "uploadCategory": return !!activeType;
       case "platform": return spec.enabled;
       case "framework": return !!form.hybridFramework;
       case "gameCategory": return !!form.gameCategory;
@@ -549,7 +598,7 @@ function NewAppPage() {
       case "review": return true;
       default: return true;
     }
-  }, [stepId, spec, form, nameStatus, logo, appFile, parsing, emailOk]);
+  }, [stepId, spec, form, nameStatus, logo, appFile, parsing, emailOk, activeType]);
 
 
   function next() {
@@ -639,7 +688,7 @@ function NewAppPage() {
           release_notes: form.releaseNotes.trim(),
         },
       });
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(draftKey(activeType ?? form.contentType));
       setResult({
         id: row.id,
         slug: row.slug,
@@ -824,12 +873,20 @@ function NewAppPage() {
         </div>
       )}
 
-      <div className="mt-8 flex items-center gap-3">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
         {stepIndex > 0 && (
           <Button variant="outline" className="rounded-full" onClick={back} disabled={busy}>
             <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
           </Button>
         )}
+        <Button
+          variant="ghost"
+          className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setCancelOpen(true)}
+          disabled={busy}
+        >
+          <X className="mr-1.5 h-4 w-4" /> Cancel Upload
+        </Button>
         <div className="ml-auto flex items-center gap-3">
           {autosaved && (
             <span className="hidden text-xs text-muted-foreground sm:inline">Saved automatically</span>
@@ -846,6 +903,27 @@ function NewAppPage() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this upload?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this upload? All information entered for this upload
+              will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">Continue Upload</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={cancelUpload}
+            >
+              Cancel Upload
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 
@@ -1234,14 +1312,14 @@ function NewAppPage() {
                 <button
                   key={o.id}
                   type="button"
-                  onClick={() => { set("contentType", o.id); set("category", o.id); }}
+                  onClick={() => selectContentType(o.id)}
                   className={`w-full rounded-2xl border p-4 text-left transition ${
-                    form.contentType === o.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
+                    activeType === o.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{o.label}</p>
-                    {form.contentType === o.id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                    {activeType === o.id && <Check className="ml-auto h-4 w-4 text-primary" />}
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">{o.desc}</p>
                 </button>
