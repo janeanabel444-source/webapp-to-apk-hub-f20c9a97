@@ -1,3 +1,4 @@
+import { NizaLogo } from "@/components/NizaLogo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -97,12 +98,7 @@ function Welcome() {
       >
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
           <div className="flex flex-col items-center text-center">
-            <div
-              className="grid h-16 w-16 place-items-center rounded-3xl shadow-lg"
-              style={{ backgroundImage: "var(--gradient-primary)" }}
-            >
-              <Sparkles className="h-8 w-8 text-primary-foreground" />
-            </div>
+            <NizaLogo size={72} className="h-16 w-16 drop-shadow-lg" />
             <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">
               Niza Mind AI
             </h1>
