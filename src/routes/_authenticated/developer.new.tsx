@@ -869,12 +869,20 @@ function NewAppPage() {
         </div>
       )}
 
-      <div className="mt-8 flex items-center gap-3">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
         {stepIndex > 0 && (
           <Button variant="outline" className="rounded-full" onClick={back} disabled={busy}>
             <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
           </Button>
         )}
+        <Button
+          variant="ghost"
+          className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setCancelOpen(true)}
+          disabled={busy}
+        >
+          <X className="mr-1.5 h-4 w-4" /> Cancel Upload
+        </Button>
         <div className="ml-auto flex items-center gap-3">
           {autosaved && (
             <span className="hidden text-xs text-muted-foreground sm:inline">Saved automatically</span>
