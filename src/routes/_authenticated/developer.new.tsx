@@ -324,26 +324,66 @@ function NewAppPage() {
     setForm((f) => ({ ...f, [k]: v }));
   }, []);
 
-  // Restore draft
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) setForm({ ...initialDraft, ...JSON.parse(raw) });
-    } catch { /* ignore */ }
+  /** Clears everything that lives outside the persisted draft (files, AI output, checks). */
+  const resetSessionState = useCallback(() => {
+    setLogo(null); setLogoPreview(null);
+    setBanner(null); setBannerPreview(null);
+    setScreenshots([]); setShotPreviews([]);
+    setAppFile(null); setApkInfo(null); setParsing(false); setApkError(null);
+    setVersionWarning(null); setDetectedPrivacyUrl(null);
+    setSuggestions(null); setAssistBusy(false); setAssistError(null);
+    setApproved({}); setApprovedFor(null); setStaleDismissed(false);
+    setSelectedTags([]); setTagInput(""); setNameStatus("idle");
+    setErr(null); setProgress(null); setAutosaved(null);
   }, []);
 
-  // Autosave every answer
+  /** Switches workflow: persists the current draft, then restores the other one. */
+  const selectContentType = useCallback((id: Category) => {
+    if (activeType === id) return;
+    if (activeType) {
+      try { localStorage.setItem(draftKey(activeType), JSON.stringify(form)); } catch { /* ignore */ }
+    }
+    let restored: Partial<DraftState> = {};
+    try {
+      const raw = localStorage.getItem(draftKey(id));
+      if (raw) restored = JSON.parse(raw);
+    } catch { /* ignore */ }
+    setActiveType(id);
+    setForm({ ...initialDraft, ...restored, contentType: id, category: id });
+    resetSessionState();
+  }, [activeType, form, resetSessionState]);
+
+  // Legacy shared draft is discarded — app and game drafts are separate now.
+  useEffect(() => {
+    try { localStorage.removeItem(LEGACY_DRAFT_KEY); } catch { /* ignore */ }
+  }, []);
+
+  // Autosave every answer into the active workflow's own draft
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
+    if (!activeType) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+        localStorage.setItem(draftKey(activeType), JSON.stringify(form));
         setAutosaved(new Date());
       } catch { /* ignore */ }
     }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [form]);
+  }, [form, activeType]);
+
+  function cancelUpload() {
+    const t = activeType ?? form.contentType;
+    try { localStorage.removeItem(draftKey(t)); } catch { /* ignore */ }
+    setCancelOpen(false);
+    setActiveType(null);
+    setForm(initialDraft);
+    resetSessionState();
+    setStepIndex(0);
+    setDir(-1);
+    setPhase("intro");
+  }
+
 
   // Duplicate name check
   useEffect(() => {
