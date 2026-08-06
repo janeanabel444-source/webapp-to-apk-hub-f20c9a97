@@ -145,9 +145,7 @@ function AuthPage() {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center px-4 py-12">
       <Link to="/" className="mb-6 flex items-center gap-2 font-display text-xl font-bold">
-        <span className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
-          <Sparkles className="h-4 w-4" />
-        </span>
+        <NizaLogo size={36} />
         Niza
       </Link>
 
