@@ -684,7 +684,7 @@ function NewAppPage() {
           release_notes: form.releaseNotes.trim(),
         },
       });
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(draftKey(activeType ?? form.contentType));
       setResult({
         id: row.id,
         slug: row.slug,
