@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sparkles, LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift, Heart, Shield, Layers } from "lucide-react";
+import { NizaLogo } from "@/components/NizaLogo";
+import { LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift, Heart, Shield, Layers } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
