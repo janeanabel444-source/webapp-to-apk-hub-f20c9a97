@@ -67,7 +67,9 @@ interface DraftState {
   websiteUrl: string;
 }
 
-const DRAFT_KEY = "niza.developer.wizard.draft.v2";
+/** Applications and games keep completely separate, isolated drafts. */
+const LEGACY_DRAFT_KEY = "niza.developer.wizard.draft.v2";
+const draftKey = (t: Category) => `niza.developer.wizard.draft.v3.${t}`;
 const ANDROID_VERSIONS = ["5.0", "6.0", "7.0", "8.0", "9.0", "10", "11", "12", "13", "14", "15"];
 
 const initialDraft: DraftState = {
