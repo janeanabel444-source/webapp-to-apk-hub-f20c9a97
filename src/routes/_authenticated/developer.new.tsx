@@ -276,6 +276,9 @@ function NewAppPage() {
 
   const [phase, setPhase] = useState<"intro" | "wizard" | "done">("intro");
   const [form, setForm] = useState<DraftState>(initialDraft);
+  /** Which workflow's draft is currently loaded — null until a category is picked. */
+  const [activeType, setActiveType] = useState<Category | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
   const [showHelp, setShowHelp] = useState(false);
