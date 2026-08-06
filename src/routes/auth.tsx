@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Sparkles, Gift } from "lucide-react";
+import { Gift } from "lucide-react";
+import { NizaLogo } from "@/components/NizaLogo";
 
 const searchSchema = z.object({ redirect: z.string().optional() });
 
