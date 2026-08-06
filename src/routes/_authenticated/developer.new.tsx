@@ -1279,7 +1279,7 @@ function NewAppPage() {
                 <button
                   key={o.id}
                   type="button"
-                  onClick={() => { set("contentType", o.id); set("category", o.id); }}
+                  onClick={() => selectContentType(o.id)}
                   className={`w-full rounded-2xl border p-4 text-left transition ${
                     form.contentType === o.id ? "border-primary bg-primary/5" : "border-border/60 bg-card hover:border-primary/40"
                   }`}
