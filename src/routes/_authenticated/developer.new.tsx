@@ -567,7 +567,7 @@ function NewAppPage() {
 
   const stepValid = useMemo(() => {
     switch (stepId) {
-      case "uploadCategory": return !!form.contentType;
+      case "uploadCategory": return !!activeType;
       case "platform": return spec.enabled;
       case "framework": return !!form.hybridFramework;
       case "gameCategory": return !!form.gameCategory;
