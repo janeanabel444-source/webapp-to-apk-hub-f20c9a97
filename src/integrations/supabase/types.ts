@@ -594,6 +594,39 @@ export type Database = {
         }
         Relationships: []
       }
+      developer_prompts: {
+        Row: {
+          app_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          snoozed_until: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          snoozed_until?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          snoozed_until?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           app_id: string
@@ -689,6 +722,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      niza_hub_events: {
+        Row: {
+          event: string
+          payload: Json
+          received_at: string
+          reference: string
+        }
+        Insert: {
+          event: string
+          payload?: Json
+          received_at?: string
+          reference: string
+        }
+        Update: {
+          event?: string
+          payload?: Json
+          received_at?: string
+          reference?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -812,6 +866,9 @@ export type Database = {
           id: string
           is_premium: boolean
           is_suspended: boolean
+          niza_hub_connected_at: string | null
+          niza_hub_email: string | null
+          niza_hub_user_id: string | null
           premium_expires_at: string | null
           premium_since: string | null
         }
@@ -824,6 +881,9 @@ export type Database = {
           id: string
           is_premium?: boolean
           is_suspended?: boolean
+          niza_hub_connected_at?: string | null
+          niza_hub_email?: string | null
+          niza_hub_user_id?: string | null
           premium_expires_at?: string | null
           premium_since?: string | null
         }
@@ -836,6 +896,9 @@ export type Database = {
           id?: string
           is_premium?: boolean
           is_suspended?: boolean
+          niza_hub_connected_at?: string | null
+          niza_hub_email?: string | null
+          niza_hub_user_id?: string | null
           premium_expires_at?: string | null
           premium_since?: string | null
         }
