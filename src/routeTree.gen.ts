@@ -24,6 +24,7 @@ import { Route as TestingTokenRouteImport } from './routes/testing.$token'
 import { Route as DownloadAppIdRouteImport } from './routes/download.$appId'
 import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
 import { Route as AppSlugRouteImport } from './routes/app.$slug'
+import { Route as AdCampaignIdRouteImport } from './routes/ad.$campaignId'
 import { Route as AuthenticatedRedeemRouteImport } from './routes/_authenticated/redeem'
 import { Route as AuthenticatedPremiumRouteImport } from './routes/_authenticated/premium'
 import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
@@ -117,6 +118,11 @@ const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
 const AppSlugRoute = AppSlugRouteImport.update({
   id: '/app/$slug',
   path: '/app/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdCampaignIdRoute = AdCampaignIdRouteImport.update({
+  id: '/ad/$campaignId',
+  path: '/ad/$campaignId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRedeemRoute = AuthenticatedRedeemRouteImport.update({
@@ -254,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/premium': typeof AuthenticatedPremiumRoute
   '/redeem': typeof AuthenticatedRedeemRoute
+  '/ad/$campaignId': typeof AdCampaignIdRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
   '/download/$appId': typeof DownloadAppIdRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/premium': typeof AuthenticatedPremiumRoute
   '/redeem': typeof AuthenticatedRedeemRoute
+  '/ad/$campaignId': typeof AdCampaignIdRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
   '/download/$appId': typeof DownloadAppIdRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/_authenticated/premium': typeof AuthenticatedPremiumRoute
   '/_authenticated/redeem': typeof AuthenticatedRedeemRoute
+  '/ad/$campaignId': typeof AdCampaignIdRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
   '/download/$appId': typeof DownloadAppIdRoute
@@ -366,6 +375,7 @@ export interface FileRouteTypes {
     | '/payment-callback'
     | '/premium'
     | '/redeem'
+    | '/ad/$campaignId'
     | '/app/$slug'
     | '/collections/$slug'
     | '/download/$appId'
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/payment-callback'
     | '/premium'
     | '/redeem'
+    | '/ad/$campaignId'
     | '/app/$slug'
     | '/collections/$slug'
     | '/download/$appId'
@@ -439,6 +450,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payment-callback'
     | '/_authenticated/premium'
     | '/_authenticated/redeem'
+    | '/ad/$campaignId'
     | '/app/$slug'
     | '/collections/$slug'
     | '/download/$appId'
@@ -467,6 +479,7 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AdCampaignIdRoute: typeof AdCampaignIdRoute
   AppSlugRoute: typeof AppSlugRoute
   DownloadAppIdRoute: typeof DownloadAppIdRoute
   TestingTokenRoute: typeof TestingTokenRoute
@@ -580,6 +593,13 @@ declare module '@tanstack/react-router' {
       path: '/app/$slug'
       fullPath: '/app/$slug'
       preLoaderRoute: typeof AppSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ad/$campaignId': {
+      id: '/ad/$campaignId'
+      path: '/ad/$campaignId'
+      fullPath: '/ad/$campaignId'
+      preLoaderRoute: typeof AdCampaignIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/redeem': {
@@ -792,6 +812,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AdCampaignIdRoute: AdCampaignIdRoute,
   AppSlugRoute: AppSlugRoute,
   DownloadAppIdRoute: DownloadAppIdRoute,
   TestingTokenRoute: TestingTokenRoute,
