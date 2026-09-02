@@ -115,7 +115,7 @@ export const listMyCampaigns = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-// ─────────────── Payment (Paystack) ───────────────
+// ─────────────── Payment (Niza Hub first, Paystack fallback) ───────────────
 export const initCampaignPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { campaignId: string; callbackUrl: string }) =>
@@ -124,20 +124,50 @@ export const initCampaignPayment = createServerFn({ method: "POST" })
       callbackUrl: z.string().url(),
     }).parse(i))
   .handler(async ({ data, context }) => {
-    const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (!secret) throw new Error("Payments are not configured.");
     const email = (context.claims as any)?.email as string | undefined;
     if (!email) throw new Error("No email on account.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: c } = await supabaseAdmin
       .from("ad_campaigns")
-      .select("id, advertiser_id, total_budget_kobo, status")
+      .select("id, name, advertiser_id, total_budget_kobo, status")
       .eq("id", data.campaignId)
       .maybeSingle();
     if (!c || c.advertiser_id !== context.userId) throw new Error("Campaign not found.");
     if (c.status !== "pending_payment") throw new Error("Campaign already paid.");
 
+    // 1) Niza Hub — the ecosystem's payment server. Always tried first.
+    const { isHubConfigured, hubInitializePayment } = await import("@/lib/niza-hub.server");
+    if (isHubConfigured()) {
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("niza_hub_user_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      const hub = await hubInitializePayment({
+        globalUserId: (prof as any)?.niza_hub_user_id ?? null,
+        productId: "niza_ads_campaign",
+        amount: Math.round(c.total_budget_kobo / 100),
+        currency: "NGN",
+        callbackUrl: data.callbackUrl,
+        metadata: { campaign_id: c.id, campaign_name: c.name, email },
+      });
+      if (hub.ok && hub.data?.authorization_url && hub.data?.reference) {
+        await supabaseAdmin
+          .from("ad_campaigns")
+          .update({ payment_reference: hub.data.reference })
+          .eq("id", c.id);
+        return {
+          authorizationUrl: hub.data.authorization_url,
+          reference: hub.data.reference,
+          provider: "niza_hub" as const,
+        };
+      }
+    }
+
+    // 2) Paystack fallback — only when the Hub is unconfigured or unreachable.
+    const secret = process.env.PAYSTACK_SECRET_KEY;
+    if (!secret) throw new Error("Payments are not configured.");
     const res = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
@@ -146,7 +176,7 @@ export const initCampaignPayment = createServerFn({ method: "POST" })
         amount: c.total_budget_kobo,
         currency: "NGN",
         callback_url: data.callbackUrl,
-        metadata: { campaign_id: c.id, purpose: "nova_ads_campaign" },
+        metadata: { campaign_id: c.id, purpose: "niza_ads_campaign" },
       }),
     });
     const body = await res.json();
@@ -155,8 +185,13 @@ export const initCampaignPayment = createServerFn({ method: "POST" })
       .from("ad_campaigns")
       .update({ payment_reference: body.data.reference })
       .eq("id", c.id);
-    return { authorizationUrl: body.data.authorization_url, reference: body.data.reference };
+    return {
+      authorizationUrl: body.data.authorization_url,
+      reference: body.data.reference,
+      provider: "paystack" as const,
+    };
   });
+
 
 export const verifyCampaignPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

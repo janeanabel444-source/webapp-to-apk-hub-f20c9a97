@@ -21,8 +21,10 @@ import { Route as AppsRouteImport } from './routes/apps'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TestingTokenRouteImport } from './routes/testing.$token'
+import { Route as DownloadAppIdRouteImport } from './routes/download.$appId'
 import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
 import { Route as AppSlugRouteImport } from './routes/app.$slug'
+import { Route as AdCampaignIdRouteImport } from './routes/ad.$campaignId'
 import { Route as AuthenticatedRedeemRouteImport } from './routes/_authenticated/redeem'
 import { Route as AuthenticatedPremiumRouteImport } from './routes/_authenticated/premium'
 import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
@@ -43,6 +45,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as AuthenticatedDeveloperAppIdIndexRouteImport } from './routes/_authenticated/developer.$appId.index'
 import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
 import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
+import { Route as AuthenticatedDeveloperAppIdBoostRouteImport } from './routes/_authenticated/developer.$appId.boost'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -103,6 +106,11 @@ const TestingTokenRoute = TestingTokenRouteImport.update({
   path: '/testing/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DownloadAppIdRoute = DownloadAppIdRouteImport.update({
+  id: '/download/$appId',
+  path: '/download/$appId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -111,6 +119,11 @@ const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
 const AppSlugRoute = AppSlugRouteImport.update({
   id: '/app/$slug',
   path: '/app/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdCampaignIdRoute = AdCampaignIdRouteImport.update({
+  id: '/ad/$campaignId',
+  path: '/ad/$campaignId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRedeemRoute = AuthenticatedRedeemRouteImport.update({
@@ -224,6 +237,12 @@ const AuthenticatedDeveloperAppIdEditRoute =
     path: '/developer/$appId/edit',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDeveloperAppIdBoostRoute =
+  AuthenticatedDeveloperAppIdBoostRouteImport.update({
+    id: '/developer/$appId/boost',
+    path: '/developer/$appId/boost',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -248,14 +267,17 @@ export interface FileRoutesByFullPath {
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/premium': typeof AuthenticatedPremiumRoute
   '/redeem': typeof AuthenticatedRedeemRoute
+  '/ad/$campaignId': typeof AdCampaignIdRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
+  '/download/$appId': typeof DownloadAppIdRoute
   '/testing/$token': typeof TestingTokenRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
   '/developer/$appId/': typeof AuthenticatedDeveloperAppIdIndexRoute
@@ -283,14 +305,17 @@ export interface FileRoutesByTo {
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/premium': typeof AuthenticatedPremiumRoute
   '/redeem': typeof AuthenticatedRedeemRoute
+  '/ad/$campaignId': typeof AdCampaignIdRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
+  '/download/$appId': typeof DownloadAppIdRoute
   '/testing/$token': typeof TestingTokenRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/developer': typeof AuthenticatedDeveloperIndexRoute
+  '/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
   '/developer/$appId': typeof AuthenticatedDeveloperAppIdIndexRoute
@@ -320,14 +345,17 @@ export interface FileRoutesById {
   '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/_authenticated/premium': typeof AuthenticatedPremiumRoute
   '/_authenticated/redeem': typeof AuthenticatedRedeemRoute
+  '/ad/$campaignId': typeof AdCampaignIdRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
+  '/download/$appId': typeof DownloadAppIdRoute
   '/testing/$token': typeof TestingTokenRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/developer/new': typeof AuthenticatedDeveloperNewRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/_authenticated/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/_authenticated/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/_authenticated/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
   '/_authenticated/developer/$appId/': typeof AuthenticatedDeveloperAppIdIndexRoute
@@ -357,14 +385,17 @@ export interface FileRouteTypes {
     | '/payment-callback'
     | '/premium'
     | '/redeem'
+    | '/ad/$campaignId'
     | '/app/$slug'
     | '/collections/$slug'
+    | '/download/$appId'
     | '/testing/$token'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/developer/new'
     | '/api/public/paystack-webhook'
     | '/developer/'
+    | '/developer/$appId/boost'
     | '/developer/$appId/edit'
     | '/developer/$appId/update'
     | '/developer/$appId/'
@@ -392,14 +423,17 @@ export interface FileRouteTypes {
     | '/payment-callback'
     | '/premium'
     | '/redeem'
+    | '/ad/$campaignId'
     | '/app/$slug'
     | '/collections/$slug'
+    | '/download/$appId'
     | '/testing/$token'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/developer/new'
     | '/api/public/paystack-webhook'
     | '/developer'
+    | '/developer/$appId/boost'
     | '/developer/$appId/edit'
     | '/developer/$appId/update'
     | '/developer/$appId'
@@ -428,14 +462,17 @@ export interface FileRouteTypes {
     | '/_authenticated/payment-callback'
     | '/_authenticated/premium'
     | '/_authenticated/redeem'
+    | '/ad/$campaignId'
     | '/app/$slug'
     | '/collections/$slug'
+    | '/download/$appId'
     | '/testing/$token'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/developer/new'
     | '/api/public/paystack-webhook'
     | '/_authenticated/developer/'
+    | '/_authenticated/developer/$appId/boost'
     | '/_authenticated/developer/$appId/edit'
     | '/_authenticated/developer/$appId/update'
     | '/_authenticated/developer/$appId/'
@@ -455,7 +492,9 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AdCampaignIdRoute: typeof AdCampaignIdRoute
   AppSlugRoute: typeof AppSlugRoute
+  DownloadAppIdRoute: typeof DownloadAppIdRoute
   TestingTokenRoute: typeof TestingTokenRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -548,6 +587,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/download/$appId': {
+      id: '/download/$appId'
+      path: '/download/$appId'
+      fullPath: '/download/$appId'
+      preLoaderRoute: typeof DownloadAppIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collections/$slug': {
       id: '/collections/$slug'
       path: '/$slug'
@@ -560,6 +606,13 @@ declare module '@tanstack/react-router' {
       path: '/app/$slug'
       fullPath: '/app/$slug'
       preLoaderRoute: typeof AppSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ad/$campaignId': {
+      id: '/ad/$campaignId'
+      path: '/ad/$campaignId'
+      fullPath: '/ad/$campaignId'
+      preLoaderRoute: typeof AdCampaignIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/redeem': {
@@ -702,6 +755,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDeveloperAppIdEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/developer/$appId/boost': {
+      id: '/_authenticated/developer/$appId/boost'
+      path: '/developer/$appId/boost'
+      fullPath: '/developer/$appId/boost'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdBoostRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -718,6 +778,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRedeemRoute: typeof AuthenticatedRedeemRoute
   AuthenticatedDeveloperNewRoute: typeof AuthenticatedDeveloperNewRoute
   AuthenticatedDeveloperIndexRoute: typeof AuthenticatedDeveloperIndexRoute
+  AuthenticatedDeveloperAppIdBoostRoute: typeof AuthenticatedDeveloperAppIdBoostRoute
   AuthenticatedDeveloperAppIdEditRoute: typeof AuthenticatedDeveloperAppIdEditRoute
   AuthenticatedDeveloperAppIdUpdateRoute: typeof AuthenticatedDeveloperAppIdUpdateRoute
   AuthenticatedDeveloperAppIdIndexRoute: typeof AuthenticatedDeveloperAppIdIndexRoute
@@ -736,6 +797,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRedeemRoute: AuthenticatedRedeemRoute,
   AuthenticatedDeveloperNewRoute: AuthenticatedDeveloperNewRoute,
   AuthenticatedDeveloperIndexRoute: AuthenticatedDeveloperIndexRoute,
+  AuthenticatedDeveloperAppIdBoostRoute: AuthenticatedDeveloperAppIdBoostRoute,
   AuthenticatedDeveloperAppIdEditRoute: AuthenticatedDeveloperAppIdEditRoute,
   AuthenticatedDeveloperAppIdUpdateRoute:
     AuthenticatedDeveloperAppIdUpdateRoute,
@@ -772,7 +834,9 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AdCampaignIdRoute: AdCampaignIdRoute,
   AppSlugRoute: AppSlugRoute,
+  DownloadAppIdRoute: DownloadAppIdRoute,
   TestingTokenRoute: TestingTokenRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
