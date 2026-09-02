@@ -21,6 +21,7 @@ import { Route as AppsRouteImport } from './routes/apps'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TestingTokenRouteImport } from './routes/testing.$token'
+import { Route as DownloadAppIdRouteImport } from './routes/download.$appId'
 import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
 import { Route as AppSlugRouteImport } from './routes/app.$slug'
 import { Route as AuthenticatedRedeemRouteImport } from './routes/_authenticated/redeem'
@@ -101,6 +102,11 @@ const IndexRoute = IndexRouteImport.update({
 const TestingTokenRoute = TestingTokenRouteImport.update({
   id: '/testing/$token',
   path: '/testing/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadAppIdRoute = DownloadAppIdRouteImport.update({
+  id: '/download/$appId',
+  path: '/download/$appId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/redeem': typeof AuthenticatedRedeemRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
+  '/download/$appId': typeof DownloadAppIdRoute
   '/testing/$token': typeof TestingTokenRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -285,6 +292,7 @@ export interface FileRoutesByTo {
   '/redeem': typeof AuthenticatedRedeemRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
+  '/download/$appId': typeof DownloadAppIdRoute
   '/testing/$token': typeof TestingTokenRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/_authenticated/redeem': typeof AuthenticatedRedeemRoute
   '/app/$slug': typeof AppSlugRoute
   '/collections/$slug': typeof CollectionsSlugRoute
+  '/download/$appId': typeof DownloadAppIdRoute
   '/testing/$token': typeof TestingTokenRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -359,6 +368,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/app/$slug'
     | '/collections/$slug'
+    | '/download/$appId'
     | '/testing/$token'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/app/$slug'
     | '/collections/$slug'
+    | '/download/$appId'
     | '/testing/$token'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/_authenticated/redeem'
     | '/app/$slug'
     | '/collections/$slug'
+    | '/download/$appId'
     | '/testing/$token'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -456,6 +468,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AppSlugRoute: typeof AppSlugRoute
+  DownloadAppIdRoute: typeof DownloadAppIdRoute
   TestingTokenRoute: typeof TestingTokenRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -546,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/testing/$token'
       fullPath: '/testing/$token'
       preLoaderRoute: typeof TestingTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/$appId': {
+      id: '/download/$appId'
+      path: '/download/$appId'
+      fullPath: '/download/$appId'
+      preLoaderRoute: typeof DownloadAppIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections/$slug': {
@@ -773,6 +793,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AppSlugRoute: AppSlugRoute,
+  DownloadAppIdRoute: DownloadAppIdRoute,
   TestingTokenRoute: TestingTokenRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
