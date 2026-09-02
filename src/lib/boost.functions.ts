@@ -48,7 +48,7 @@ export const setBoostPrompt = createServerFn({ method: "POST" })
         snoozed_until: snoozedUntil,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id,app_id,kind" },
+      { onConflict: "user_id,kind,app_id" },
     );
     if (error) throw new Error(error.message);
     return { ok: true };
