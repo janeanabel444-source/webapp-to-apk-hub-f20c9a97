@@ -41,8 +41,9 @@ export async function downloadApkWithProgress(
   filePath: string,
   appName: string,
   onProgress: (loaded: number, total: number) => void,
+  downloadUrl?: string,
 ): Promise<{ url: string; size: number; nativeInstalled?: boolean }> {
-  const signed = await getApkSignedUrl(filePath);
+  const signed = downloadUrl ?? await getApkSignedUrl(filePath);
 
   // Native path — Android wrapper handles download + installer intent.
   if (isNizaAndroid()) {

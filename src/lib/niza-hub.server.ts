@@ -165,6 +165,18 @@ export function hubInitializePayment(input: {
   });
 }
 
+export function hubVerifyPayment(input: { reference: string; productId?: string }) {
+  return hubFetch<{
+    reference?: string;
+    status?: string;
+    paid?: boolean;
+    paid_at?: string;
+  }>('/api/public/v1/payments/verify', {
+    reference: input.reference,
+    ...(input.productId ? { product_id: input.productId } : {}),
+  });
+}
+
 export function hubSubscriptionStatus(globalUserId: string, productId?: string) {
   return hubFetch<{
     subscriptions: Array<{
