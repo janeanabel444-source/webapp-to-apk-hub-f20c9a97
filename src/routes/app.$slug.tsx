@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, Star, Download as DownloadIcon, Shield, History, Sparkles,
@@ -99,13 +99,31 @@ function AppDetail() {
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [editingReview, setEditingReview] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [replyBusy, setReplyBusy] = useState(false);
   const [showAllPerms, setShowAllPerms] = useState(false);
   const [activeShot, setActiveShot] = useState<number | null>(null);
+  const reviewFormRef = useRef<HTMLDivElement | null>(null);
+  const { review } = useSearch({ from: "/app/$slug" });
+  const replyFn = useServerFn(replyToReview);
+  const deleteReplyFn = useServerFn(deleteMyReviewReply);
 
   useEffect(() => {
     const mine = reviews?.find((r) => r.user_id === user?.id);
     if (mine) { setRating(mine.rating); setBody(mine.body ?? ""); }
   }, [reviews, user?.id]);
+
+  useEffect(() => {
+    if (review === "1" || review === "true") {
+      requestAnimationFrame(() => {
+        reviewFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        reviewFormRef.current?.querySelector("textarea")?.focus();
+      });
+      setEditingReview(true);
+    }
+  }, [review]);
 
   // Track view for logged-in users (Recently viewed)
   useEffect(() => {
@@ -132,10 +150,36 @@ function AppDetail() {
     setSubmitting(true);
     try {
       await upsertReview(user.id, app.id, rating, body.trim());
-      toast.success("Review posted");
+      toast.success(reviews?.some((r) => r.user_id === user.id) ? "Review updated" : "Review posted");
+      setEditingReview(false);
       qc.invalidateQueries({ queryKey: ["reviews", app.id] });
     } catch (e: any) { toast.error(e.message ?? "Couldn't post review"); }
     finally { setSubmitting(false); }
+  }
+
+  async function submitReply(reviewId: string) {
+    if (!replyDraft.trim()) return;
+    setReplyBusy(true);
+    try {
+      await replyFn({ data: { reviewId, reply: replyDraft } });
+      setReplyDraft("");
+      setReplyingTo(null);
+      toast.success("Developer reply saved");
+      qc.invalidateQueries({ queryKey: ["reviews", app.id] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't save reply");
+    } finally { setReplyBusy(false); }
+  }
+
+  async function removeReply(reviewId: string) {
+    setReplyBusy(true);
+    try {
+      await deleteReplyFn({ data: { reviewId } });
+      toast.success("Reply removed");
+      qc.invalidateQueries({ queryKey: ["reviews", app.id] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't remove reply");
+    } finally { setReplyBusy(false); }
   }
 
   function formatCount(n: number) {
@@ -218,6 +262,7 @@ function AppDetail() {
               appName={app.name}
               filePath={app.file_path}
               appUrl={app.app_url}
+              downloadUrl={app.file_path ? `${typeof window !== "undefined" ? window.location.origin : "https://webapp-to-apk-hub.lovable.app"}/download/${app.id}` : null}
               packageName={a.package_name}
               apkSize={a.apk_size}
               license={a.license ?? "free"}
@@ -416,16 +461,23 @@ function AppDetail() {
         <div className="flex items-end justify-between">
           <h2 className="font-display text-xl font-bold">Ratings & reviews</h2>
         </div>
-        <div className="mt-4 rounded-2xl border border-border/60 bg-card p-5">
-          <p className="text-sm font-medium">{user ? "Rate this app" : "Sign in to rate this app"}</p>
-          <div className="mt-2"><StarRow value={rating} onChange={user ? setRating : undefined} /></div>
-          {user && (
+        <div ref={reviewFormRef} className="mt-4 rounded-2xl border border-border/60 bg-card p-5">
+          <p className="text-sm font-medium">{user ? (editingReview || !reviews?.some((r) => r.user_id === user.id) ? "Rate this app" : "Your review") : "Sign in to rate this app"}</p>
+          <div className="mt-2"><StarRow value={rating} onChange={user && (editingReview || !reviews?.some((r) => r.user_id === user.id)) ? setRating : undefined} /></div>
+          {user && (editingReview || !reviews?.some((r) => r.user_id === user.id)) && (
             <>
               <Textarea value={body} onChange={(e) => setBody(e.target.value)}
                 placeholder="Share your thoughts (optional)" className="mt-3 min-h-20" maxLength={500} />
-              <div className="mt-3 flex justify-end">
-                <Button onClick={submitReview} disabled={submitting} className="rounded-full">Post review</Button>
+              <div className="mt-3 flex justify-end gap-2">
+                {editingReview && <Button variant="ghost" onClick={() => setEditingReview(false)} className="rounded-full">Cancel</Button>}
+                <Button onClick={submitReview} disabled={submitting} className="rounded-full">{editingReview ? "Update review" : "Post review"}</Button>
               </div>
+            </>
+          )}
+          {user && !editingReview && reviews?.some((r) => r.user_id === user.id) && (
+            <>
+              <p className="mt-2 text-sm text-muted-foreground">{body || "You left a rating for this app."}</p>
+              <Button variant="outline" size="sm" onClick={() => setEditingReview(true)} className="mt-3 rounded-full">Edit review</Button>
             </>
           )}
         </div>
@@ -450,6 +502,24 @@ function AppDetail() {
                 <div className="mt-3 rounded-xl bg-secondary/60 p-3 text-sm">
                   <div className="text-xs font-semibold uppercase tracking-wide text-primary">Developer</div>
                   <p className="mt-1 text-muted-foreground">{r.dev_reply}</p>
+                </div>
+              )}
+              {user?.id === a.developer_id && (
+                <div className="mt-3">
+                  {replyingTo === r.id ? (
+                    <div className="space-y-2">
+                      <Textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} maxLength={1000} placeholder="Reply to this review" className="min-h-20" />
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyDraft(""); }} className="rounded-full">Cancel</Button>
+                        <Button size="sm" onClick={() => void submitReply(r.id)} disabled={replyBusy || !replyDraft.trim()} className="rounded-full">Save reply</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => { setReplyingTo(r.id); setReplyDraft(r.dev_reply ?? ""); }} className="rounded-full">{r.dev_reply ? "Edit reply" : "Reply"}</Button>
+                      {r.dev_reply && <Button size="sm" variant="ghost" onClick={() => void removeReply(r.id)} disabled={replyBusy} className="rounded-full">Remove reply</Button>}
+                    </div>
+                  )}
                 </div>
               )}
             </article>

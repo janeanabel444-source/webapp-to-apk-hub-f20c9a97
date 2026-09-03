@@ -32,6 +32,7 @@ type Props = {
   isDemo?: boolean;
   installedVersion?: string | null;
   latestVersion?: string | null;
+  downloadUrl?: string | null;
   apkSize?: number | null;
   license?: "free" | "paid" | null;
   priceKobo?: number | null;
@@ -57,6 +58,7 @@ export function InstallButton({
   isDemo = false,
   installedVersion,
   latestVersion,
+  downloadUrl,
   apkSize,
   license = "free",
   priceKobo = 0,
@@ -127,7 +129,7 @@ export function InstallButton({
       if (filePath) {
         const result = await downloadApkWithProgress(filePath, appName, (loaded, total) => {
           setProgress(total ? (loaded / total) * 100 : 0);
-        });
+        }, downloadUrl ?? undefined);
         if (result.nativeInstalled) {
           toast.success("Installing via Niza Android…");
         } else if (isAndroidDevice()) {
