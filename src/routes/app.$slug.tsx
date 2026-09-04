@@ -1,10 +1,12 @@
 import { createFileRoute, Link, notFound, useNavigate, useSearch } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, Star, Download as DownloadIcon, Shield, History, Sparkles,
   Mail, Globe, FileText, Languages as LangIcon, AlertTriangle, Info,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import { useAuth } from "@/lib/auth";
 import {
   fetchApp, fetchReviews, fetchInstallState, upsertReview,
@@ -20,9 +22,11 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { ReportAppDialog } from "@/components/ReportAppDialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { deleteMyReviewReply, replyToReview } from "@/lib/reviews.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/$slug")({
+  validateSearch: z.object({ review: z.string().optional() }),
   loader: async ({ params }) => {
     const app = await fetchApp(params.slug);
     if (!app) throw notFound();
