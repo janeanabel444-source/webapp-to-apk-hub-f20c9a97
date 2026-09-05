@@ -31,6 +31,7 @@ export type Database = {
           moderator_note: string | null
           name: string
           paid_at: string | null
+          payment_provider: string
           payment_reference: string | null
           spent_kobo: number
           starts_at: string | null
@@ -57,6 +58,7 @@ export type Database = {
           moderator_note?: string | null
           name: string
           paid_at?: string | null
+          payment_provider?: string
           payment_reference?: string | null
           spent_kobo?: number
           starts_at?: string | null
@@ -83,6 +85,7 @@ export type Database = {
           moderator_note?: string | null
           name?: string
           paid_at?: string | null
+          payment_provider?: string
           payment_reference?: string | null
           spent_kobo?: number
           starts_at?: string | null
@@ -299,6 +302,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "app_versions_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_views: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          viewer_id: string | null
+          visitor_key: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id?: string
+          viewer_id?: string | null
+          visitor_key: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          viewer_id?: string | null
+          visitor_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_views_app_id_fkey"
             columns: ["app_id"]
             isOneToOne: false
             referencedRelation: "apps"
