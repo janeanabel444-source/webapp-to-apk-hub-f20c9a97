@@ -43,6 +43,8 @@ import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authent
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedDeveloperAppIdIndexRouteImport } from './routes/_authenticated/developer.$appId.index'
+import { Route as ApiPublicAdsServeRouteImport } from './routes/api/public/ads.serve'
+import { Route as ApiPublicAdsReportRouteImport } from './routes/api/public/ads.report'
 import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
 import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
 import { Route as AuthenticatedDeveloperAppIdBoostRouteImport } from './routes/_authenticated/developer.$appId.boost'
@@ -225,6 +227,16 @@ const AuthenticatedDeveloperAppIdIndexRoute =
     path: '/developer/$appId/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicAdsServeRoute = ApiPublicAdsServeRouteImport.update({
+  id: '/api/public/ads/serve',
+  path: '/api/public/ads/serve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAdsReportRoute = ApiPublicAdsReportRouteImport.update({
+  id: '/api/public/ads/report',
+  path: '/api/public/ads/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDeveloperAppIdUpdateRoute =
   AuthenticatedDeveloperAppIdUpdateRouteImport.update({
     id: '/developer/$appId/update',
@@ -280,6 +292,8 @@ export interface FileRoutesByFullPath {
   '/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
+  '/api/public/ads/report': typeof ApiPublicAdsReportRoute
+  '/api/public/ads/serve': typeof ApiPublicAdsServeRoute
   '/developer/$appId/': typeof AuthenticatedDeveloperAppIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -318,6 +332,8 @@ export interface FileRoutesByTo {
   '/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
+  '/api/public/ads/report': typeof ApiPublicAdsReportRoute
+  '/api/public/ads/serve': typeof ApiPublicAdsServeRoute
   '/developer/$appId': typeof AuthenticatedDeveloperAppIdIndexRoute
 }
 export interface FileRoutesById {
@@ -358,6 +374,8 @@ export interface FileRoutesById {
   '/_authenticated/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/_authenticated/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
   '/_authenticated/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
+  '/api/public/ads/report': typeof ApiPublicAdsReportRoute
+  '/api/public/ads/serve': typeof ApiPublicAdsServeRoute
   '/_authenticated/developer/$appId/': typeof AuthenticatedDeveloperAppIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -398,6 +416,8 @@ export interface FileRouteTypes {
     | '/developer/$appId/boost'
     | '/developer/$appId/edit'
     | '/developer/$appId/update'
+    | '/api/public/ads/report'
+    | '/api/public/ads/serve'
     | '/developer/$appId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -436,6 +456,8 @@ export interface FileRouteTypes {
     | '/developer/$appId/boost'
     | '/developer/$appId/edit'
     | '/developer/$appId/update'
+    | '/api/public/ads/report'
+    | '/api/public/ads/serve'
     | '/developer/$appId'
   id:
     | '__root__'
@@ -475,6 +497,8 @@ export interface FileRouteTypes {
     | '/_authenticated/developer/$appId/boost'
     | '/_authenticated/developer/$appId/edit'
     | '/_authenticated/developer/$appId/update'
+    | '/api/public/ads/report'
+    | '/api/public/ads/serve'
     | '/_authenticated/developer/$appId/'
   fileRoutesById: FileRoutesById
 }
@@ -499,6 +523,8 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
+  ApiPublicAdsReportRoute: typeof ApiPublicAdsReportRoute
+  ApiPublicAdsServeRoute: typeof ApiPublicAdsServeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -741,6 +767,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDeveloperAppIdIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/ads/serve': {
+      id: '/api/public/ads/serve'
+      path: '/api/public/ads/serve'
+      fullPath: '/api/public/ads/serve'
+      preLoaderRoute: typeof ApiPublicAdsServeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ads/report': {
+      id: '/api/public/ads/report'
+      path: '/api/public/ads/report'
+      fullPath: '/api/public/ads/report'
+      preLoaderRoute: typeof ApiPublicAdsReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/developer/$appId/update': {
       id: '/_authenticated/developer/$appId/update'
       path: '/developer/$appId/update'
@@ -841,6 +881,8 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
+  ApiPublicAdsReportRoute: ApiPublicAdsReportRoute,
+  ApiPublicAdsServeRoute: ApiPublicAdsServeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
