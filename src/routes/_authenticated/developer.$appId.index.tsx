@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getMyDeveloperApp } from "@/lib/developer.functions";
 import { fetchAppVersions } from "@/lib/store";
-import { getApkSignedUrl } from "@/lib/apk-download";
 import { formatBytes } from "@/lib/apk-parser";
 import { gameTypeLabel } from "@/lib/platforms";
 import { REVIEW_STATES } from "@/lib/review";
@@ -100,7 +99,6 @@ function DeveloperAppInfoPage() {
     queryKey: ["developer-app-versions", appId],
     queryFn: () => fetchAppVersions(appId),
   });
-  const [downloading, setDownloading] = useState(false);
 
   if (isLoading) return <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-muted-foreground">Loading…</div>;
   if (!app) return <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-muted-foreground">App not found.</div>;
@@ -129,19 +127,6 @@ function DeveloperAppInfoPage() {
     ["Cloud save", a.cloud_save],
   ].filter(([, on]) => on) as [string, boolean][];
 
-  async function copyDownloadLink() {
-    if (!a.file_path) return toast.error("No APK attached to this listing yet.");
-    setDownloading(true);
-    try {
-      const url = await getApkSignedUrl(a.file_path);
-      await navigator.clipboard?.writeText(url);
-      toast.success("Temporary download link copied (valid 1 hour)");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't create a download link");
-    } finally {
-      setDownloading(false);
-    }
-  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
@@ -210,17 +195,11 @@ function DeveloperAppInfoPage() {
           {a.share_token && (
             <CopyRow label="Private testing link" value={`${origin}/testing/${a.share_token}`} hint="Works even while the app is unpublished. Only share with your testers." />
           )}
-          <div className="rounded-xl border border-border/60 bg-background/40 p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-medium">Direct download link</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">Signed APK URL, valid for one hour.</p>
-              </div>
-              <Button size="sm" variant="outline" className="h-7 rounded-full px-3 text-xs" onClick={copyDownloadLink} disabled={downloading || !a.file_path}>
-                {downloading ? "Creating…" : "Copy"}
-              </Button>
-            </div>
-          </div>
+          {a.file_path ? (
+            <CopyRow label="Permanent download link" value={`${origin}/download/${a.id}`} hint="Never expires. Always downloads the newest live APK, even after updates." />
+          ) : (
+            <p className="rounded-xl border border-dashed border-border/60 p-3 text-xs text-muted-foreground">No APK attached to this listing yet.</p>
+          )}
         </div>
       </Section>
 
