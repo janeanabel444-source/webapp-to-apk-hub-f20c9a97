@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { installApp, uninstallApp, markInstalledAppUpdated, compareVersions } from "@/lib/store";
 import { downloadApkWithProgress, isAndroidDevice } from "@/lib/apk-download";
-import { nativeBridge, isNizaAndroid } from "@/lib/native-bridge";
+import { nativeBridge, initNativeBridge, hasCapability } from "@/lib/native-bridge";
 import { formatBytes } from "@/lib/apk-parser";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -75,7 +75,16 @@ export function InstallButton({
   const [showHelper, setShowHelper] = useState(false);
   const [confirmUninstall, setConfirmUninstall] = useState(false);
   const isPaid = license === "paid" && (priceKobo ?? 0) > 0;
-  const canProbe = isNizaAndroid() && !!packageName;
+  const [nativeReady, setNativeReady] = useState(false);
+  const [deviceVersion, setDeviceVersion] = useState<string | null>(null);
+  const canProbe = nativeReady && !!packageName && hasCapability("isPackageInstalled");
+
+  // Capability handshake — resolves to browser mode after a short timeout.
+  useEffect(() => {
+    let alive = true;
+    initNativeBridge().then(() => alive && setNativeReady(true)).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => setInLibrary(initialInstalled), [initialInstalled]);
 
@@ -86,8 +95,10 @@ export function InstallButton({
     try {
       const res = await nativeBridge.isPackageInstalled(packageName!);
       setDeviceInstalled(!!res?.installed);
+      setDeviceVersion(res?.installed ? res.versionName ?? null : null);
     } catch {
       setDeviceInstalled(null);
+      setDeviceVersion(null);
     } finally {
       setChecking(false);
     }
@@ -108,13 +119,15 @@ export function InstallButton({
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
     };
-  }, [canProbe, probeDevice]);
+  }, [canProbe, probeDevice, latestVersion]);
 
+  // Prefer the real on-device version; fall back to the library record.
+  const effectiveInstalled = deviceInstalled === true ? deviceVersion ?? installedVersion : installedVersion;
   const updateAvailable =
-    inLibrary &&
+    (inLibrary || deviceInstalled === true) &&
     !!latestVersion &&
-    !!installedVersion &&
-    compareVersions(latestVersion, installedVersion) > 0;
+    !!effectiveInstalled &&
+    compareVersions(latestVersion, effectiveInstalled) > 0;
 
   /** We only claim the app is openable when the device confirms it, or it's a hosted web app. */
   const confirmedOnDevice = deviceInstalled === true;
@@ -138,18 +151,6 @@ export function InstallButton({
         } else {
           toast.success("APK downloaded");
         }
-      } else {
-        const start = performance.now();
-        const dur = 1000;
-        await new Promise<void>((resolve) => {
-          const tick = () => {
-            const p = Math.min(100, ((performance.now() - start) / dur) * 100);
-            setProgress(p);
-            if (p < 100) requestAnimationFrame(tick);
-            else resolve();
-          };
-          requestAnimationFrame(tick);
-        });
       }
       await markFn();
       setInLibrary(true);
@@ -182,13 +183,14 @@ export function InstallButton({
   }
 
   async function handleUpdate() {
-    if (!user) return;
+    if (!user) return navigate({ to: "/auth", search: { redirect: window.location.pathname } });
     await runDownloadAndMark(() => markInstalledAppUpdated(user.id, appId), `Updated to v${latestVersion}`);
   }
 
   async function handleOpen() {
     if (confirmedOnDevice && packageName) {
       try {
+        if (!hasCapability("launchPackage")) throw new Error(`Open ${appName} from your device's app list`);
         await nativeBridge.launchPackage(packageName);
         return;
       } catch (e: any) {
@@ -209,7 +211,7 @@ export function InstallButton({
     setBusy(true);
     try {
       // Ask Android to remove the package first when we know it's installed.
-      if (confirmedOnDevice && packageName) {
+      if (confirmedOnDevice && packageName && hasCapability("uninstallPackage")) {
         try {
           await nativeBridge.uninstallPackage(packageName);
         } catch (e: any) {
@@ -295,6 +297,19 @@ export function InstallButton({
               {checking ? "Checking device…" : "Installed"}
             </Button>
           )}
+          {variant !== "compact" && filePath && !updateAvailable && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={() => void runDownloadAndMark(async () => {}, "Downloaded again")}
+              disabled={busy}
+              aria-label="Download APK again"
+              title="Download APK again"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
           {variant !== "compact" && (
             <Button
               variant="ghost"
@@ -349,6 +364,13 @@ export function InstallButton({
     }
 
     // Not in the library, but Android says the package is already on the device.
+    if (!inLibrary && confirmedOnDevice && updateAvailable) {
+      return (
+        <Button onClick={handleUpdate} className={cn("rounded-full font-semibold text-primary-foreground shadow-md", sizeCls)} style={{ background: "var(--gradient-primary)" }}>
+          <RefreshCw className="mr-1.5 h-4 w-4" /> Update
+        </Button>
+      );
+    }
     if (!inLibrary && confirmedOnDevice) {
       return (
         <Button className={cn("rounded-full font-semibold", sizeCls)} variant="secondary" onClick={handleOpen}>
