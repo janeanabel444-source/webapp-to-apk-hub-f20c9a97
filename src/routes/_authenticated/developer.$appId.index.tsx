@@ -99,7 +99,6 @@ function DeveloperAppInfoPage() {
     queryKey: ["developer-app-versions", appId],
     queryFn: () => fetchAppVersions(appId),
   });
-  const [downloading, setDownloading] = useState(false);
 
   if (isLoading) return <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-muted-foreground">Loading…</div>;
   if (!app) return <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-muted-foreground">App not found.</div>;
