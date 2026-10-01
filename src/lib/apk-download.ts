@@ -4,7 +4,7 @@
 // In a normal browser we stream the download and rely on Android Chrome's
 // download notification to launch the installer.
 import { supabase } from "@/integrations/supabase/client";
-import { nativeBridge, isNizaAndroid } from "@/lib/native-bridge";
+import { nativeBridge, isNizaAndroid, initNativeBridge, hasCapability, nativeDownloadApk } from "@/lib/native-bridge";
 
 export async function getApkSignedUrl(filePath: string) {
   if (!filePath) throw new Error("This app has no APK file attached yet.");
@@ -44,19 +44,20 @@ export async function downloadApkWithProgress(
   downloadUrl?: string,
 ): Promise<{ url: string; size: number; nativeInstalled?: boolean }> {
   const signed = downloadUrl ?? await getApkSignedUrl(filePath);
+  const fileName = `${appName.replace(/[^a-z0-9.-]+/gi, "_")}.apk`;
 
-  // Native path — Android wrapper handles download + installer intent.
-  if (isNizaAndroid()) {
-    onProgress(1, 1);
-    try {
-      const res = await nativeBridge.installApk({
-        url: signed,
-        fileName: `${appName.replace(/[^a-z0-9.-]+/gi, "_")}.apk`,
-      });
-      return { url: signed, size: 0, nativeInstalled: !!res?.installed };
-    } catch (e: any) {
-      throw new Error(e?.message ?? "Native install failed");
+  // Native path — the Android downloader owns the download and reports real bytes.
+  await initNativeBridge();
+  if (hasCapability("downloadApk")) {
+    const absolute = new URL(signed, window.location.origin).toString();
+    const job = nativeDownloadApk({ url: absolute, fileName }, onProgress);
+    const done = await job.done;
+    let nativeInstalled = false;
+    if (hasCapability("installApk")) {
+      const r = await nativeBridge.installApk(job.downloadId);
+      nativeInstalled = !!r?.started;
     }
+    return { url: absolute, size: done.total || done.loaded, nativeInstalled };
   }
 
   // Browser fallback — stream the file so the download notification opens the installer.
