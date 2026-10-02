@@ -3,11 +3,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { verifyPremiumPayment } from "@/lib/paystack.functions";
+import { verifyCampaignPayment } from "@/lib/ads.functions";
 import { z } from "zod";
 
 const searchSchema = z.object({
   reference: z.string().optional(),
   trxref: z.string().optional(),
+  purpose: z.enum(["premium", "ads"]).optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/payment-callback")({
@@ -17,9 +19,11 @@ export const Route = createFileRoute("/_authenticated/payment-callback")({
 });
 
 function Callback() {
-  const { reference, trxref } = useSearch({ from: "/_authenticated/payment-callback" });
+  const { reference, trxref, purpose } = useSearch({ from: "/_authenticated/payment-callback" });
   const ref = reference ?? trxref;
-  const verify = useServerFn(verifyPremiumPayment);
+  const verifyPremium = useServerFn(verifyPremiumPayment);
+  const verifyAds = useServerFn(verifyCampaignPayment);
+  const isAds = purpose === "ads";
   const [state, setState] = useState<"loading" | "success" | "failed">("loading");
   const [msg, setMsg] = useState<string>("");
 
@@ -29,7 +33,7 @@ function Callback() {
       setMsg("Missing payment reference.");
       return;
     }
-    verify({ data: { reference: ref } })
+    (isAds ? verifyAds({ data: { reference: ref } }) : verifyPremium({ data: { reference: ref } }))
       .then((r) => {
         if (r.success) setState("success");
         else {
@@ -41,7 +45,7 @@ function Callback() {
         setState("failed");
         setMsg(e?.message ?? "Verification error");
       });
-  }, [ref, verify]);
+  }, [ref, isAds, verifyAds, verifyPremium]);
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center px-4 py-16 text-center">
@@ -55,13 +59,15 @@ function Callback() {
       {state === "success" && (
         <>
           <CheckCircle2 className="h-14 w-14 text-primary" />
-          <h1 className="mt-4 font-display text-2xl font-bold">Welcome to Premium!</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Your account has been upgraded.</p>
+          <h1 className="mt-4 font-display text-2xl font-bold">{isAds ? "Campaign paid!" : "Welcome to Premium!"}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {isAds ? "Your campaign is now waiting for a quick review before it goes live." : "Your account has been upgraded."}
+          </p>
           <Link
-            to="/ai-image"
+            to={isAds ? "/developer" : "/ai-image"}
             className="mt-6 inline-block rounded-full bg-primary px-6 py-2 text-sm font-medium text-primary-foreground"
           >
-            Try AI Image Generation
+            {isAds ? "Back to Developer Hub" : "Try AI Image Generation"}
           </Link>
         </>
       )}
@@ -71,7 +77,7 @@ function Callback() {
           <h1 className="mt-4 font-display text-2xl font-bold">Payment not confirmed</h1>
           <p className="mt-2 text-sm text-muted-foreground">{msg}</p>
           <Link
-            to="/premium"
+            to={isAds ? "/developer" : "/premium"}
             className="mt-6 inline-block rounded-full border border-border bg-card px-6 py-2 text-sm font-medium"
           >
             Try again
