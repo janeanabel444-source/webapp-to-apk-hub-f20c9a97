@@ -7,6 +7,7 @@ import {
   isCurrentUserAdmin, adminListReports, adminUpdateReport,
   adminToggleFeatured, adminSetAppStatus, adminListApps,
 } from "@/lib/admin.functions";
+import { AdminCampaigns } from "@/components/AdminCampaigns";
 import { Button } from "@/components/ui/button";
 import { Shield, Flag, Star, Ban } from "lucide-react";
 import { toast } from "sonner";
@@ -80,6 +81,8 @@ function AdminPage() {
           <p className="text-sm text-muted-foreground">Moderate apps, reports and featured picks.</p>
         </div>
       </div>
+
+      <AdminCampaigns />
 
       {/* Reports */}
       <section className="mt-8">

@@ -13,6 +13,7 @@ import { fetchAppVersions } from "@/lib/store";
 import { formatBytes } from "@/lib/apk-parser";
 import { gameTypeLabel } from "@/lib/platforms";
 import { REVIEW_STATES } from "@/lib/review";
+import { BoostPrompt } from "@/components/BoostPrompt";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/")({
   head: () => ({
@@ -133,6 +134,8 @@ function DeveloperAppInfoPage() {
       <Link to="/developer" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Developer Hub
       </Link>
+
+      <BoostPrompt appId={appId} live={a.status === "live" && a.is_published} />
 
       {/* Header */}
       <div className="mt-4 flex flex-wrap items-start gap-4 rounded-3xl border border-border/60 bg-card p-4">
