@@ -155,7 +155,7 @@ export const initCampaignPayment = createServerFn({ method: "POST" })
       if (hub.ok && hub.data?.authorization_url && hub.data?.reference) {
         await supabaseAdmin
           .from("ad_campaigns")
-          .update({ payment_reference: hub.data.reference })
+          .update({ payment_reference: hub.data.reference, payment_provider: "niza_hub" })
           .eq("id", c.id);
         return {
           authorizationUrl: hub.data.authorization_url,
@@ -183,7 +183,7 @@ export const initCampaignPayment = createServerFn({ method: "POST" })
     if (!res.ok || !body.status || !body.data) throw new Error(body.message || "Payment init failed");
     await supabaseAdmin
       .from("ad_campaigns")
-      .update({ payment_reference: body.data.reference })
+      .update({ payment_reference: body.data.reference, payment_provider: "paystack" })
       .eq("id", c.id);
     return {
       authorizationUrl: body.data.authorization_url,
@@ -197,30 +197,47 @@ export const verifyCampaignPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { reference: string }) => z.object({ reference: z.string().min(4) }).parse(i))
   .handler(async ({ data, context }) => {
-    const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (!secret) throw new Error("Payments are not configured.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: c } = await supabaseAdmin
       .from("ad_campaigns")
-      .select("id, advertiser_id, status")
+      .select("id, advertiser_id, status, payment_provider")
       .eq("payment_reference", data.reference)
       .maybeSingle();
     if (!c || c.advertiser_id !== context.userId) throw new Error("Reference not found.");
+    if (c.status !== "pending_payment" && c.status !== "draft") {
+      return { success: true, status: "already_verified" };
+    }
 
-    const res = await fetch(
-      `https://api.paystack.co/transaction/verify/${encodeURIComponent(data.reference)}`,
-      { headers: { Authorization: `Bearer ${secret}` } },
-    );
-    const body = await res.json();
-    if (!res.ok || !body.status || !body.data) throw new Error(body.message || "Verify failed");
-    const success = body.data.status === "success";
+    let success = false;
+    let status = "unknown";
+    let paidAt: string | undefined;
+    if (c.payment_provider === "niza_hub") {
+      const { hubVerifyPayment } = await import("@/lib/niza-hub.server");
+      const hub: any = await hubVerifyPayment({ reference: data.reference, productId: "niza_ads_campaign" });
+      if (!hub.ok) throw new Error("Couldn't verify payment with Niza Hub.");
+      status = hub.data?.status ?? "unknown";
+      success = !!hub.data?.paid || status === "success" || status === "paid";
+      paidAt = hub.data?.paid_at;
+    } else {
+      const secret = process.env.PAYSTACK_SECRET_KEY;
+      if (!secret) throw new Error("Payments are not configured.");
+      const res = await fetch(
+        `https://api.paystack.co/transaction/verify/${encodeURIComponent(data.reference)}`,
+        { headers: { Authorization: `Bearer ${secret}` } },
+      );
+      const body = await res.json();
+      if (!res.ok || !body.status || !body.data) throw new Error(body.message || "Verify failed");
+      status = body.data.status;
+      success = status === "success";
+      paidAt = body.data.paid_at;
+    }
     if (success) {
       await supabaseAdmin
         .from("ad_campaigns")
-        .update({ status: "pending_review", paid_at: body.data.paid_at ?? new Date().toISOString() })
+        .update({ status: "pending_review", paid_at: paidAt ?? new Date().toISOString() })
         .eq("id", c.id);
     }
-    return { success, status: body.data.status };
+    return { success, status };
   });
 
 // ─────────────── Ad serving ───────────────
