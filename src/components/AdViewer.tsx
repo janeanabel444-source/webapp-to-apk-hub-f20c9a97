@@ -55,6 +55,14 @@ export function AdViewer({ onRewarded, onClose }: { onRewarded: (bonus: number) 
     })();
   }, [pickFn, startPh]);
 
+  const [closeCountdown, setCloseCountdown] = useState(5);
+  useEffect(() => {
+    if (!state) return;
+    setCloseCountdown(5);
+    const t = setInterval(() => setCloseCountdown((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [state]);
+
   useEffect(() => {
     if (!state) return;
     const t = setInterval(() => {
@@ -88,6 +96,7 @@ export function AdViewer({ onRewarded, onClose }: { onRewarded: (bonus: number) 
   }
 
   const ad = state?.kind === "real" ? state.ad : null;
+  const closeLeft = state ? closeCountdown : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3">
@@ -96,9 +105,20 @@ export function AdViewer({ onRewarded, onClose }: { onRewarded: (bonus: number) 
           <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             {state?.kind === "placeholder" ? "Sponsored · Niza" : "Sponsored"}
           </span>
-          <button onClick={onClose} className="rounded-full p-1 text-muted-foreground hover:bg-secondary">
-            <X className="h-4 w-4" />
-          </button>
+          {closeLeft > 0 ? (
+            <span className="relative grid h-7 w-7 place-items-center" aria-label={`Close in ${closeLeft}s`}>
+              <svg viewBox="0 0 36 36" className="absolute inset-0 h-7 w-7 -rotate-90">
+                <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" className="stroke-muted" />
+                <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" className="stroke-primary transition-all duration-1000"
+                  strokeDasharray={94.2} strokeDashoffset={94.2 * (closeLeft / 5)} />
+              </svg>
+              <span className="text-[10px] font-semibold">{closeLeft}</span>
+            </span>
+          ) : (
+            <button onClick={onClose} aria-label="Close ad" className="rounded-full p-1 text-muted-foreground hover:bg-secondary">
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {loading && (
