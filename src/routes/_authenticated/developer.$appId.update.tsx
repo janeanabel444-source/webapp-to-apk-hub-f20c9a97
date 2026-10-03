@@ -135,7 +135,8 @@ function UpdateAppPage() {
       await qc.invalidateQueries({ queryKey: ["developer-apps"] });
       await qc.invalidateQueries({ queryKey: ["developer-app", appId] });
       await qc.invalidateQueries({ queryKey: ["app-versions", appId] });
-      navigate({ to: "/developer" });
+      await qc.invalidateQueries({ queryKey: ["boost-prompt", appId] });
+      navigate({ to: "/developer/$appId", params: { appId } });
     } catch (e: any) {
       setErr(e?.message ?? "Update failed");
     } finally {

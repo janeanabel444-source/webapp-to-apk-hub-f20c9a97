@@ -45,6 +45,7 @@ import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/publi
 import { Route as AuthenticatedDeveloperAppIdIndexRouteImport } from './routes/_authenticated/developer.$appId.index'
 import { Route as AuthenticatedDeveloperAppIdBoostRouteImport } from './routes/_authenticated/developer.$appId.boost'
 import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
+import { Route as AuthenticatedDeveloperAppIdStatsRouteImport } from './routes/_authenticated/developer.$appId.stats'
 import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
 import { Route as ApiPublicAdsReportRouteImport } from './routes/api/public/ads.report'
 import { Route as ApiPublicAdsServeRouteImport } from './routes/api/public/ads.serve'
@@ -239,6 +240,12 @@ const AuthenticatedDeveloperAppIdEditRoute =
     path: '/developer/$appId/edit',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDeveloperAppIdStatsRoute =
+  AuthenticatedDeveloperAppIdStatsRouteImport.update({
+    id: '/developer/$appId/stats',
+    path: '/developer/$appId/stats',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDeveloperAppIdUpdateRoute =
   AuthenticatedDeveloperAppIdUpdateRouteImport.update({
     id: '/developer/$appId/update',
@@ -291,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
+  '/developer/$appId/stats': typeof AuthenticatedDeveloperAppIdStatsRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
   '/api/public/ads/report': typeof ApiPublicAdsReportRoute
   '/api/public/ads/serve': typeof ApiPublicAdsServeRoute
@@ -331,6 +339,7 @@ export interface FileRoutesByTo {
   '/developer': typeof AuthenticatedDeveloperIndexRoute
   '/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
+  '/developer/$appId/stats': typeof AuthenticatedDeveloperAppIdStatsRoute
   '/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
   '/api/public/ads/report': typeof ApiPublicAdsReportRoute
   '/api/public/ads/serve': typeof ApiPublicAdsServeRoute
@@ -373,6 +382,7 @@ export interface FileRoutesById {
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/_authenticated/developer/$appId/boost': typeof AuthenticatedDeveloperAppIdBoostRoute
   '/_authenticated/developer/$appId/edit': typeof AuthenticatedDeveloperAppIdEditRoute
+  '/_authenticated/developer/$appId/stats': typeof AuthenticatedDeveloperAppIdStatsRoute
   '/_authenticated/developer/$appId/update': typeof AuthenticatedDeveloperAppIdUpdateRoute
   '/api/public/ads/report': typeof ApiPublicAdsReportRoute
   '/api/public/ads/serve': typeof ApiPublicAdsServeRoute
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/developer/'
     | '/developer/$appId/boost'
     | '/developer/$appId/edit'
+    | '/developer/$appId/stats'
     | '/developer/$appId/update'
     | '/api/public/ads/report'
     | '/api/public/ads/serve'
@@ -455,6 +466,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/developer/$appId/boost'
     | '/developer/$appId/edit'
+    | '/developer/$appId/stats'
     | '/developer/$appId/update'
     | '/api/public/ads/report'
     | '/api/public/ads/serve'
@@ -496,6 +508,7 @@ export interface FileRouteTypes {
     | '/_authenticated/developer/'
     | '/_authenticated/developer/$appId/boost'
     | '/_authenticated/developer/$appId/edit'
+    | '/_authenticated/developer/$appId/stats'
     | '/_authenticated/developer/$appId/update'
     | '/api/public/ads/report'
     | '/api/public/ads/serve'
@@ -781,6 +794,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDeveloperAppIdEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/developer/$appId/stats': {
+      id: '/_authenticated/developer/$appId/stats'
+      path: '/developer/$appId/stats'
+      fullPath: '/developer/$appId/stats'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdStatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/developer/$appId/update': {
       id: '/_authenticated/developer/$appId/update'
       path: '/developer/$appId/update'
@@ -820,6 +840,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDeveloperIndexRoute: typeof AuthenticatedDeveloperIndexRoute
   AuthenticatedDeveloperAppIdBoostRoute: typeof AuthenticatedDeveloperAppIdBoostRoute
   AuthenticatedDeveloperAppIdEditRoute: typeof AuthenticatedDeveloperAppIdEditRoute
+  AuthenticatedDeveloperAppIdStatsRoute: typeof AuthenticatedDeveloperAppIdStatsRoute
   AuthenticatedDeveloperAppIdUpdateRoute: typeof AuthenticatedDeveloperAppIdUpdateRoute
   AuthenticatedDeveloperAppIdIndexRoute: typeof AuthenticatedDeveloperAppIdIndexRoute
 }
@@ -839,6 +860,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDeveloperIndexRoute: AuthenticatedDeveloperIndexRoute,
   AuthenticatedDeveloperAppIdBoostRoute: AuthenticatedDeveloperAppIdBoostRoute,
   AuthenticatedDeveloperAppIdEditRoute: AuthenticatedDeveloperAppIdEditRoute,
+  AuthenticatedDeveloperAppIdStatsRoute: AuthenticatedDeveloperAppIdStatsRoute,
   AuthenticatedDeveloperAppIdUpdateRoute:
     AuthenticatedDeveloperAppIdUpdateRoute,
   AuthenticatedDeveloperAppIdIndexRoute: AuthenticatedDeveloperAppIdIndexRoute,
