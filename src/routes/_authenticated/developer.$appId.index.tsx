@@ -170,6 +170,9 @@ function DeveloperAppInfoPage() {
           <Button asChild size="sm" variant="outline" className="flex-1 rounded-full">
             <Link to="/developer/$appId/edit" params={{ appId }}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</Link>
           </Button>
+          <Button asChild size="sm" variant="outline" className="flex-1 rounded-full">
+            <Link to="/developer/$appId/stats" params={{ appId }}><History className="mr-1.5 h-3.5 w-3.5" /> Stats</Link>
+          </Button>
         </div>
       </div>
 

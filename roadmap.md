@@ -28,5 +28,5 @@
 - [x] `/ad/$campaignId` attribution link
 - [x] Admin campaign moderation
 - [x] Niza Ads SDK endpoints (`/api/public/ads/serve`, `/api/public/ads/report`)
-- [ ] Video ads: close button gated behind 5s circular countdown
-- [ ] Developer analytics dashboard (views, clicks, downloads, spend per app)
+- [x] Video ads: close button gated behind 5s circular countdown
+- [x] Developer analytics dashboard (views, clicks, downloads, spend per app)
