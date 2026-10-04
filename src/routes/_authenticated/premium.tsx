@@ -88,12 +88,12 @@ function PremiumPage() {
               onClick={upgrade}
               disabled={loading}
             >
-              {loading ? "Redirecting to checkout…" : "Go Premium with Paystack"}
+              {loading ? "Redirecting to checkout…" : "Go Premium"}
             </Button>
           )}
           {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Secure checkout powered by Paystack. Cards, bank, USSD & transfer supported.
+            Secure checkout via Niza Hub or Paystack. Cards, bank, USSD & transfer supported.
           </p>
         </div>
       </div>
