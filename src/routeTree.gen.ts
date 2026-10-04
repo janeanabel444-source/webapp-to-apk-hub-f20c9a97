@@ -9,85 +9,54 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WelcomeRouteImport } from './routes/welcome'
-import { Route as TrendingRouteImport } from './routes/trending'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as GamesRouteImport } from './routes/games'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as CollectionsRouteImport } from './routes/collections'
-import { Route as CategoriesRouteImport } from './routes/categories'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AppsRouteImport } from './routes/apps'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TestingTokenRouteImport } from './routes/testing.$token'
-import { Route as DownloadAppIdRouteImport } from './routes/download.$appId'
-import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
-import { Route as AppSlugRouteImport } from './routes/app.$slug'
-import { Route as AdCampaignIdRouteImport } from './routes/ad.$campaignId'
-import { Route as AuthenticatedRedeemRouteImport } from './routes/_authenticated/redeem'
-import { Route as AuthenticatedPremiumRouteImport } from './routes/_authenticated/premium'
-import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
-import { Route as AuthenticatedFavoritesRouteImport } from './routes/_authenticated/favorites'
-import { Route as AuthenticatedAiToolsRouteImport } from './routes/_authenticated/ai-tools'
-import { Route as AuthenticatedAiImageRouteImport } from './routes/_authenticated/ai-image'
-import { Route as AuthenticatedAiGalleryRouteImport } from './routes/_authenticated/ai-gallery'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AppsRouteImport } from './routes/apps'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as CollectionsRouteImport } from './routes/collections'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as GamesRouteImport } from './routes/games'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as TrendingRouteImport } from './routes/trending'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer.index'
-import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
-import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authenticated/developer.new'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAiGalleryRouteImport } from './routes/_authenticated/ai-gallery'
+import { Route as AuthenticatedAiImageRouteImport } from './routes/_authenticated/ai-image'
+import { Route as AuthenticatedAiToolsRouteImport } from './routes/_authenticated/ai-tools'
+import { Route as AuthenticatedFavoritesRouteImport } from './routes/_authenticated/favorites'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
+import { Route as AuthenticatedPremiumRouteImport } from './routes/_authenticated/premium'
+import { Route as AuthenticatedRedeemRouteImport } from './routes/_authenticated/redeem'
+import { Route as AdCampaignIdRouteImport } from './routes/ad.$campaignId'
+import { Route as AppSlugRouteImport } from './routes/app.$slug'
+import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
+import { Route as DownloadAppIdRouteImport } from './routes/download.$appId'
+import { Route as TestingTokenRouteImport } from './routes/testing.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer.index'
+import { Route as AuthenticatedDeveloperNewRouteImport } from './routes/_authenticated/developer.new'
+import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 import { Route as AuthenticatedDeveloperAppIdIndexRouteImport } from './routes/_authenticated/developer.$appId.index'
-import { Route as ApiPublicAdsServeRouteImport } from './routes/api/public/ads.serve'
-import { Route as ApiPublicAdsReportRouteImport } from './routes/api/public/ads.report'
-import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
-import { Route as AuthenticatedDeveloperAppIdStatsRouteImport } from './routes/_authenticated/developer.$appId.stats'
-import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
 import { Route as AuthenticatedDeveloperAppIdBoostRouteImport } from './routes/_authenticated/developer.$appId.boost'
+import { Route as AuthenticatedDeveloperAppIdEditRouteImport } from './routes/_authenticated/developer.$appId.edit'
+import { Route as AuthenticatedDeveloperAppIdStatsRouteImport } from './routes/_authenticated/developer.$appId.stats'
+import { Route as AuthenticatedDeveloperAppIdUpdateRouteImport } from './routes/_authenticated/developer.$appId.update'
+import { Route as ApiPublicAdsReportRouteImport } from './routes/api/public/ads.report'
+import { Route as ApiPublicAdsServeRouteImport } from './routes/api/public/ads.serve'
 
-const WelcomeRoute = WelcomeRouteImport.update({
-  id: '/welcome',
-  path: '/welcome',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrendingRoute = TrendingRouteImport.update({
-  id: '/trending',
-  path: '/trending',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GamesRoute = GamesRouteImport.update({
-  id: '/games',
-  path: '/games',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsRoute = CollectionsRouteImport.update({
-  id: '/collections',
-  path: '/collections',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategoriesRoute = CategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppsRoute = AppsRouteImport.update({
@@ -95,80 +64,61 @@ const AppsRoute = AppsRouteImport.update({
   path: '/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TestingTokenRoute = TestingTokenRouteImport.update({
-  id: '/testing/$token',
-  path: '/testing/$token',
+const CollectionsRoute = CollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DownloadAppIdRoute = DownloadAppIdRouteImport.update({
-  id: '/download/$appId',
-  path: '/download/$appId',
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CollectionsRoute,
-} as any)
-const AppSlugRoute = AppSlugRouteImport.update({
-  id: '/app/$slug',
-  path: '/app/$slug',
+const GamesRoute = GamesRouteImport.update({
+  id: '/games',
+  path: '/games',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdCampaignIdRoute = AdCampaignIdRouteImport.update({
-  id: '/ad/$campaignId',
-  path: '/ad/$campaignId',
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRedeemRoute = AuthenticatedRedeemRouteImport.update({
-  id: '/redeem',
-  path: '/redeem',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const TrendingRoute = TrendingRouteImport.update({
+  id: '/trending',
+  path: '/trending',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPremiumRoute = AuthenticatedPremiumRouteImport.update({
-  id: '/premium',
-  path: '/premium',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPaymentCallbackRoute =
-  AuthenticatedPaymentCallbackRouteImport.update({
-    id: '/payment-callback',
-    path: '/payment-callback',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedNotificationsRoute =
-  AuthenticatedNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFavoritesRoute = AuthenticatedFavoritesRouteImport.update({
-  id: '/favorites',
-  path: '/favorites',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAiToolsRoute = AuthenticatedAiToolsRouteImport.update({
-  id: '/ai-tools',
-  path: '/ai-tools',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAiImageRoute = AuthenticatedAiImageRouteImport.update({
-  id: '/ai-image',
-  path: '/ai-image',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAiGalleryRoute = AuthenticatedAiGalleryRouteImport.update({
@@ -176,21 +126,82 @@ const AuthenticatedAiGalleryRoute = AuthenticatedAiGalleryRouteImport.update({
   path: '/ai-gallery',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedAiImageRoute = AuthenticatedAiImageRouteImport.update({
+  id: '/ai-image',
+  path: '/ai-image',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedAiToolsRoute = AuthenticatedAiToolsRouteImport.update({
+  id: '/ai-tools',
+  path: '/ai-tools',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFavoritesRoute = AuthenticatedFavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
+const AuthenticatedPaymentCallbackRoute =
+  AuthenticatedPaymentCallbackRouteImport.update({
+    id: '/payment-callback',
+    path: '/payment-callback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPremiumRoute = AuthenticatedPremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRedeemRoute = AuthenticatedRedeemRouteImport.update({
+  id: '/redeem',
+  path: '/redeem',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AdCampaignIdRoute = AdCampaignIdRouteImport.update({
+  id: '/ad/$campaignId',
+  path: '/ad/$campaignId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppSlugRoute = AppSlugRouteImport.update({
+  id: '/app/$slug',
+  path: '/app/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => CollectionsRoute,
+} as any)
+const DownloadAppIdRoute = DownloadAppIdRouteImport.update({
+  id: '/download/$appId',
+  path: '/download/$appId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestingTokenRoute = TestingTokenRouteImport.update({
+  id: '/testing/$token',
+  path: '/testing/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedDeveloperIndexRoute =
@@ -199,61 +210,22 @@ const AuthenticatedDeveloperIndexRoute =
     path: '/developer/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicPaystackWebhookRoute =
-  ApiPublicPaystackWebhookRouteImport.update({
-    id: '/api/public/paystack-webhook',
-    path: '/api/public/paystack-webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AuthenticatedDeveloperNewRoute =
   AuthenticatedDeveloperNewRouteImport.update({
     id: '/developer/new',
     path: '/developer/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
+const ApiPublicPaystackWebhookRoute =
+  ApiPublicPaystackWebhookRouteImport.update({
+    id: '/api/public/paystack-webhook',
+    path: '/api/public/paystack-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedDeveloperAppIdIndexRoute =
   AuthenticatedDeveloperAppIdIndexRouteImport.update({
     id: '/developer/$appId/',
     path: '/developer/$appId/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const ApiPublicAdsServeRoute = ApiPublicAdsServeRouteImport.update({
-  id: '/api/public/ads/serve',
-  path: '/api/public/ads/serve',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicAdsReportRoute = ApiPublicAdsReportRouteImport.update({
-  id: '/api/public/ads/report',
-  path: '/api/public/ads/report',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedDeveloperAppIdUpdateRoute =
-  AuthenticatedDeveloperAppIdUpdateRouteImport.update({
-    id: '/developer/$appId/update',
-    path: '/developer/$appId/update',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDeveloperAppIdStatsRoute =
-  AuthenticatedDeveloperAppIdStatsRouteImport.update({
-    id: '/developer/$appId/stats',
-    path: '/developer/$appId/stats',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDeveloperAppIdEditRoute =
-  AuthenticatedDeveloperAppIdEditRouteImport.update({
-    id: '/developer/$appId/edit',
-    path: '/developer/$appId/edit',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDeveloperAppIdBoostRoute =
@@ -262,6 +234,34 @@ const AuthenticatedDeveloperAppIdBoostRoute =
     path: '/developer/$appId/boost',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDeveloperAppIdEditRoute =
+  AuthenticatedDeveloperAppIdEditRouteImport.update({
+    id: '/developer/$appId/edit',
+    path: '/developer/$appId/edit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDeveloperAppIdStatsRoute =
+  AuthenticatedDeveloperAppIdStatsRouteImport.update({
+    id: '/developer/$appId/stats',
+    path: '/developer/$appId/stats',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDeveloperAppIdUpdateRoute =
+  AuthenticatedDeveloperAppIdUpdateRouteImport.update({
+    id: '/developer/$appId/update',
+    path: '/developer/$appId/update',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicAdsReportRoute = ApiPublicAdsReportRouteImport.update({
+  id: '/api/public/ads/report',
+  path: '/api/public/ads/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAdsServeRoute = ApiPublicAdsServeRouteImport.update({
+  id: '/api/public/ads/serve',
+  path: '/api/public/ads/serve',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -542,67 +542,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/welcome': {
-      id: '/welcome'
-      path: '/welcome'
-      fullPath: '/welcome'
-      preLoaderRoute: typeof WelcomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trending': {
-      id: '/trending'
-      path: '/trending'
-      fullPath: '/trending'
-      preLoaderRoute: typeof TrendingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/games': {
-      id: '/games'
-      path: '/games'
-      fullPath: '/games'
-      preLoaderRoute: typeof GamesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collections': {
-      id: '/collections'
-      path: '/collections'
-      fullPath: '/collections'
-      preLoaderRoute: typeof CollectionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/categories': {
-      id: '/categories'
-      path: '/categories'
-      fullPath: '/categories'
-      preLoaderRoute: typeof CategoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/apps': {
-      id: '/apps'
-      path: '/apps'
-      fullPath: '/apps'
-      preLoaderRoute: typeof AppsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -612,123 +556,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/apps': {
+      id: '/apps'
+      path: '/apps'
+      fullPath: '/apps'
+      preLoaderRoute: typeof AppsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/testing/$token': {
-      id: '/testing/$token'
-      path: '/testing/$token'
-      fullPath: '/testing/$token'
-      preLoaderRoute: typeof TestingTokenRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/download/$appId': {
-      id: '/download/$appId'
-      path: '/download/$appId'
-      fullPath: '/download/$appId'
-      preLoaderRoute: typeof DownloadAppIdRouteImport
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/collections/$slug': {
-      id: '/collections/$slug'
-      path: '/$slug'
-      fullPath: '/collections/$slug'
-      preLoaderRoute: typeof CollectionsSlugRouteImport
-      parentRoute: typeof CollectionsRoute
-    }
-    '/app/$slug': {
-      id: '/app/$slug'
-      path: '/app/$slug'
-      fullPath: '/app/$slug'
-      preLoaderRoute: typeof AppSlugRouteImport
+    '/collections': {
+      id: '/collections'
+      path: '/collections'
+      fullPath: '/collections'
+      preLoaderRoute: typeof CollectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ad/$campaignId': {
-      id: '/ad/$campaignId'
-      path: '/ad/$campaignId'
-      fullPath: '/ad/$campaignId'
-      preLoaderRoute: typeof AdCampaignIdRouteImport
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/redeem': {
-      id: '/_authenticated/redeem'
-      path: '/redeem'
-      fullPath: '/redeem'
-      preLoaderRoute: typeof AuthenticatedRedeemRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/games': {
+      id: '/games'
+      path: '/games'
+      fullPath: '/games'
+      preLoaderRoute: typeof GamesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/premium': {
-      id: '/_authenticated/premium'
-      path: '/premium'
-      fullPath: '/premium'
-      preLoaderRoute: typeof AuthenticatedPremiumRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/payment-callback': {
-      id: '/_authenticated/payment-callback'
-      path: '/payment-callback'
-      fullPath: '/payment-callback'
-      preLoaderRoute: typeof AuthenticatedPaymentCallbackRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/trending': {
+      id: '/trending'
+      path: '/trending'
+      fullPath: '/trending'
+      preLoaderRoute: typeof TrendingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/library': {
-      id: '/_authenticated/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/favorites': {
-      id: '/_authenticated/favorites'
-      path: '/favorites'
-      fullPath: '/favorites'
-      preLoaderRoute: typeof AuthenticatedFavoritesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ai-tools': {
-      id: '/_authenticated/ai-tools'
-      path: '/ai-tools'
-      fullPath: '/ai-tools'
-      preLoaderRoute: typeof AuthenticatedAiToolsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ai-image': {
-      id: '/_authenticated/ai-image'
-      path: '/ai-image'
-      fullPath: '/ai-image'
-      preLoaderRoute: typeof AuthenticatedAiImageRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ai-gallery': {
-      id: '/_authenticated/ai-gallery'
-      path: '/ai-gallery'
-      fullPath: '/ai-gallery'
-      preLoaderRoute: typeof AuthenticatedAiGalleryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -738,32 +626,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/developer/': {
-      id: '/_authenticated/developer/'
-      path: '/developer'
-      fullPath: '/developer/'
-      preLoaderRoute: typeof AuthenticatedDeveloperIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/public/paystack-webhook': {
-      id: '/api/public/paystack-webhook'
-      path: '/api/public/paystack-webhook'
-      fullPath: '/api/public/paystack-webhook'
-      preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/developer/new': {
-      id: '/_authenticated/developer/new'
-      path: '/developer/new'
-      fullPath: '/developer/new'
-      preLoaderRoute: typeof AuthenticatedDeveloperNewRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/_authenticated/ai-gallery': {
+      id: '/_authenticated/ai-gallery'
+      path: '/ai-gallery'
+      fullPath: '/ai-gallery'
+      preLoaderRoute: typeof AuthenticatedAiGalleryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ai-image': {
+      id: '/_authenticated/ai-image'
+      path: '/ai-image'
+      fullPath: '/ai-image'
+      preLoaderRoute: typeof AuthenticatedAiImageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ai-tools': {
+      id: '/_authenticated/ai-tools'
+      path: '/ai-tools'
+      fullPath: '/ai-tools'
+      preLoaderRoute: typeof AuthenticatedAiToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/favorites': {
+      id: '/_authenticated/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof AuthenticatedFavoritesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payment-callback': {
+      id: '/_authenticated/payment-callback'
+      path: '/payment-callback'
+      fullPath: '/payment-callback'
+      preLoaderRoute: typeof AuthenticatedPaymentCallbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/premium': {
+      id: '/_authenticated/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof AuthenticatedPremiumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/redeem': {
+      id: '/_authenticated/redeem'
+      path: '/redeem'
+      fullPath: '/redeem'
+      preLoaderRoute: typeof AuthenticatedRedeemRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/ad/$campaignId': {
+      id: '/ad/$campaignId'
+      path: '/ad/$campaignId'
+      fullPath: '/ad/$campaignId'
+      preLoaderRoute: typeof AdCampaignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/$slug': {
+      id: '/app/$slug'
+      path: '/app/$slug'
+      fullPath: '/app/$slug'
+      preLoaderRoute: typeof AppSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collections/$slug': {
+      id: '/collections/$slug'
+      path: '/$slug'
+      fullPath: '/collections/$slug'
+      preLoaderRoute: typeof CollectionsSlugRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
+    '/download/$appId': {
+      id: '/download/$appId'
+      path: '/download/$appId'
+      fullPath: '/download/$appId'
+      preLoaderRoute: typeof DownloadAppIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/testing/$token': {
+      id: '/testing/$token'
+      path: '/testing/$token'
+      fullPath: '/testing/$token'
+      preLoaderRoute: typeof TestingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
@@ -773,6 +745,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/developer/': {
+      id: '/_authenticated/developer/'
+      path: '/developer'
+      fullPath: '/developer/'
+      preLoaderRoute: typeof AuthenticatedDeveloperIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/developer/new': {
+      id: '/_authenticated/developer/new'
+      path: '/developer/new'
+      fullPath: '/developer/new'
+      preLoaderRoute: typeof AuthenticatedDeveloperNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/paystack-webhook': {
+      id: '/api/public/paystack-webhook'
+      path: '/api/public/paystack-webhook'
+      fullPath: '/api/public/paystack-webhook'
+      preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/developer/$appId/': {
       id: '/_authenticated/developer/$appId/'
       path: '/developer/$appId'
@@ -780,32 +780,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDeveloperAppIdIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/ads/serve': {
-      id: '/api/public/ads/serve'
-      path: '/api/public/ads/serve'
-      fullPath: '/api/public/ads/serve'
-      preLoaderRoute: typeof ApiPublicAdsServeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/ads/report': {
-      id: '/api/public/ads/report'
-      path: '/api/public/ads/report'
-      fullPath: '/api/public/ads/report'
-      preLoaderRoute: typeof ApiPublicAdsReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/developer/$appId/update': {
-      id: '/_authenticated/developer/$appId/update'
-      path: '/developer/$appId/update'
-      fullPath: '/developer/$appId/update'
-      preLoaderRoute: typeof AuthenticatedDeveloperAppIdUpdateRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/developer/$appId/stats': {
-      id: '/_authenticated/developer/$appId/stats'
-      path: '/developer/$appId/stats'
-      fullPath: '/developer/$appId/stats'
-      preLoaderRoute: typeof AuthenticatedDeveloperAppIdStatsRouteImport
+    '/_authenticated/developer/$appId/boost': {
+      id: '/_authenticated/developer/$appId/boost'
+      path: '/developer/$appId/boost'
+      fullPath: '/developer/$appId/boost'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdBoostRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/developer/$appId/edit': {
@@ -815,12 +794,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDeveloperAppIdEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/developer/$appId/boost': {
-      id: '/_authenticated/developer/$appId/boost'
-      path: '/developer/$appId/boost'
-      fullPath: '/developer/$appId/boost'
-      preLoaderRoute: typeof AuthenticatedDeveloperAppIdBoostRouteImport
+    '/_authenticated/developer/$appId/stats': {
+      id: '/_authenticated/developer/$appId/stats'
+      path: '/developer/$appId/stats'
+      fullPath: '/developer/$appId/stats'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/developer/$appId/update': {
+      id: '/_authenticated/developer/$appId/update'
+      path: '/developer/$appId/update'
+      fullPath: '/developer/$appId/update'
+      preLoaderRoute: typeof AuthenticatedDeveloperAppIdUpdateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/ads/report': {
+      id: '/api/public/ads/report'
+      path: '/api/public/ads/report'
+      fullPath: '/api/public/ads/report'
+      preLoaderRoute: typeof ApiPublicAdsReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ads/serve': {
+      id: '/api/public/ads/serve'
+      path: '/api/public/ads/serve'
+      fullPath: '/api/public/ads/serve'
+      preLoaderRoute: typeof ApiPublicAdsServeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
