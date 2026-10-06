@@ -93,17 +93,18 @@ class NizaBridge(private val activity: Activity, private val webView: WebView) {
         try {
             var current = URL(url)
             // Follow redirects manually (HttpURLConnection won't cross http→https).
-            repeat(6) {
-                conn = (current.openConnection() as HttpURLConnection).apply {
+            var hops = 0
+            while (true) {
+                val c0 = (current.openConnection() as HttpURLConnection).apply {
                     instanceFollowRedirects = false; connectTimeout = 20_000; readTimeout = 60_000
                 }
-                val code = conn!!.responseCode
-                if (code in 300..399) {
-                    current = URL(current, conn!!.getHeaderField("Location")); conn!!.disconnect()
-                } else {
-                    if (code !in 200..299) throw IllegalStateException("Server returned $code")
-                    return@repeat
+                conn = c0
+                val code = c0.responseCode
+                if (code in 300..399 && hops++ < 6) {
+                    current = URL(current, c0.getHeaderField("Location")); c0.disconnect(); continue
                 }
+                if (code !in 200..299) throw IllegalStateException("Server returned $code")
+                break
             }
             val c = conn!!
             val total = c.contentLengthLong.coerceAtLeast(0)
