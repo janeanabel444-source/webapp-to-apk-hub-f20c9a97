@@ -13,7 +13,7 @@
 ## Native Android bridge
 - [x] Capability handshake, Capacitor + legacy interface, browser fallback
 - [x] Native download with real byte progress, install, open, uninstall, version detection
-- [ ] Android wrapper must implement the documented contract — blocked: native code lives outside this project
+- [x] Android wrapper code in `android/` (NizaBridge.kt, MainActivity.kt, manifest)
 
 ## Reviews
 - [x] Users can edit their own rating/review

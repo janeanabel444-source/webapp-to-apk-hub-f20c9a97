@@ -45,6 +45,11 @@ function EditAppPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    const url = appUrl.trim();
+    if (url && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(url)) {
+      setErr("Please enter a full link starting with https://");
+      return;
+    }
     setBusy(true);
     try {
       await updateFn({

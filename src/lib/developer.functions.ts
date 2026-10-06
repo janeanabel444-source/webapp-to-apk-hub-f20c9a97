@@ -440,7 +440,8 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     void _vn; void _rn;
     const { error } = await supabaseAdmin
       .from("apps")
-      .update({ ...safePatch, status: existing.status === "live" ? "live" : "pending" })
+      // Metadata edits never change review status; resubmission is explicit.
+      .update(safePatch)
       .eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
