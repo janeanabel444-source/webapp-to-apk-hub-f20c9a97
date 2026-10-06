@@ -115,9 +115,11 @@ export function InstallButton({
     const onFocus = () => void probeDevice();
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
+    window.addEventListener("niza:foreground", onFocus);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("niza:foreground", onFocus);
     };
   }, [canProbe, probeDevice, latestVersion]);
 
