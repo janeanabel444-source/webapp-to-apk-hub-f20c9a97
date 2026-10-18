@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { fetchMyLibrary } from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
-import { downloadLink } from "@/lib/links";
+import { appDownloadUrl } from "@/lib/links";
 import { isDemoApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/library")({
@@ -64,9 +64,9 @@ function Library() {
                 packageName={app.package_name}
                 filePath={app.file_path}
                 appUrl={app.app_url}
-                downloadUrl={downloadLink(app.id)}
+                downloadUrl={appDownloadUrl(app.id)}
                 isDemo={isDemoApp(app)}
-                license={app.license_type === "paid" ? "paid" : "free"}
+                license={app.license === "paid" ? "paid" : "free"}
                 priceKobo={app.price_kobo}
                 initialInstalled={true}
                 variant="compact"
