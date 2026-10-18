@@ -38,7 +38,7 @@ function AccountPage() {
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordStatus, setPasswordStatus] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
-  const hasEmailPassword = (user ?? routeUser).app_metadata.providers?.includes("email") ?? false;
+  const hasEmailPassword = (user ?? routeUser).app_metadata?.providers?.includes("email") ?? false;
 
   async function saveProfile(e: FormEvent) {
     e.preventDefault();
