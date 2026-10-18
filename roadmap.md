@@ -1,6 +1,9 @@
 # Niza App Store — Roadmap
 
 ## In progress
+- [ ] Allow APK uploads up to 80 MB
+- [ ] Account settings: photo, display name, email, password; Account navigation
+- [ ] Verify native foreground refresh and package identity across listings
 - [x] Niza Hub integration layer (`src/lib/niza-hub.server.ts`): SSO, payments, catalog, webhooks
 - [x] Niza Hub credentials (NIZA_APP_ID / NIZA_APP_SECRET / NIZA_WORKSPACE_ID / NIZA_WEBHOOK_SECRET)
 - [x] Official logo everywhere (header, footer, auth, hero, favicon, PWA icons)

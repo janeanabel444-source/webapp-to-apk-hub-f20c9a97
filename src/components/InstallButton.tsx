@@ -90,10 +90,10 @@ export function InstallButton({
 
   /** Ask the Android wrapper whether the package is really on this device. */
   const probeDevice = useCallback(async () => {
-    if (!canProbe) return;
+    if (!canProbe || !packageName) return;
     setChecking(true);
     try {
-      const res = await nativeBridge.isPackageInstalled(packageName!);
+      const res = await nativeBridge.isPackageInstalled(packageName);
       setDeviceInstalled(!!res?.installed);
       setDeviceVersion(res?.installed ? res.versionName ?? null : null);
     } catch {
@@ -107,12 +107,13 @@ export function InstallButton({
   // Sync with the real device state on mount and whenever the app regains focus
   // (the user may have installed or uninstalled it in the Android installer).
   useEffect(() => {
+    setDeviceInstalled(null);
+    setDeviceVersion(null);
     if (!canProbe) {
-      setDeviceInstalled(null);
       return;
     }
     void probeDevice();
-    const onFocus = () => void probeDevice();
+    const onFocus = () => { if (document.visibilityState === "visible") void probeDevice(); };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
     window.addEventListener("niza:foreground", onFocus);

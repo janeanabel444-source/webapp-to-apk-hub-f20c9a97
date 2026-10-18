@@ -2,6 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { NizaLogo } from "@/components/NizaLogo";
 import { LogOut, LibraryBig, User as UserIcon, Crown, Code2, Images, Gift, Heart, Shield, Layers } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
+import { accountQueryOptions } from "@/lib/account";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems: Array<{ to: any; label: string; exact?: boolean; muted?: boolean }> = [
@@ -25,6 +27,7 @@ const navItems: Array<{ to: any; label: string; exact?: boolean; muted?: boolean
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const { data: profile } = useQuery({ ...accountQueryOptions(user?.id ?? ""), enabled: !!user });
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -65,14 +68,15 @@ export function Header() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full border border-border bg-surface px-1 py-1 pr-3 transition hover:shadow-md">
+                <Button variant="outline" aria-label="Account menu" className="flex items-center gap-2 rounded-full border border-border bg-surface px-1 py-1 pr-3 transition hover:shadow-md">
                   <Avatar className="h-7 w-7">
+                    <AvatarImage src={profile?.photoUrl ?? undefined} alt="Your profile photo" className="object-cover" />
                     <AvatarFallback className="bg-primary text-xs text-primary-foreground">
-                      {(user.email ?? "U")[0].toUpperCase()}
+                      {(profile?.display_name || user.email || "U")[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden text-sm font-medium sm:inline">{user.email?.split("@")[0]}</span>
-                </button>
+                  <span className="hidden max-w-28 truncate text-sm font-medium sm:inline">{profile?.display_name || user.email?.split("@")[0]}</span>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem asChild>
@@ -100,7 +104,7 @@ export function Header() {
                   <Link to="/premium"><Crown className="mr-2 h-4 w-4" /> Go Premium</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/library"><UserIcon className="mr-2 h-4 w-4" /> Account</Link>
+                  <Link to="/account"><UserIcon className="mr-2 h-4 w-4" /> Account</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}><LogOut className="mr-2 h-4 w-4" /> Sign out</DropdownMenuItem>
