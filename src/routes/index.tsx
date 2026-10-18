@@ -11,6 +11,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Welcome to Niza App Store. Discover apps and games in one place. Explore, install, and publish apps easily." },
       { property: "og:title", content: "Niza App Store" },
       { property: "og:description", content: "Discover apps and games in one place." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Home,

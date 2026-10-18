@@ -4,9 +4,18 @@ import { useAuth } from "@/lib/auth";
 import { fetchMyLibrary } from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
+import { downloadLink } from "@/lib/links";
+import { isDemoApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/library")({
-  head: () => ({ meta: [{ title: "My library — Niza App Store" }] }),
+  head: () => ({ meta: [
+    { title: "My library — Niza App Store" },
+    { name: "description", content: "Manage your installed Niza apps and games." },
+    { property: "og:title", content: "My library — Niza App Store" },
+    { property: "og:description", content: "Manage your installed Niza apps and games." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Library,
 });
 
@@ -14,7 +23,7 @@ function Library() {
   const { user } = useAuth();
   const { data, isLoading } = useQuery({
     queryKey: ["library", user?.id],
-    queryFn: () => fetchMyLibrary(user!.id),
+    queryFn: () => user ? fetchMyLibrary(user.id) : Promise.resolve([]),
     enabled: !!user,
   });
 
@@ -32,13 +41,9 @@ function Library() {
             <Link to="/" className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground">Browse apps</Link>
           </div>
         )}
-        {(data ?? []).map((row: any) => {
+        {(data ?? []).map((row) => {
           const app = row.app;
           if (!app) return null;
-          const updateAvailable =
-            !!row.installed_version &&
-            !!app.version &&
-            row.installed_version !== app.version;
           return (
             <div key={app.id} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3">
               <Link to="/app/$slug" params={{ slug: app.slug }}>
@@ -50,18 +55,19 @@ function Library() {
                 </Link>
                 <p className="truncate text-xs text-muted-foreground">
                   v{row.installed_version ?? app.version}
-                  {updateAvailable && (
-                    <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 font-medium text-primary">
-                      Update to v{app.version}
-                    </span>
-                  )}
                   {app.tagline ? ` · ${app.tagline}` : ""}
                 </p>
               </div>
               <InstallButton
                 appId={app.id}
                 appName={app.name}
-                packageName={(app as any).package_name}
+                packageName={app.package_name}
+                filePath={app.file_path}
+                appUrl={app.app_url}
+                downloadUrl={downloadLink(app.id)}
+                isDemo={isDemoApp(app)}
+                license={app.license_type === "paid" ? "paid" : "free"}
+                priceKobo={app.price_kobo}
                 initialInstalled={true}
                 variant="compact"
                 installedVersion={row.installed_version}
