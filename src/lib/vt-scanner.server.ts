@@ -242,13 +242,15 @@ export async function drainVtScanQueue(): Promise<number> {
     .limit(10);
   let resolved = 0;
   for (const row of (rows ?? []) as unknown as QueueRow[]) {
-    if (!(await claimVtSlot(db))) break; // too soon since the last VT request
+    let progressed = false;
     try {
-      const progressed = await processRow(db, row);
-      if (progressed) resolved++;
+      progressed = await processRow(db, row);
     } catch (e: any) {
       await bumpAttempts(db, row, e?.message ?? "unknown error");
+      progressed = true;
     }
+    if (!progressed) break; // VT rate slot unavailable — wait for the next pass
+    resolved++;
   }
   return resolved;
 }
