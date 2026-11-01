@@ -42,7 +42,7 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 // Minimal DER walking (for v1 JAR signatures: PKCS#7 -> X.509 certificate)
 // ---------------------------------------------------------------------------
 
-/** Reads a DER TLV at `off`; returns { tag, contentStart, contentLen, next }. */
+/** Reads a DER TLV at `off`; returns { tag, start, contentStart, contentLen, next }. */
 function readTlv(b: Uint8Array, off: number) {
   if (off + 2 > b.length) throw new Error("DER truncated");
   const tag = b[off]!;
@@ -54,7 +54,7 @@ function readTlv(b: Uint8Array, off: number) {
     len = 0;
     for (let i = 0; i < n; i++) len = len * 256 + b[next++]!;
   }
-  return { tag, contentStart: next, contentLen: len, next: next + len };
+  return { tag, start: off, contentStart: next, contentLen: len, next: next + len };
 }
 
 function children(b: Uint8Array, start: number, end: number) {
