@@ -1162,6 +1162,7 @@ export type Database = {
       }
       vt_scan_queue: {
         Row: {
+          analysis_id: string | null
           app_id: string
           app_version_id: string | null
           attempts: number
@@ -1175,6 +1176,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          analysis_id?: string | null
           app_id: string
           app_version_id?: string | null
           attempts?: number
@@ -1188,6 +1190,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          analysis_id?: string | null
           app_id?: string
           app_version_id?: string | null
           attempts?: number

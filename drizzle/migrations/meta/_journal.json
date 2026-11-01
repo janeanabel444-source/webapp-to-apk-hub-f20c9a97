@@ -15,6 +15,13 @@
       "when": 1793513144695,
       "tag": "0001_vt_scan_gate_and_cert_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793513180270,
+      "tag": "0002_vt_queue_analysis_id",
+      "breakpoints": true
     }
   ]
 }
