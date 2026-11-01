@@ -523,15 +523,25 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     const { id, ...patch } = data;
     const { data: existing } = await supabaseAdmin
       .from("apps")
-      .select("developer_id, status, file_path")
+      .select("developer_id, status, file_path, package_name, cert_fingerprint_sha256")
       .eq("id", id)
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) {
       throw new Error("Not found");
     }
-    // SECURITY: any binary swap must be re-scanned, even on a metadata edit.
+    // SECURITY: any binary swap is re-verified (permissions + certificate
+    // fingerprint) and re-queued for VirusTotal, even on a metadata edit.
+    let swapReport: ApkSecurityReport | null = null;
     if (patch.file_path && patch.file_path !== existing.file_path) {
-      await scanAppBinaryOrThrow(patch.file_path);
+      swapReport = await gateApkBinary({
+        filePath: patch.file_path,
+        packageName: existing.package_name,
+        previousFingerprint: existing.cert_fingerprint_sha256,
+        currentUserId: context.userId,
+      });
+      if (swapReport.permissions) patch.permissions = swapReport.permissions;
+      if (swapReport.sizeBytes) patch.apk_size = swapReport.sizeBytes;
+      patch.cert_fingerprint_sha256 = existing.cert_fingerprint_sha256 ?? swapReport.certFingerprintSha256;
     }
     // Drop fields not on the apps table.
     const { version_name: _vn, release_notes: _rn, ...safePatch } =
