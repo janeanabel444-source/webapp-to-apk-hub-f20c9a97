@@ -402,18 +402,40 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     if (!isDraft) {
-      await supabaseAdmin.from("app_versions").insert({
-        app_id: row.id,
-        version: initialVersion,
-        release_notes: releaseNotes,
-        file_path: data.file_path ?? null,
-        package_name: data.package_name ?? null,
-        version_code: data.version_code ?? null,
-        apk_size: data.apk_size ?? null,
-        permissions: data.permissions ?? [],
-        permissions_added: data.permissions ?? [],
-        permissions_removed: [],
-      });
+      const { data: versionRow, error: verErr } = await supabaseAdmin
+        .from("app_versions")
+        .insert({
+          app_id: row.id,
+          version: initialVersion,
+          release_notes: releaseNotes,
+          file_path: data.file_path ?? null,
+          package_name: data.package_name ?? null,
+          version_code: data.version_code ?? null,
+          apk_size: data.apk_size ?? null,
+          permissions: data.permissions ?? [],
+          permissions_added: data.permissions ?? [],
+          permissions_removed: [],
+        })
+        .select("id")
+        .single();
+      if (verErr) throw new Error(verErr.message);
+
+      // Fail-closed gate: queue the VirusTotal scan. If the exact binary was
+      // already rejected before, roll the whole listing back.
+      if (scanning && apkReport && data.file_path) {
+        try {
+          await queueScanAndDrain({
+            appId: row.id,
+            appVersionId: versionRow.id,
+            filePath: data.file_path,
+            report: apkReport,
+          });
+        } catch (e) {
+          await supabaseAdmin.from("app_versions").delete().eq("id", versionRow.id);
+          await supabaseAdmin.from("apps").delete().eq("id", row.id);
+          throw e;
+        }
+      }
     }
 
     return row;
