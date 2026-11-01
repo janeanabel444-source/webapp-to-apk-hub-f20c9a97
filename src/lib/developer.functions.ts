@@ -549,6 +549,7 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     const { version_name: _vn, release_notes: _rn, ...safePatch } =
       patch as typeof patch & { version_name?: unknown; release_notes?: unknown };
     void _vn; void _rn;
+    if (swapFingerprint) (safePatch as Record<string, unknown>).cert_fingerprint_sha256 = swapFingerprint;
     const { error } = await supabaseAdmin
       .from("apps")
       // Metadata edits never change review status; resubmission is explicit.
