@@ -588,18 +588,24 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       throw new Error("Provide a new app file or an updated app URL.");
     }
 
-    // Administrator releases are trusted and skip scanning.
-    if (
-      data.file_path &&
-      data.file_path !== existing.file_path &&
-      !(await isTrustedPublisher(context.userId, (context.claims as any)?.email))
-    ) {
-      await scanAppBinaryOrThrow(data.file_path);
+    // Binary security gate on a changed APK. Fail-closed: the update stays
+    // hidden ("verifying") until the queued VirusTotal scan clears, and a
+    // signing-certificate mismatch is rejected immediately.
+    const fileChanged = !!data.file_path && data.file_path !== existing.file_path;
+    const trusted = await isTrustedPublisher(context.userId, (context.claims as any)?.email);
+    let apkReport: ApkSecurityReport | null = null;
+    if (fileChanged) {
+      apkReport = await gateApkBinary({
+        filePath: data.file_path!,
+        packageName: data.package_name ?? existing.package_name,
+        previousFingerprint: existing.cert_fingerprint_sha256,
+        currentUserId: context.userId,
+      });
+      if (apkReport.versionName) data.version = apkReport.versionName;
     }
-
-
+    const nextPerms = apkReport ? apkReport.permissions : data.permissions ?? [];
+    const scanning = !!apkReport && !trusted && (await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()));
     const prevPerms: string[] = (existing.permissions as string[] | null) ?? [];
-    const nextPerms = data.permissions ?? [];
     const prevSet = new Set(prevPerms);
     const nextSet = new Set(nextPerms);
     const permsAdded = [...nextSet].filter((p) => !prevSet.has(p));
