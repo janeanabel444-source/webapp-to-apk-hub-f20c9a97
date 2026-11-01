@@ -550,9 +550,24 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("apps")
       // Metadata edits never change review status; resubmission is explicit.
+      // A swapped binary goes back behind the VirusTotal scan gate.
       .update(safePatch)
       .eq("id", id);
     if (error) throw new Error(error.message);
+    if (swapReport && (await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()))) {
+      const wasLive = existing.status === "live";
+      if (wasLive) {
+        await supabaseAdmin.from("apps").update({ status: "verifying", is_published: false, scan_status: "verifying" }).eq("id", id);
+      }
+      try {
+        await queueScanAndDrain({ appId: id, filePath: patch.file_path!, report: swapReport });
+      } catch {
+        if (wasLive) {
+          await supabaseAdmin.from("apps").update({ status: "live", is_published: true }).eq("id", id);
+        }
+        throw new Error("This exact file was previously rejected by VirusTotal and cannot be uploaded again.");
+      }
+    }
     return { ok: true };
   });
 
