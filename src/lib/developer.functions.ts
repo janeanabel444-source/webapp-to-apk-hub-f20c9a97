@@ -620,29 +620,60 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
         file_path: newFilePath,
         app_url: data.app_url ?? existing.app_url,
         last_updated_at: now,
-        status: "live",
-        is_published: true,
+        status: scanning ? "verifying" : "live",
+        is_published: !scanning,
+        scan_status: scanning ? "verifying" : apkReport ? "none" : undefined,
+        cert_fingerprint_sha256: existing.cert_fingerprint_sha256 ?? apkReport?.certFingerprintSha256 ?? null,
         package_name: data.package_name ?? undefined,
         version_code: data.version_code ?? undefined,
-        apk_size: data.apk_size ?? undefined,
+        apk_size: apkReport ? apkReport.sizeBytes : data.apk_size ?? undefined,
         permissions: nextPerms.length ? nextPerms : undefined,
       })
       .eq("id", data.id);
     if (updateErr) throw new Error(updateErr.message);
 
-    const { error: histErr } = await supabaseAdmin.from("app_versions").insert({
-      app_id: data.id,
-      version: data.version,
-      release_notes: data.release_notes,
-      file_path: newFilePath,
-      package_name: data.package_name ?? null,
-      version_code: data.version_code ?? null,
-      apk_size: data.apk_size ?? null,
-      permissions: nextPerms,
-      permissions_added: permsAdded,
-      permissions_removed: permsRemoved,
-    });
+    const { data: versionRow, error: histErr } = await supabaseAdmin
+      .from("app_versions")
+      .insert({
+        app_id: data.id,
+        version: data.version,
+        release_notes: data.release_notes,
+        file_path: newFilePath,
+        package_name: data.package_name ?? null,
+        version_code: data.version_code ?? null,
+        apk_size: apkReport ? apkReport.sizeBytes : data.apk_size ?? null,
+        permissions: nextPerms,
+        permissions_added: permsAdded,
+        permissions_removed: permsRemoved,
+      })
+      .select("id")
+      .single();
     if (histErr) throw new Error(histErr.message);
+
+    if (scanning && apkReport && data.file_path) {
+      try {
+        await queueScanAndDrain({
+          appId: data.id,
+          appVersionId: versionRow.id,
+          filePath: data.file_path,
+          report: apkReport,
+        });
+      } catch (e) {
+        // Known-malicious binary: roll the update back entirely.
+        await supabaseAdmin.from("app_versions").delete().eq("id", versionRow.id);
+        await supabaseAdmin
+          .from("apps")
+          .update({
+            version: existing.version,
+            file_path: existing.file_path,
+            status: "live",
+            is_published: true,
+            scan_status: existing.scan_status ?? "none",
+          })
+          .eq("id", data.id);
+        throw e;
+      }
+    }
 
     return { ok: true, version: data.version };
   });
