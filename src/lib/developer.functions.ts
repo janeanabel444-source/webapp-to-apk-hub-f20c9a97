@@ -378,10 +378,12 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         price_kobo: data.license === "paid" ? (data.price_kobo ?? 0) : 0,
         is_draft: isDraft,
         // Development builds stay private (link only). Public releases publish
-        // automatically once scanning + validation pass; anything critical is
-        // held in the administrator review queue.
-        is_published: autoPublish,
-        status: isDraft ? "draft" : isDevBuild ? "development" : autoPublish ? "live" : "pending",
+        // automatically once the VirusTotal scan + validation pass; anything
+        // critical is held in the administrator review queue.
+        is_published: autoPublish && !scanning,
+        status: isDraft ? "draft" : isDevBuild ? "development" : scanning ? "verifying" : autoPublish ? "live" : "pending",
+        scan_status: scanning ? "verifying" : apkReport ? "none" : "none",
+        cert_fingerprint_sha256: apkReport?.certFingerprintSha256 ?? null,
         review_note: reviewNote,
 
 
