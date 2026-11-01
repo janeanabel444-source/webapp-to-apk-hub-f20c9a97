@@ -37,11 +37,15 @@ export function vtConfigured() {
 
 /** Returns true if the caller may make the next VT request, and records it. */
 async function claimVtSlot(db: SupabaseAdmin): Promise<boolean> {
-  const { data } = await db.from("vt_rate_state").select("last_request_at").eq("id", 1).single();
-  const last = data ? new Date(data.last_request_at as string).getTime() : 0;
-  if (Date.now() - last < MIN_INTERVAL_MS) return false;
-  await db.from("vt_rate_state").update({ last_request_at: new Date().toISOString() }).eq("id", 1);
-  return true;
+  // Atomic claim: only succeeds when the last request is at least 15s old.
+  const cutoff = new Date(Date.now() - MIN_INTERVAL_MS).toISOString();
+  const { count } = await db
+    .from("vt_rate_state")
+    .update({ last_request_at: new Date().toISOString() })
+    .lt("last_request_at", cutoff)
+    .eq("id", 1)
+    .select();
+  return (count ?? 0) > 0;
 }
 
 async function vtFetch(path: string, init?: RequestInit): Promise<Response | null> {
