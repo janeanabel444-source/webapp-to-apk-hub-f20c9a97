@@ -78,11 +78,11 @@ function extractV1Certificate(p7: Uint8Array): Uint8Array | null {
     if (!outer) return null;
     const signedData = readTlv(p7, outer.contentStart); // SEQUENCE
     const sdKids = children(p7, signedData.contentStart, signedData.next);
-    // certificates live in the second [0] IMPLICIT after version/digests/contentInfo
+    // certificates live in the [0] IMPLICIT after version/digests/contentInfo
     const certs = sdKids.find((k) => k.tag === 0xa0);
     if (!certs) return null;
-    const first = readTlv(p7, certs.contentStart); // Certificate SEQUENCE
-    return p7.subarray(first.contentStart - (first.next - first.contentStart - first.contentLen) , first.next);
+    const first = readTlv(p7, certs.contentStart); // Certificate SEQUENCE (full TLV)
+    return p7.subarray(first.start, first.next);
   } catch {
     return null;
   }
