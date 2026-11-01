@@ -215,7 +215,9 @@ async function processRow(db: SupabaseAdmin, row: QueueRow): Promise<boolean> {
     .from("vt_scan_queue")
     .update({ status: "poll", analysis_id: analysisId, attempts: row.attempts + 1, updated_at: new Date().toISOString() })
     .eq("id", row.id);
-  await db.from("app_versions").update({ vt_scan_id: analysisId, vt_permalink: permalink }).eq("id", row.app_version_id!);
+  if (row.app_version_id) {
+    await db.from("app_versions").update({ vt_scan_id: analysisId, vt_permalink: permalink }).eq("id", row.app_version_id);
+  }
   return true;
 }
 
