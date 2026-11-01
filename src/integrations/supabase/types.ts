@@ -270,6 +270,10 @@ export type Database = {
           release_notes: string | null
           version: string
           version_code: number | null
+          vt_permalink: string | null
+          vt_positives: number | null
+          vt_scan_id: string | null
+          vt_total: number | null
         }
         Insert: {
           apk_size?: number | null
@@ -284,6 +288,10 @@ export type Database = {
           release_notes?: string | null
           version: string
           version_code?: number | null
+          vt_permalink?: string | null
+          vt_positives?: number | null
+          vt_scan_id?: string | null
+          vt_total?: number | null
         }
         Update: {
           apk_size?: number | null
@@ -298,6 +306,10 @@ export type Database = {
           release_notes?: string | null
           version?: string
           version_code?: number | null
+          vt_permalink?: string | null
+          vt_positives?: number | null
+          vt_scan_id?: string | null
+          vt_total?: number | null
         }
         Relationships: [
           {
@@ -346,6 +358,7 @@ export type Database = {
           apk_size: number | null
           app_url: string | null
           category: Database["public"]["Enums"]["app_category"]
+          cert_fingerprint_sha256: string | null
           cloud_save: boolean
           contains_ads: boolean
           content_rating: string | null
@@ -398,6 +411,7 @@ export type Database = {
           review_note: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          scan_status: string
           screenshots: string[]
           share_token: string
           short_description: string | null
@@ -416,6 +430,7 @@ export type Database = {
           apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
+          cert_fingerprint_sha256?: string | null
           cloud_save?: boolean
           contains_ads?: boolean
           content_rating?: string | null
@@ -468,6 +483,7 @@ export type Database = {
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          scan_status?: string
           screenshots?: string[]
           share_token?: string
           short_description?: string | null
@@ -486,6 +502,7 @@ export type Database = {
           apk_size?: number | null
           app_url?: string | null
           category?: Database["public"]["Enums"]["app_category"]
+          cert_fingerprint_sha256?: string | null
           cloud_save?: boolean
           contains_ads?: boolean
           content_rating?: string | null
@@ -538,6 +555,7 @@ export type Database = {
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          scan_status?: string
           screenshots?: string[]
           share_token?: string
           short_description?: string | null
@@ -1124,6 +1142,63 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vt_rate_state: {
+        Row: {
+          id: number
+          last_request_at: string
+        }
+        Insert: {
+          id?: number
+          last_request_at?: string
+        }
+        Update: {
+          id?: number
+          last_request_at?: string
+        }
+        Relationships: []
+      }
+      vt_scan_queue: {
+        Row: {
+          app_id: string
+          app_version_id: string | null
+          attempts: number
+          created_at: string
+          file_path: string
+          id: string
+          last_error: string | null
+          sha256: string | null
+          size_bytes: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          app_id: string
+          app_version_id?: string | null
+          attempts?: number
+          created_at?: string
+          file_path: string
+          id?: string
+          last_error?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          app_id?: string
+          app_version_id?: string | null
+          attempts?: number
+          created_at?: string
+          file_path?: string
+          id?: string
+          last_error?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }

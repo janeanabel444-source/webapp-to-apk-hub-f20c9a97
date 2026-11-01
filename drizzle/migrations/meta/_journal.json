@@ -8,6 +8,13 @@
       "when": 1792322842787,
       "tag": "0000_profile_photo_owner_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793513144695,
+      "tag": "0001_vt_scan_gate_and_cert_lock",
+      "breakpoints": true
     }
   ]
 }
