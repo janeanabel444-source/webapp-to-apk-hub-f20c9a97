@@ -94,27 +94,85 @@ async function isTrustedPublisher(userId: string, email: string | undefined) {
 }
 
 /**
- * Scan an uploaded app binary with VirusTotal. Throws on malicious; returns
- * the report otherwise. Shared by create + update so both paths are
- * protected against malware bypass.
+ * Binary security gate, run server-side on every APK upload (never trusting
+ * the client's parsed values):
+ *  - permissions are re-extracted from the binary AndroidManifest.xml and
+ *    forbidden permissions reject the upload immediately (no admin review);
+ *  - the SHA-256 certificate fingerprint is taken from the APK signing
+ *    block / v1 signature. First upload records it; updates must match it
+ *    (certificate mismatch rejects immediately to prevent app hijacking).
  */
-async function scanAppBinaryOrThrow(filePath: string): Promise<{ status: string; detail: string }> {
-  const { scanStorageFileWithVirusTotal } = await import("@/lib/virustotal.server");
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const scan = await scanStorageFileWithVirusTotal("app-files", filePath);
-  if (scan.status === "malicious") {
-    await supabaseAdmin.storage.from("app-files").remove([filePath]).catch(() => {});
-    throw new Error(
-      `This file was flagged by ${scan.positives} of ${scan.total} antivirus engines and cannot be published.`,
-    );
+type ApkSecurityReport = import("@/lib/apk-security.server").ApkSecurityReport;
+
+async function gateApkBinary(opts: {
+  filePath: string;
+  packageName?: string | null;
+  previousFingerprint?: string | null;
+  currentUserId: string;
+}): Promise<ApkSecurityReport> {
+  const { inspectApkFromStorage, assertNoForbiddenPermissions } = await import("@/lib/apk-security.server");
+  const report = await inspectApkFromStorage(opts.filePath);
+  assertNoForbiddenPermissions(report.permissions);
+
+  if (opts.previousFingerprint && report.certFingerprintSha256) {
+    if (report.certFingerprintSha256 !== opts.previousFingerprint) {
+      throw new Error(
+        "Signing certificate mismatch: this APK was signed with a different key than the one originally used for this app. " +
+          "Updates must be signed with the same certificate. If you lost your signing key, contact Niza support — this protection prevents app hijacking.",
+      );
+    }
   }
-  return {
-    status: scan.status,
-    detail:
-      scan.status === "clean"
-        ? "VirusTotal: no engine flagged this package."
-        : "VirusTotal: this package has not been analysed before, so no verdict is available.",
-  };
+
+  if (opts.packageName) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: claimed } = await supabaseAdmin
+      .from("apps")
+      .select("id, developer_id, cert_fingerprint_sha256, name")
+      .eq("package_name", opts.packageName)
+      .not("cert_fingerprint_sha256", "is", null)
+      .neq("developer_id", opts.currentUserId)
+      .limit(1)
+      .maybeSingle();
+    if (claimed) {
+      throw new Error(
+        `The package identifier ${opts.packageName} is already signed and published on Niza by another developer ("${claimed.name}"). ` +
+          "Rebuild your application with your own unique package identifier and signing key.",
+      );
+    }
+  }
+
+  return report;
+}
+
+/** True when VirusTotal scanning is active for this caller/upload. */
+async function scanRequired(userId: string, email: string | undefined): Promise<boolean> {
+  if (!(await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()))) return false;
+  return !(await isTrustedPublisher(userId, email));
+}
+
+/**
+ * Attaches the freshly queued VirusTotal scan and runs one throttle-aware
+ * drain pass so known files get their verdict immediately.
+ */
+async function queueScanAndDrain(opts: {
+  appId: string;
+  appVersionId?: string | null;
+  filePath: string;
+  report: ApkSecurityReport;
+}) {
+  const { enqueueVtScan, drainVtScanQueue } = await import("@/lib/vt-scanner.server");
+  await enqueueVtScan({
+    appId: opts.appId,
+    appVersionId: opts.appVersionId ?? null,
+    filePath: opts.filePath,
+    sha256: opts.report.sha256,
+    sizeBytes: opts.report.sizeBytes,
+  });
+  try {
+    await drainVtScanQueue();
+  } catch {
+    // A throttle/unavailable outcome keeps the app in the verifying state.
+  }
 }
 
 
