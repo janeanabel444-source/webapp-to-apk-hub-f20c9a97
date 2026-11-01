@@ -541,8 +541,10 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
       });
       if (swapReport.permissions) patch.permissions = swapReport.permissions;
       if (swapReport.sizeBytes) patch.apk_size = swapReport.sizeBytes;
-      patch.cert_fingerprint_sha256 = existing.cert_fingerprint_sha256 ?? swapReport.certFingerprintSha256;
     }
+    const swapFingerprint = swapReport
+      ? existing.cert_fingerprint_sha256 ?? swapReport.certFingerprintSha256
+      : null;
     // Drop fields not on the apps table.
     const { version_name: _vn, release_notes: _rn, ...safePatch } =
       patch as typeof patch & { version_name?: unknown; release_notes?: unknown };
