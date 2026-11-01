@@ -266,13 +266,26 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       }
     }
 
-    // ---- VirusTotal + marketplace validation -> automatic publishing decision ----
-    // Administrator releases are trusted: they skip scanning and the review
-    // queue and go live as soon as the package itself validates.
-    let scanReport: { status: string; detail: string } | null = null;
-    if (data.file_path && !isDraft && !admin) {
-      scanReport = await scanAppBinaryOrThrow(data.file_path);
+    // ---- Binary security gate + VirusTotal queue -> automatic publishing decision ----
+    // The binary itself is verified server-side (permissions from the binary
+    // manifest + certificate fingerprint from the signing block). The file is
+    // then queued for VirusTotal; while the scan is pending the app stays in
+    // the "verifying" state and is never published. Administrator releases
+    // are trusted: they skip scanning and the review queue.
+    let apkReport: ApkSecurityReport | null = null;
+    if (data.file_path && !isDraft) {
+      apkReport = await gateApkBinary({
+        filePath: data.file_path,
+        packageName: data.package_name,
+        currentUserId: context.userId,
+      });
+      // Server-extracted values are authoritative.
+      data.permissions = apkReport.permissions;
+      data.apk_size = apkReport.sizeBytes;
+      if (!data.package_name && apkReport.packageName) data.package_name = apkReport.packageName;
+      if (apkReport.versionName && !data.version_name) data.version_name = apkReport.versionName;
     }
+    const scanning = !!apkReport && !admin && (await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()));
 
     const { SENSITIVE_PERMISSIONS } = await import("@/lib/review");
     const sensitive = (data.permissions ?? []).filter((p) => SENSITIVE_PERMISSIONS[p]);
@@ -296,7 +309,11 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     const reviewNote = isDraft
       ? null
       : [
-          scanReport ? scanReport.detail : admin ? "Administrator release — scanning skipped." : null,
+          scanning
+            ? "VirusTotal scan queued — this app stays hidden from the store until the scan clears."
+            : admin && apkReport
+              ? "Administrator release — scanning skipped."
+              : null,
           criticalReasons.length ? `Held for review:\n${criticalReasons.map((r) => `• ${r}`).join("\n")}` : null,
           marketplaceWarnings.length
             ? `Marketplace validation notes:\n${marketplaceWarnings.map((w) => `• ${w}`).join("\n")}`
