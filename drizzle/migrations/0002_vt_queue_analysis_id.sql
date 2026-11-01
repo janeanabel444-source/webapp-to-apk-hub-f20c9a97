@@ -1,0 +1,1 @@
+ALTER TABLE public.vt_scan_queue ADD COLUMN IF NOT EXISTS analysis_id TEXT;

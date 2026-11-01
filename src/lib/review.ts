@@ -197,6 +197,8 @@ export function summarizeIssues(issues: ReviewIssue[]) {
 
 /** Human-readable review states surfaced to developers. */
 export const REVIEW_STATES: Record<string, { label: string; description: string; tone: "pending" | "good" | "warn" | "bad" }> = {
+  verifying: { label: "Verifying — security scan in progress", description: "The package is queued for VirusTotal scanning; it stays hidden until the scan clears.", tone: "pending" },
+
   draft: { label: "Draft", description: "Saved but not submitted.", tone: "pending" },
   development: { label: "Development build", description: "Private — shared only through your testing link.", tone: "pending" },
   pending: { label: "In review", description: "Automated checks passed. A reviewer is looking at your submission.", tone: "pending" },

@@ -94,27 +94,85 @@ async function isTrustedPublisher(userId: string, email: string | undefined) {
 }
 
 /**
- * Scan an uploaded app binary with VirusTotal. Throws on malicious; returns
- * the report otherwise. Shared by create + update so both paths are
- * protected against malware bypass.
+ * Binary security gate, run server-side on every APK upload (never trusting
+ * the client's parsed values):
+ *  - permissions are re-extracted from the binary AndroidManifest.xml and
+ *    forbidden permissions reject the upload immediately (no admin review);
+ *  - the SHA-256 certificate fingerprint is taken from the APK signing
+ *    block / v1 signature. First upload records it; updates must match it
+ *    (certificate mismatch rejects immediately to prevent app hijacking).
  */
-async function scanAppBinaryOrThrow(filePath: string): Promise<{ status: string; detail: string }> {
-  const { scanStorageFileWithVirusTotal } = await import("@/lib/virustotal.server");
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const scan = await scanStorageFileWithVirusTotal("app-files", filePath);
-  if (scan.status === "malicious") {
-    await supabaseAdmin.storage.from("app-files").remove([filePath]).catch(() => {});
-    throw new Error(
-      `This file was flagged by ${scan.positives} of ${scan.total} antivirus engines and cannot be published.`,
-    );
+type ApkSecurityReport = import("@/lib/apk-security.server").ApkSecurityReport;
+
+async function gateApkBinary(opts: {
+  filePath: string;
+  packageName?: string | null;
+  previousFingerprint?: string | null;
+  currentUserId: string;
+}): Promise<ApkSecurityReport> {
+  const { inspectApkFromStorage, assertNoForbiddenPermissions } = await import("@/lib/apk-security.server");
+  const report = await inspectApkFromStorage(opts.filePath);
+  assertNoForbiddenPermissions(report.permissions);
+
+  if (opts.previousFingerprint && report.certFingerprintSha256) {
+    if (report.certFingerprintSha256 !== opts.previousFingerprint) {
+      throw new Error(
+        "Signing certificate mismatch: this APK was signed with a different key than the one originally used for this app. " +
+          "Updates must be signed with the same certificate. If you lost your signing key, contact Niza support — this protection prevents app hijacking.",
+      );
+    }
   }
-  return {
-    status: scan.status,
-    detail:
-      scan.status === "clean"
-        ? "VirusTotal: no engine flagged this package."
-        : "VirusTotal: this package has not been analysed before, so no verdict is available.",
-  };
+
+  if (opts.packageName) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: claimed } = await supabaseAdmin
+      .from("apps")
+      .select("id, developer_id, cert_fingerprint_sha256, name")
+      .eq("package_name", opts.packageName)
+      .not("cert_fingerprint_sha256", "is", null)
+      .neq("developer_id", opts.currentUserId)
+      .limit(1)
+      .maybeSingle();
+    if (claimed) {
+      throw new Error(
+        `The package identifier ${opts.packageName} is already signed and published on Niza by another developer ("${claimed.name}"). ` +
+          "Rebuild your application with your own unique package identifier and signing key.",
+      );
+    }
+  }
+
+  return report;
+}
+
+/** True when VirusTotal scanning is active for this caller/upload. */
+async function scanRequired(userId: string, email: string | undefined): Promise<boolean> {
+  if (!(await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()))) return false;
+  return !(await isTrustedPublisher(userId, email));
+}
+
+/**
+ * Attaches the freshly queued VirusTotal scan and runs one throttle-aware
+ * drain pass so known files get their verdict immediately.
+ */
+async function queueScanAndDrain(opts: {
+  appId: string;
+  appVersionId?: string | null;
+  filePath: string;
+  report: ApkSecurityReport;
+}) {
+  const { enqueueVtScan, drainVtScanQueue } = await import("@/lib/vt-scanner.server");
+  await enqueueVtScan({
+    appId: opts.appId,
+    appVersionId: opts.appVersionId ?? null,
+    filePath: opts.filePath,
+    sha256: opts.report.sha256,
+    sizeBytes: opts.report.sizeBytes,
+  });
+  try {
+    await drainVtScanQueue();
+  } catch {
+    // A throttle/unavailable outcome keeps the app in the verifying state.
+  }
 }
 
 
@@ -208,13 +266,26 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       }
     }
 
-    // ---- VirusTotal + marketplace validation -> automatic publishing decision ----
-    // Administrator releases are trusted: they skip scanning and the review
-    // queue and go live as soon as the package itself validates.
-    let scanReport: { status: string; detail: string } | null = null;
-    if (data.file_path && !isDraft && !admin) {
-      scanReport = await scanAppBinaryOrThrow(data.file_path);
+    // ---- Binary security gate + VirusTotal queue -> automatic publishing decision ----
+    // The binary itself is verified server-side (permissions from the binary
+    // manifest + certificate fingerprint from the signing block). The file is
+    // then queued for VirusTotal; while the scan is pending the app stays in
+    // the "verifying" state and is never published. Administrator releases
+    // are trusted: they skip scanning and the review queue.
+    let apkReport: ApkSecurityReport | null = null;
+    if (data.file_path && !isDraft) {
+      apkReport = await gateApkBinary({
+        filePath: data.file_path,
+        packageName: data.package_name,
+        currentUserId: context.userId,
+      });
+      // Server-extracted values are authoritative.
+      data.permissions = apkReport.permissions;
+      data.apk_size = apkReport.sizeBytes;
+      if (!data.package_name && apkReport.packageName) data.package_name = apkReport.packageName;
+      if (apkReport.versionName && !data.version_name) data.version_name = apkReport.versionName;
     }
+    const scanning = !!apkReport && !admin && (await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()));
 
     const { SENSITIVE_PERMISSIONS } = await import("@/lib/review");
     const sensitive = (data.permissions ?? []).filter((p) => SENSITIVE_PERMISSIONS[p]);
@@ -238,7 +309,11 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     const reviewNote = isDraft
       ? null
       : [
-          scanReport ? scanReport.detail : admin ? "Administrator release — scanning skipped." : null,
+          scanning
+            ? "VirusTotal scan queued — this app stays hidden from the store until the scan clears."
+            : admin && apkReport
+              ? "Administrator release — scanning skipped."
+              : null,
           criticalReasons.length ? `Held for review:\n${criticalReasons.map((r) => `• ${r}`).join("\n")}` : null,
           marketplaceWarnings.length
             ? `Marketplace validation notes:\n${marketplaceWarnings.map((w) => `• ${w}`).join("\n")}`
@@ -303,10 +378,12 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
         price_kobo: data.license === "paid" ? (data.price_kobo ?? 0) : 0,
         is_draft: isDraft,
         // Development builds stay private (link only). Public releases publish
-        // automatically once scanning + validation pass; anything critical is
-        // held in the administrator review queue.
-        is_published: autoPublish,
-        status: isDraft ? "draft" : isDevBuild ? "development" : autoPublish ? "live" : "pending",
+        // automatically once the VirusTotal scan + validation pass; anything
+        // critical is held in the administrator review queue.
+        is_published: autoPublish && !scanning,
+        status: isDraft ? "draft" : isDevBuild ? "development" : scanning ? "verifying" : autoPublish ? "live" : "pending",
+        scan_status: scanning ? "verifying" : apkReport ? "none" : "none",
+        cert_fingerprint_sha256: apkReport?.certFingerprintSha256 ?? null,
         review_note: reviewNote,
 
 
@@ -325,18 +402,40 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     if (!isDraft) {
-      await supabaseAdmin.from("app_versions").insert({
-        app_id: row.id,
-        version: initialVersion,
-        release_notes: releaseNotes,
-        file_path: data.file_path ?? null,
-        package_name: data.package_name ?? null,
-        version_code: data.version_code ?? null,
-        apk_size: data.apk_size ?? null,
-        permissions: data.permissions ?? [],
-        permissions_added: data.permissions ?? [],
-        permissions_removed: [],
-      });
+      const { data: versionRow, error: verErr } = await supabaseAdmin
+        .from("app_versions")
+        .insert({
+          app_id: row.id,
+          version: initialVersion,
+          release_notes: releaseNotes,
+          file_path: data.file_path ?? null,
+          package_name: data.package_name ?? null,
+          version_code: data.version_code ?? null,
+          apk_size: data.apk_size ?? null,
+          permissions: data.permissions ?? [],
+          permissions_added: data.permissions ?? [],
+          permissions_removed: [],
+        })
+        .select("id")
+        .single();
+      if (verErr) throw new Error(verErr.message);
+
+      // Fail-closed gate: queue the VirusTotal scan. If the exact binary was
+      // already rejected before, roll the whole listing back.
+      if (scanning && apkReport && data.file_path) {
+        try {
+          await queueScanAndDrain({
+            appId: row.id,
+            appVersionId: versionRow.id,
+            filePath: data.file_path,
+            report: apkReport,
+          });
+        } catch (e) {
+          await supabaseAdmin.from("app_versions").delete().eq("id", versionRow.id);
+          await supabaseAdmin.from("apps").delete().eq("id", row.id);
+          throw e;
+        }
+      }
     }
 
     return row;
@@ -424,26 +523,54 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
     const { id, ...patch } = data;
     const { data: existing } = await supabaseAdmin
       .from("apps")
-      .select("developer_id, status, file_path")
+      .select("developer_id, status, file_path, package_name, cert_fingerprint_sha256")
       .eq("id", id)
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) {
       throw new Error("Not found");
     }
-    // SECURITY: any binary swap must be re-scanned, even on a metadata edit.
+    // SECURITY: any binary swap is re-verified (permissions + certificate
+    // fingerprint) and re-queued for VirusTotal, even on a metadata edit.
+    let swapReport: ApkSecurityReport | null = null;
     if (patch.file_path && patch.file_path !== existing.file_path) {
-      await scanAppBinaryOrThrow(patch.file_path);
+      swapReport = await gateApkBinary({
+        filePath: patch.file_path,
+        packageName: existing.package_name,
+        previousFingerprint: existing.cert_fingerprint_sha256,
+        currentUserId: context.userId,
+      });
+      if (swapReport.permissions) patch.permissions = swapReport.permissions;
+      if (swapReport.sizeBytes) patch.apk_size = swapReport.sizeBytes;
     }
+    const swapFingerprint = swapReport
+      ? existing.cert_fingerprint_sha256 ?? swapReport.certFingerprintSha256
+      : null;
     // Drop fields not on the apps table.
     const { version_name: _vn, release_notes: _rn, ...safePatch } =
       patch as typeof patch & { version_name?: unknown; release_notes?: unknown };
     void _vn; void _rn;
+    if (swapFingerprint) (safePatch as Record<string, unknown>).cert_fingerprint_sha256 = swapFingerprint;
     const { error } = await supabaseAdmin
       .from("apps")
       // Metadata edits never change review status; resubmission is explicit.
+      // A swapped binary goes back behind the VirusTotal scan gate.
       .update(safePatch)
       .eq("id", id);
     if (error) throw new Error(error.message);
+    if (swapReport && (await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()))) {
+      const wasLive = existing.status === "live";
+      if (wasLive) {
+        await supabaseAdmin.from("apps").update({ status: "verifying", is_published: false, scan_status: "verifying" }).eq("id", id);
+      }
+      try {
+        await queueScanAndDrain({ appId: id, filePath: patch.file_path!, report: swapReport });
+      } catch {
+        if (wasLive) {
+          await supabaseAdmin.from("apps").update({ status: "live", is_published: true }).eq("id", id);
+        }
+        throw new Error("This exact file was previously rejected by VirusTotal and cannot be uploaded again.");
+      }
+    }
     return { ok: true };
   });
 
@@ -471,7 +598,7 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing } = await supabaseAdmin
       .from("apps")
-      .select("id, developer_id, version, file_path, app_url, permissions")
+      .select("id, developer_id, version, file_path, app_url, permissions, package_name, cert_fingerprint_sha256, scan_status")
       .eq("id", data.id)
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) {
@@ -489,18 +616,24 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
       throw new Error("Provide a new app file or an updated app URL.");
     }
 
-    // Administrator releases are trusted and skip scanning.
-    if (
-      data.file_path &&
-      data.file_path !== existing.file_path &&
-      !(await isTrustedPublisher(context.userId, (context.claims as any)?.email))
-    ) {
-      await scanAppBinaryOrThrow(data.file_path);
+    // Binary security gate on a changed APK. Fail-closed: the update stays
+    // hidden ("verifying") until the queued VirusTotal scan clears, and a
+    // signing-certificate mismatch is rejected immediately.
+    const fileChanged = !!data.file_path && data.file_path !== existing.file_path;
+    const trusted = await isTrustedPublisher(context.userId, (context.claims as any)?.email);
+    let apkReport: ApkSecurityReport | null = null;
+    if (fileChanged) {
+      apkReport = await gateApkBinary({
+        filePath: data.file_path!,
+        packageName: data.package_name ?? existing.package_name,
+        previousFingerprint: existing.cert_fingerprint_sha256,
+        currentUserId: context.userId,
+      });
+      if (apkReport.versionName) data.version = apkReport.versionName;
     }
-
-
+    const nextPerms = apkReport ? apkReport.permissions : data.permissions ?? [];
+    const scanning = !!apkReport && !trusted && (await import("@/lib/vt-scanner.server").then((m) => m.vtConfigured()));
     const prevPerms: string[] = (existing.permissions as string[] | null) ?? [];
-    const nextPerms = data.permissions ?? [];
     const prevSet = new Set(prevPerms);
     const nextSet = new Set(nextPerms);
     const permsAdded = [...nextSet].filter((p) => !prevSet.has(p));
@@ -515,29 +648,60 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
         file_path: newFilePath,
         app_url: data.app_url ?? existing.app_url,
         last_updated_at: now,
-        status: "live",
-        is_published: true,
+        status: scanning ? "verifying" : "live",
+        is_published: !scanning,
+        scan_status: scanning ? "verifying" : apkReport ? "none" : undefined,
+        cert_fingerprint_sha256: existing.cert_fingerprint_sha256 ?? apkReport?.certFingerprintSha256 ?? null,
         package_name: data.package_name ?? undefined,
         version_code: data.version_code ?? undefined,
-        apk_size: data.apk_size ?? undefined,
+        apk_size: apkReport ? apkReport.sizeBytes : data.apk_size ?? undefined,
         permissions: nextPerms.length ? nextPerms : undefined,
       })
       .eq("id", data.id);
     if (updateErr) throw new Error(updateErr.message);
 
-    const { error: histErr } = await supabaseAdmin.from("app_versions").insert({
-      app_id: data.id,
-      version: data.version,
-      release_notes: data.release_notes,
-      file_path: newFilePath,
-      package_name: data.package_name ?? null,
-      version_code: data.version_code ?? null,
-      apk_size: data.apk_size ?? null,
-      permissions: nextPerms,
-      permissions_added: permsAdded,
-      permissions_removed: permsRemoved,
-    });
+    const { data: versionRow, error: histErr } = await supabaseAdmin
+      .from("app_versions")
+      .insert({
+        app_id: data.id,
+        version: data.version,
+        release_notes: data.release_notes,
+        file_path: newFilePath,
+        package_name: data.package_name ?? null,
+        version_code: data.version_code ?? null,
+        apk_size: apkReport ? apkReport.sizeBytes : data.apk_size ?? null,
+        permissions: nextPerms,
+        permissions_added: permsAdded,
+        permissions_removed: permsRemoved,
+      })
+      .select("id")
+      .single();
     if (histErr) throw new Error(histErr.message);
+
+    if (scanning && apkReport && data.file_path) {
+      try {
+        await queueScanAndDrain({
+          appId: data.id,
+          appVersionId: versionRow.id,
+          filePath: data.file_path,
+          report: apkReport,
+        });
+      } catch (e) {
+        // Known-malicious binary: roll the update back entirely.
+        await supabaseAdmin.from("app_versions").delete().eq("id", versionRow.id);
+        await supabaseAdmin
+          .from("apps")
+          .update({
+            version: existing.version,
+            file_path: existing.file_path,
+            status: "live",
+            is_published: true,
+            scan_status: existing.scan_status ?? "none",
+          })
+          .eq("id", data.id);
+        throw e;
+      }
+    }
 
     return { ok: true, version: data.version };
   });

@@ -1,7 +1,11 @@
 # Niza App Store — Roadmap
 
 ## In progress
-- [ ] Allow APK uploads up to 80 MB
+- [x] Allow APK uploads up to 80 MB (TUS resumable upload + Wake Lock — wiring in progress)
+- [x] VirusTotal 4/min queue, fail-closed "verifying" gate, scan ID/score/permalink on app_versions
+- [x] Binary permissions + certificate fingerprint lock (zero-tolerance rejection, no admin review)
+- [ ] Expanded developer edit page (banner, icon, screenshots add/delete/reorder, category, tags, links)
+- [ ] InstallButton: cancel button, 500–800ms progress throttle, direct native uninstall
 - [ ] Account settings: photo, display name, email, password; Account navigation
 - [ ] Verify native foreground refresh and package identity across listings
 - [x] Niza Hub integration layer (`src/lib/niza-hub.server.ts`): SSO, payments, catalog, webhooks
