@@ -570,7 +570,7 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing } = await supabaseAdmin
       .from("apps")
-      .select("id, developer_id, version, file_path, app_url, permissions")
+      .select("id, developer_id, version, file_path, app_url, permissions, package_name, cert_fingerprint_sha256, scan_status")
       .eq("id", data.id)
       .maybeSingle();
     if (!existing || existing.developer_id !== context.userId) {
