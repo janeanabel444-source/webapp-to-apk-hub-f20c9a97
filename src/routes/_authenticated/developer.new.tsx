@@ -721,7 +721,13 @@ function NewAppPage() {
       });
       setPhase("done");
     } catch (e: any) {
-      setErr(e?.message ?? "Something went wrong while publishing.");
+      apkCancelRef.current = null;
+      if (e instanceof UploadCancelled) {
+        if (appFile) clearApkResume(appFile);
+        setErr("Upload cancelled — pick your APK again when you're ready.");
+      } else {
+        setErr(e?.message ?? "Something went wrong while publishing.");
+      }
     } finally {
       setBusy(false);
       setProgress(null);
@@ -890,7 +896,24 @@ function NewAppPage() {
 
       {progress && (
         <div className="mt-5">
-          <p className="text-xs text-muted-foreground">{progress.label}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{progress.label}</p>
+            {progress.label.startsWith("Uploading APK") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 rounded-full px-2 text-xs"
+                disabled={cancellingUpload}
+                onClick={() => {
+                  setCancellingUpload(true);
+                  void apkCancelRef.current?.();
+                }}
+              >
+                {cancellingUpload ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <X className="mr-1 h-3 w-3" />} Cancel
+              </Button>
+            )}
+          </div>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress.pct}%` }} />
           </div>
