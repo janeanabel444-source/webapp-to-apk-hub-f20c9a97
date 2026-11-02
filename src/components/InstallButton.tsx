@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Download, Trash2, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
+import { Check, Download, Trash2, RefreshCw, ExternalLink, Loader2, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { installApp, uninstallApp, markInstalledAppUpdated, compareVersions } from "@/lib/store";
-import { downloadApkWithProgress, isAndroidDevice } from "@/lib/apk-download";
+import { downloadApkWithProgress, isAndroidDevice, isDownloadCancelled } from "@/lib/apk-download";
 import { nativeBridge, initNativeBridge, hasCapability } from "@/lib/native-bridge";
 import { formatBytes } from "@/lib/apk-parser";
 import { toast } from "sonner";
@@ -74,6 +74,12 @@ export function InstallButton({
   const [busy, setBusy] = useState(false);
   const [showHelper, setShowHelper] = useState(false);
   const [confirmUninstall, setConfirmUninstall] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  // Cancel handle for an in-flight download; null when not downloading.
+  const cancelRef = useRef<(() => Promise<void>) | null>(null);
+  // Progress is throttled to one React update every 700ms — completion and
+  // cancellation render immediately.
+  const lastEmitRef = useRef(0);
   const isPaid = license === "paid" && (priceKobo ?? 0) > 0;
   const [nativeReady, setNativeReady] = useState(false);
   const [deviceVersion, setDeviceVersion] = useState<string | null>(null);
@@ -88,17 +94,21 @@ export function InstallButton({
 
   useEffect(() => setInLibrary(initialInstalled), [initialInstalled]);
 
-  /** Ask the Android wrapper whether the package is really on this device. */
-  const probeDevice = useCallback(async () => {
-    if (!canProbe || !packageName) return;
+  /** Ask the Android wrapper whether the package is really on this device.
+   *  Returns the confirmed state (true/false) or null when it can't be probed. */
+  const probeDevice = useCallback(async (): Promise<DeviceState> => {
+    if (!canProbe || !packageName) return null;
     setChecking(true);
     try {
       const res = await nativeBridge.isPackageInstalled(packageName);
-      setDeviceInstalled(!!res?.installed);
-      setDeviceVersion(res?.installed ? res.versionName ?? null : null);
+      const installed = !!res?.installed;
+      setDeviceInstalled(installed);
+      setDeviceVersion(installed ? res.versionName ?? null : null);
+      return installed;
     } catch {
       setDeviceInstalled(null);
       setDeviceVersion(null);
+      return null;
     } finally {
       setChecking(false);
     }
