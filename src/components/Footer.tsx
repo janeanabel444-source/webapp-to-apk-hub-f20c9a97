@@ -9,6 +9,10 @@ export function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="text-muted-foreground">
           <NizaLogo size={18} className="mr-1.5 inline-block align-text-bottom" />© {new Date().getFullYear()} Niza App Store ·{" "}
+          <Link to="/account" className="font-medium text-foreground hover:underline">
+            Account
+          </Link>{" "}
+          ·{" "}
           <Link to="/contact" className="font-medium text-foreground hover:underline">
             Contact &amp; Support
           </Link>

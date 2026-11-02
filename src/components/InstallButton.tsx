@@ -411,6 +411,19 @@ export function InstallButton({
               {apkSize ? ` · ${formatBytes(apkSize)}` : ""}
             </span>
           )}
+          {filePath && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() => void cancelDownload()}
+              disabled={cancelling}
+              aria-label="Cancel download"
+            >
+              {cancelling ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <X className="mr-1 h-3.5 w-3.5" />}
+              Cancel
+            </Button>
+          )}
         </div>
       );
     }
