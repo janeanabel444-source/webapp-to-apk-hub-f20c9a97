@@ -61,6 +61,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -74,6 +75,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Niza App Store" },
       { name: "twitter:description", content: "Discover great apps, games, and AI tools on Niza." },
+      { name: "google-site-verification", content: "y5aqO2Vx88qkxpDkJJ1RLi2mgWfuUAt9tW21_EftjC4" },
       { name: "theme-color", content: "#12101f" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "Niza" },

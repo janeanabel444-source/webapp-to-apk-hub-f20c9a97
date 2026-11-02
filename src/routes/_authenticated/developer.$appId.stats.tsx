@@ -5,6 +5,7 @@ import { ArrowLeft, Eye, Download, Smartphone, Star, Megaphone, MousePointerClic
 import { getMyAppAnalytics } from "@/lib/analytics.functions";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/stats")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "App statistics — Niza Developer Hub" },

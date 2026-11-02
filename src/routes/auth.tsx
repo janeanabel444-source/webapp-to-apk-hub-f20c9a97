@@ -16,6 +16,7 @@ import { NizaLogo } from "@/components/NizaLogo";
 const searchSchema = z.object({ redirect: z.string().optional() });
 
 export const Route = createFileRoute("/auth")({
+  staticData: { sitemap: false },
   validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Sign in — Niza App Store" }] }),
   component: AuthPage,

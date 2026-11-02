@@ -9,6 +9,7 @@ import { downloadApkWithProgress } from "@/lib/apk-download";
 import { formatBytes } from "@/lib/apk-parser";
 
 export const Route = createFileRoute("/testing/$token")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Private Testing Build — Niza App Store" },

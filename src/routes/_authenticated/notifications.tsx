@@ -6,6 +6,7 @@ import { fetchNotifications, markNotificationsRead } from "@/lib/store-extras";
 import { Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Notifications — Niza" }] }),
   component: NotificationsPage,
 });

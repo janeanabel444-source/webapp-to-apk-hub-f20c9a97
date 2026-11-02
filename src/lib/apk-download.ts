@@ -6,6 +6,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { nativeBridge, isNizaAndroid, initNativeBridge, hasCapability, nativeDownloadApk } from "@/lib/native-bridge";
 
+/** Error message used when the user cancels a download — callers match on it. */
+export const DOWNLOAD_CANCELLED = "Download cancelled";
+
+export function isDownloadCancelled(e: unknown): boolean {
+  return e instanceof Error && e.message === DOWNLOAD_CANCELLED;
+}
+
 export async function getApkSignedUrl(filePath: string) {
   if (!filePath) throw new Error("This app has no APK file attached yet.");
   const { data: session } = await supabase.auth.getSession();
@@ -32,16 +39,20 @@ export async function getApkSignedUrl(filePath: string) {
   return data.signedUrl;
 }
 
+/** Handle that lets the UI cancel an in-flight download. */
+export type DownloadHandle = { cancel: () => Promise<void> };
 
 /**
  * Downloads an APK. Inside the Niza Android wrapper, hands off to the native
  * installer. In a browser, streams with progress and triggers the download.
+ * `onHandle` receives a cancel handle as soon as the download has started.
  */
 export async function downloadApkWithProgress(
   filePath: string,
   appName: string,
   onProgress: (loaded: number, total: number) => void,
   downloadUrl?: string,
+  onHandle?: (handle: DownloadHandle) => void,
 ): Promise<{ url: string; size: number; nativeInstalled?: boolean }> {
   const signed = downloadUrl ?? await getApkSignedUrl(filePath);
   const fileName = `${appName.replace(/[^a-z0-9.-]+/gi, "_")}.apk`;
@@ -51,6 +62,7 @@ export async function downloadApkWithProgress(
   if (hasCapability("downloadApk")) {
     const absolute = new URL(signed, window.location.origin).toString();
     const job = nativeDownloadApk({ url: absolute, fileName }, onProgress);
+    onHandle?.({ cancel: () => job.cancel() });
     const done = await job.done;
     let nativeInstalled = false;
     if (hasCapability("installApk")) {
@@ -61,7 +73,13 @@ export async function downloadApkWithProgress(
   }
 
   // Browser fallback — stream the file so the download notification opens the installer.
-  const res = await fetch(signed);
+  const controller = new AbortController();
+  onHandle?.({
+    cancel: async () => {
+      controller.abort(new Error(DOWNLOAD_CANCELLED));
+    },
+  });
+  const res = await fetch(signed, { signal: controller.signal });
   if (!res.ok || !res.body) {
     if (res.status === 404) throw new Error("APK file is missing from storage.");
     throw new Error(`Failed to start download (${res.status})`);
@@ -70,13 +88,19 @@ export async function downloadApkWithProgress(
   const reader = res.body.getReader();
   const chunks: BlobPart[] = [];
   let loaded = 0;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    loaded += value.byteLength;
-    onProgress(loaded, total || loaded);
+  try {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      loaded += value.byteLength;
+      onProgress(loaded, total || loaded);
+    }
+  } catch (e: any) {
+    // AbortController rejects the read loop with the abort reason.
+    if (controller.signal.aborted) throw new Error(DOWNLOAD_CANCELLED);
+    throw e;
   }
   const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
   const url = URL.createObjectURL(blob);

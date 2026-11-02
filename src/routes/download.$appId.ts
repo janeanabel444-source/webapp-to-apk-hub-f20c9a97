@@ -8,6 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
  * increments the download counter. Links stay valid across app updates.
  */
 export const Route = createFileRoute("/download/$appId")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       GET: async ({ params }) => {

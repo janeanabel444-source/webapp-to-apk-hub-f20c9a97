@@ -1,14 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { ArrowLeft, Loader2, UploadCloud, History, Sparkles, Package } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeft, Loader2, UploadCloud, History, Sparkles, Package, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
+import { uploadApkResumable, holdScreenAwake, UploadCancelled } from "@/lib/resumable-upload";
 import { getMyDeveloperApp, publishAppUpdate } from "@/lib/developer.functions";
 import { generateReleaseNotes } from "@/lib/release-notes.functions";
 import { fetchAppVersions, compareVersions } from "@/lib/store";
@@ -16,6 +17,7 @@ import { parseApkFile, diffPermissions, formatBytes, type ParsedApk } from "@/li
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/update")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Release Update — Developer Hub" }] }),
   component: UpdateAppPage,
 });
@@ -46,6 +48,10 @@ function UpdateAppPage() {
   const [generating, setGenerating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Resumable APK upload state (TUS + wake lock + cancel).
+  const apkCancelRef = useRef<(() => Promise<void>) | null>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
+  const [cancellingUpload, setCancellingUpload] = useState(false);
 
   async function onPickFile(f: File | null) {
     setAppFile(f);
@@ -117,8 +123,23 @@ function UpdateAppPage() {
     try {
       let filePath: string | null = null;
       if (appFile) {
-        const up = await uploadToBucket("app-files", user.id, appFile);
-        filePath = up.path;
+        // Resumable chunked upload (TUS) with a screen wake lock.
+        setUploadPct(0);
+        const wake = await holdScreenAwake();
+        try {
+          const job = uploadApkResumable({
+            userId: user.id,
+            file: appFile,
+            onProgress: (loaded, total) => setUploadPct(total ? Math.round((loaded / total) * 100) : 0),
+          });
+          apkCancelRef.current = job.cancel;
+          filePath = (await job.promise).path;
+          apkCancelRef.current = null;
+        } finally {
+          await wake.release();
+          apkCancelRef.current = null;
+          setUploadPct(null);
+        }
       }
       await publishFn({
         data: {
@@ -138,7 +159,12 @@ function UpdateAppPage() {
       await qc.invalidateQueries({ queryKey: ["boost-prompt", appId] });
       navigate({ to: "/developer/$appId", params: { appId } });
     } catch (e: any) {
-      setErr(e?.message ?? "Update failed");
+      apkCancelRef.current = null;
+      if (e instanceof UploadCancelled) {
+        setErr("Upload cancelled — nothing was published.");
+      } else {
+        setErr(e?.message ?? "Update failed");
+      }
     } finally {
       setBusy(false);
     }
@@ -167,6 +193,30 @@ function UpdateAppPage() {
             <input type="file" className="hidden" accept=".apk,application/vnd.android.package-archive" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} />
           </label>
           {parsing && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Reading APK…</p>}
+          {uploadPct !== null && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Uploading APK… {uploadPct}%</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 rounded-full px-2 text-xs"
+                  disabled={cancellingUpload}
+                  onClick={() => {
+                    setCancellingUpload(true);
+                    void apkCancelRef.current?.();
+                  }}
+                >
+                  {cancellingUpload ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <X className="mr-1 h-3 w-3" />} Cancel
+                </Button>
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${uploadPct}%` }} />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Large files upload in resumable chunks — a dropped connection continues where it stopped.</p>
+            </div>
+          )}
           {apkInfo && !parsing && (
             <div className="mt-2 rounded-xl border border-border/60 bg-background/50 p-3 text-xs">
               <div className="flex items-center gap-1 font-semibold"><Package className="h-3.5 w-3.5" /> Detected</div>

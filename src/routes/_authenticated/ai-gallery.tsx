@@ -7,6 +7,7 @@ import { getMyPremiumStatus } from "@/lib/premium.functions";
 import { listGalleryImages } from "@/lib/ai-images.functions";
 
 export const Route = createFileRoute("/_authenticated/ai-gallery")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "AI Images Gallery — Niza" }] }),
   component: GalleryPage,
 });

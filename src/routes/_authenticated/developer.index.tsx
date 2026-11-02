@@ -9,6 +9,7 @@ import { listMyDeveloperApps, resubmitForReview } from "@/lib/developer.function
 import { REVIEW_STATES } from "@/lib/review";
 
 export const Route = createFileRoute("/_authenticated/developer/")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Developer Hub — Niza" }] }),
   component: DeveloperHome,
 });

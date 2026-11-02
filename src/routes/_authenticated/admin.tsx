@@ -13,6 +13,7 @@ import { Shield, Flag, Star, Ban } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Admin — Niza" }] }),
   component: AdminPage,
 });

@@ -4,6 +4,7 @@ import { fetchCollections } from "@/lib/store-extras";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/collections")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Collections — Niza App Store" },

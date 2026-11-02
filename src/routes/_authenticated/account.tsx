@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export const Route = createFileRoute("/_authenticated/account")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: "Account settings — Niza App Store" },
     { name: "description", content: "Manage your Niza profile, photo, and password." },

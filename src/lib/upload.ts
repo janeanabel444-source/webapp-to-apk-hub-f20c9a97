@@ -24,7 +24,7 @@ const ALLOWED_VIDEO_EXT = new Set(["mp4", "webm", "mov"]);
 const MAX_BYTES: Record<string, number> = {
   "app-logos": 2 * 1024 * 1024, // 2 MB
   "app-screenshots": 5 * 1024 * 1024, // 5 MB
-  "app-files": 75 * 1024 * 1024, // 75 MB
+  "app-files": 80 * 1024 * 1024, // 80 MB (matches the bucket limit)
   "app-videos": 30 * 1024 * 1024, // 30 MB
 };
 

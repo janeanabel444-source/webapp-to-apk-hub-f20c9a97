@@ -7,6 +7,7 @@ import { AppCard, AppCardSkeleton } from "@/components/AppCard";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/apps")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Apps — NizaMind AI" },

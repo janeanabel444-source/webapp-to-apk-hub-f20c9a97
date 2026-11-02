@@ -5,6 +5,7 @@ import { AppCard } from "@/components/AppCard";
 import { ChevronLeft } from "lucide-react";
 
 export const Route = createFileRoute("/collections/$slug")({
+  staticData: { sitemap: true },
   loader: async ({ params }) => {
     const res = await fetchCollection(params.slug);
     if (!res) throw notFound();

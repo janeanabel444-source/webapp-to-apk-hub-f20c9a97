@@ -12,6 +12,7 @@ import { ShareAppButton } from "@/components/ShareAppButton";
 import { AdViewer } from "@/components/AdViewer";
 
 export const Route = createFileRoute("/_authenticated/ai-image")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "AI Image Generation — Niza" }] }),
   component: AiImagePage,
 });

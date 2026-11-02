@@ -11,6 +11,7 @@ const reportSchema = z.object({
 });
 
 export const Route = createFileRoute("/api/public/ads/report")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       POST: async ({ request }) => {

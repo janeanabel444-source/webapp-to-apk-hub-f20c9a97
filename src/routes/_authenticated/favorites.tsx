@@ -6,6 +6,7 @@ import { AppCard } from "@/components/AppCard";
 import { Heart } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/favorites")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Favorites — Niza" }] }),
   component: FavoritesPage,
 });

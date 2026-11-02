@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
+import { uploadApkResumable, holdScreenAwake, clearApkResume, UploadCancelled } from "@/lib/resumable-upload";
 import { createDeveloperApp, checkAppNameAvailable } from "@/lib/developer.functions";
 import { generateAppDescription, generateAppKeywords, generateListingSuggestions, type ListingSuggestions } from "@/lib/app-listing-ai.functions";
 import { checkPackageVersion } from "@/lib/developer.functions";
@@ -28,6 +29,7 @@ import {
 
 
 export const Route = createFileRoute("/_authenticated/developer/new")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Publish Your Application — Niza Developer Hub" },
@@ -320,6 +322,9 @@ function NewAppPage() {
   const [aiBusy, setAiBusy] = useState<"desc" | "kw" | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ label: string; pct: number } | null>(null);
+  // Cancel handle for the resumable APK upload while it is in flight.
+  const apkCancelRef = useRef<(() => Promise<void>) | null>(null);
+  const [cancellingUpload, setCancellingUpload] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autosaved, setAutosaved] = useState<Date | null>(null);
   const [result, setResult] = useState<{ id: string; slug: string; shareToken: string; dev: boolean } | null>(null);
@@ -633,8 +638,27 @@ function NewAppPage() {
       const shots = await Promise.all(screenshots.map((f) => uploadToBucket("app-screenshots", user.id, f)));
       let filePath: string | null = null;
       if (appFile) {
-        setProgress({ label: "Uploading application file…", pct: 65 });
-        filePath = (await uploadToBucket("app-files", user.id, appFile)).path;
+        setProgress({ label: "Uploading APK… 0%", pct: 60 });
+        // Resumable chunked upload (6 MB chunks, TUS) with a screen wake lock —
+        // a dropped connection continues from the last chunk, and the screen
+        // stays awake so the upload never dies in the background.
+        const wake = await holdScreenAwake();
+        try {
+          const job = uploadApkResumable({
+            userId: user.id,
+            file: appFile,
+            onProgress: (loaded, total) => {
+              const pct = total ? Math.round((loaded / total) * 100) : 0;
+              setProgress({ label: `Uploading APK… ${pct}%`, pct: 60 + (pct * 0.28) });
+            },
+          });
+          apkCancelRef.current = job.cancel;
+          filePath = (await job.promise).path;
+          apkCancelRef.current = null;
+        } finally {
+          await wake.release();
+          apkCancelRef.current = null;
+        }
       }
       setProgress({ label: "Running security checks & publishing…", pct: 88 });
       const row: any = await create({
@@ -697,7 +721,13 @@ function NewAppPage() {
       });
       setPhase("done");
     } catch (e: any) {
-      setErr(e?.message ?? "Something went wrong while publishing.");
+      apkCancelRef.current = null;
+      if (e instanceof UploadCancelled) {
+        if (appFile) clearApkResume(appFile);
+        setErr("Upload cancelled — pick your APK again when you're ready.");
+      } else {
+        setErr(e?.message ?? "Something went wrong while publishing.");
+      }
     } finally {
       setBusy(false);
       setProgress(null);
@@ -866,7 +896,24 @@ function NewAppPage() {
 
       {progress && (
         <div className="mt-5">
-          <p className="text-xs text-muted-foreground">{progress.label}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{progress.label}</p>
+            {progress.label.startsWith("Uploading APK") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 rounded-full px-2 text-xs"
+                disabled={cancellingUpload}
+                onClick={() => {
+                  setCancellingUpload(true);
+                  void apkCancelRef.current?.();
+                }}
+              >
+                {cancellingUpload ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <X className="mr-1 h-3 w-3" />} Cancel
+              </Button>
+            )}
+          </div>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress.pct}%` }} />
           </div>

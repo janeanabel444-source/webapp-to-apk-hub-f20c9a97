@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Download, Trash2, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
+import { Check, Download, Trash2, RefreshCw, ExternalLink, Loader2, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { installApp, uninstallApp, markInstalledAppUpdated, compareVersions } from "@/lib/store";
-import { downloadApkWithProgress, isAndroidDevice } from "@/lib/apk-download";
+import { downloadApkWithProgress, isAndroidDevice, isDownloadCancelled } from "@/lib/apk-download";
 import { nativeBridge, initNativeBridge, hasCapability } from "@/lib/native-bridge";
 import { formatBytes } from "@/lib/apk-parser";
 import { toast } from "sonner";
@@ -74,6 +74,12 @@ export function InstallButton({
   const [busy, setBusy] = useState(false);
   const [showHelper, setShowHelper] = useState(false);
   const [confirmUninstall, setConfirmUninstall] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  // Cancel handle for an in-flight download; null when not downloading.
+  const cancelRef = useRef<(() => Promise<void>) | null>(null);
+  // Progress is throttled to one React update every 700ms — completion and
+  // cancellation render immediately.
+  const lastEmitRef = useRef(0);
   const isPaid = license === "paid" && (priceKobo ?? 0) > 0;
   const [nativeReady, setNativeReady] = useState(false);
   const [deviceVersion, setDeviceVersion] = useState<string | null>(null);
@@ -88,17 +94,21 @@ export function InstallButton({
 
   useEffect(() => setInLibrary(initialInstalled), [initialInstalled]);
 
-  /** Ask the Android wrapper whether the package is really on this device. */
-  const probeDevice = useCallback(async () => {
-    if (!canProbe || !packageName) return;
+  /** Ask the Android wrapper whether the package is really on this device.
+   *  Returns the confirmed state (true/false) or null when it can't be probed. */
+  const probeDevice = useCallback(async (): Promise<DeviceState> => {
+    if (!canProbe || !packageName) return null;
     setChecking(true);
     try {
       const res = await nativeBridge.isPackageInstalled(packageName);
-      setDeviceInstalled(!!res?.installed);
-      setDeviceVersion(res?.installed ? res.versionName ?? null : null);
+      const installed = !!res?.installed;
+      setDeviceInstalled(installed);
+      setDeviceVersion(installed ? res.versionName ?? null : null);
+      return installed;
     } catch {
       setDeviceInstalled(null);
       setDeviceVersion(null);
+      return null;
     } finally {
       setChecking(false);
     }
@@ -138,14 +148,33 @@ export function InstallButton({
   /** In library but the device says it isn't installed → the install never finished. */
   const needsFinish = inLibrary && canProbe && deviceInstalled === false;
 
+  /** Push download progress to React at most every 700ms (smooth on budget
+   *  devices); 100% renders immediately on completion. */
+  const pushProgress = useCallback((loaded: number, total: number) => {
+    const pct = total ? (loaded / total) * 100 : 0;
+    if (pct >= 100) {
+      lastEmitRef.current = Date.now();
+      setProgress(100);
+      return;
+    }
+    const now = Date.now();
+    if (now - lastEmitRef.current >= 700) {
+      lastEmitRef.current = now;
+      setProgress(pct);
+    }
+  }, []);
+
   async function runDownloadAndMark(markFn: () => Promise<void>, successMsg: string) {
     setBusy(true);
     setProgress(0);
+    lastEmitRef.current = 0;
     try {
       if (filePath) {
-        const result = await downloadApkWithProgress(filePath, appName, (loaded, total) => {
-          setProgress(total ? (loaded / total) * 100 : 0);
-        }, downloadUrl ?? undefined);
+        const result = await downloadApkWithProgress(filePath, appName, pushProgress, downloadUrl ?? undefined, (handle) => {
+          cancelRef.current = handle.cancel;
+        });
+        cancelRef.current = null;
+        setProgress(100);
         if (result.nativeInstalled) {
           toast.success("Installing via Niza Android…");
         } else if (isAndroidDevice()) {
@@ -164,11 +193,25 @@ export function InstallButton({
       // Re-check the device once the installer has had a moment to finish.
       if (canProbe) setTimeout(() => void probeDevice(), 2500);
     } catch (err: any) {
-      toast.error(err?.message ?? "Couldn't complete — please try again");
+      cancelRef.current = null;
+      if (isDownloadCancelled(err)) {
+        toast.info("Download cancelled");
+      } else {
+        toast.error(err?.message ?? "Couldn't complete — please try again");
+      }
     } finally {
       setBusy(false);
+      setCancelling(false);
       setProgress(0);
+      cancelRef.current = null;
     }
+  }
+
+  async function cancelDownload() {
+    const cancel = cancelRef.current;
+    if (!cancel) return;
+    setCancelling(true);
+    await cancel();
   }
 
   async function handleInstall() {
@@ -220,7 +263,13 @@ export function InstallButton({
         } catch (e: any) {
           toast.error(e?.message ?? "Android couldn't remove the app");
         }
-        await probeDevice();
+        const stillThere = await probeDevice();
+        if (stillThere !== false) {
+          // The user dismissed Android's uninstall prompt — keep the app in
+          // the library; Android owns the actual removal.
+          toast.message(`${appName} is still on your device — approve the uninstall prompt to remove it`);
+          return;
+        }
       }
       await uninstallApp(user.id, appId);
       setInLibrary(false);
@@ -361,6 +410,19 @@ export function InstallButton({
               {filePath ? "Downloading APK…" : "Installing…"}
               {apkSize ? ` · ${formatBytes(apkSize)}` : ""}
             </span>
+          )}
+          {filePath && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() => void cancelDownload()}
+              disabled={cancelling}
+              aria-label="Cancel download"
+            >
+              {cancelling ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <X className="mr-1 h-3.5 w-3.5" />}
+              Cancel
+            </Button>
           )}
         </div>
       );
