@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { ArrowLeft, Loader2, UploadCloud, History, Sparkles, Package } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeft, Loader2, UploadCloud, History, Sparkles, Package, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
