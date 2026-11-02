@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
+import { uploadApkResumable, holdScreenAwake, UploadCancelled } from "@/lib/resumable-upload";
 import { getMyDeveloperApp, publishAppUpdate } from "@/lib/developer.functions";
 import { generateReleaseNotes } from "@/lib/release-notes.functions";
 import { fetchAppVersions, compareVersions } from "@/lib/store";
@@ -47,6 +48,10 @@ function UpdateAppPage() {
   const [generating, setGenerating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Resumable APK upload state (TUS + wake lock + cancel).
+  const apkCancelRef = useRef<(() => Promise<void>) | null>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
+  const [cancellingUpload, setCancellingUpload] = useState(false);
 
   async function onPickFile(f: File | null) {
     setAppFile(f);
