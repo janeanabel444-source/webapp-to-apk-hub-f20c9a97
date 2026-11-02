@@ -638,8 +638,27 @@ function NewAppPage() {
       const shots = await Promise.all(screenshots.map((f) => uploadToBucket("app-screenshots", user.id, f)));
       let filePath: string | null = null;
       if (appFile) {
-        setProgress({ label: "Uploading application file…", pct: 65 });
-        filePath = (await uploadToBucket("app-files", user.id, appFile)).path;
+        setProgress({ label: "Uploading APK… 0%", pct: 60 });
+        // Resumable chunked upload (6 MB chunks, TUS) with a screen wake lock —
+        // a dropped connection continues from the last chunk, and the screen
+        // stays awake so the upload never dies in the background.
+        const wake = await holdScreenAwake();
+        try {
+          const job = uploadApkResumable({
+            userId: user.id,
+            file: appFile,
+            onProgress: (loaded, total) => {
+              const pct = total ? Math.round((loaded / total) * 100) : 0;
+              setProgress({ label: `Uploading APK… ${pct}%`, pct: 60 + (pct * 0.28) });
+            },
+          });
+          apkCancelRef.current = job.cancel;
+          filePath = (await job.promise).path;
+          apkCancelRef.current = null;
+        } finally {
+          await wake.release();
+          apkCancelRef.current = null;
+        }
       }
       setProgress({ label: "Running security checks & publishing…", pct: 88 });
       const row: any = await create({
