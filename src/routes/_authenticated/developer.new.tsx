@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { uploadToBucket } from "@/lib/upload";
+import { uploadApkResumable, holdScreenAwake, clearApkResume, UploadCancelled } from "@/lib/resumable-upload";
 import { createDeveloperApp, checkAppNameAvailable } from "@/lib/developer.functions";
 import { generateAppDescription, generateAppKeywords, generateListingSuggestions, type ListingSuggestions } from "@/lib/app-listing-ai.functions";
 import { checkPackageVersion } from "@/lib/developer.functions";
@@ -321,6 +322,9 @@ function NewAppPage() {
   const [aiBusy, setAiBusy] = useState<"desc" | "kw" | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ label: string; pct: number } | null>(null);
+  // Cancel handle for the resumable APK upload while it is in flight.
+  const apkCancelRef = useRef<(() => Promise<void>) | null>(null);
+  const [cancellingUpload, setCancellingUpload] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autosaved, setAutosaved] = useState<Date | null>(null);
   const [result, setResult] = useState<{ id: string; slug: string; shareToken: string; dev: boolean } | null>(null);
