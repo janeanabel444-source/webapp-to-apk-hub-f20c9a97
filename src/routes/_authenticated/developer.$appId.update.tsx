@@ -123,8 +123,23 @@ function UpdateAppPage() {
     try {
       let filePath: string | null = null;
       if (appFile) {
-        const up = await uploadToBucket("app-files", user.id, appFile);
-        filePath = up.path;
+        // Resumable chunked upload (TUS) with a screen wake lock.
+        setUploadPct(0);
+        const wake = await holdScreenAwake();
+        try {
+          const job = uploadApkResumable({
+            userId: user.id,
+            file: appFile,
+            onProgress: (loaded, total) => setUploadPct(total ? Math.round((loaded / total) * 100) : 0),
+          });
+          apkCancelRef.current = job.cancel;
+          filePath = (await job.promise).path;
+          apkCancelRef.current = null;
+        } finally {
+          await wake.release();
+          apkCancelRef.current = null;
+          setUploadPct(null);
+        }
       }
       await publishFn({
         data: {
