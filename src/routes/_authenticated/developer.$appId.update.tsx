@@ -159,7 +159,12 @@ function UpdateAppPage() {
       await qc.invalidateQueries({ queryKey: ["boost-prompt", appId] });
       navigate({ to: "/developer/$appId", params: { appId } });
     } catch (e: any) {
-      setErr(e?.message ?? "Update failed");
+      apkCancelRef.current = null;
+      if (e instanceof UploadCancelled) {
+        setErr("Upload cancelled — nothing was published.");
+      } else {
+        setErr(e?.message ?? "Update failed");
+      }
     } finally {
       setBusy(false);
     }
@@ -188,6 +193,30 @@ function UpdateAppPage() {
             <input type="file" className="hidden" accept=".apk,application/vnd.android.package-archive" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} />
           </label>
           {parsing && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Reading APK…</p>}
+          {uploadPct !== null && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Uploading APK… {uploadPct}%</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 rounded-full px-2 text-xs"
+                  disabled={cancellingUpload}
+                  onClick={() => {
+                    setCancellingUpload(true);
+                    void apkCancelRef.current?.();
+                  }}
+                >
+                  {cancellingUpload ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <X className="mr-1 h-3 w-3" />} Cancel
+                </Button>
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${uploadPct}%` }} />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Large files upload in resumable chunks — a dropped connection continues where it stopped.</p>
+            </div>
+          )}
           {apkInfo && !parsing && (
             <div className="mt-2 rounded-xl border border-border/60 bg-background/50 p-3 text-xs">
               <div className="flex items-center gap-1 font-semibold"><Package className="h-3.5 w-3.5" /> Detected</div>
