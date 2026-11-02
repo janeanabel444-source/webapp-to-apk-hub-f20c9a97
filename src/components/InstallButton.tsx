@@ -148,14 +148,33 @@ export function InstallButton({
   /** In library but the device says it isn't installed → the install never finished. */
   const needsFinish = inLibrary && canProbe && deviceInstalled === false;
 
+  /** Push download progress to React at most every 700ms (smooth on budget
+   *  devices); 100% renders immediately on completion. */
+  const pushProgress = useCallback((loaded: number, total: number) => {
+    const pct = total ? (loaded / total) * 100 : 0;
+    if (pct >= 100) {
+      lastEmitRef.current = Date.now();
+      setProgress(100);
+      return;
+    }
+    const now = Date.now();
+    if (now - lastEmitRef.current >= 700) {
+      lastEmitRef.current = now;
+      setProgress(pct);
+    }
+  }, []);
+
   async function runDownloadAndMark(markFn: () => Promise<void>, successMsg: string) {
     setBusy(true);
     setProgress(0);
+    lastEmitRef.current = 0;
     try {
       if (filePath) {
-        const result = await downloadApkWithProgress(filePath, appName, (loaded, total) => {
-          setProgress(total ? (loaded / total) * 100 : 0);
-        }, downloadUrl ?? undefined);
+        const result = await downloadApkWithProgress(filePath, appName, pushProgress, downloadUrl ?? undefined, (handle) => {
+          cancelRef.current = handle.cancel;
+        });
+        cancelRef.current = null;
+        setProgress(100);
         if (result.nativeInstalled) {
           toast.success("Installing via Niza Android…");
         } else if (isAndroidDevice()) {
@@ -174,11 +193,25 @@ export function InstallButton({
       // Re-check the device once the installer has had a moment to finish.
       if (canProbe) setTimeout(() => void probeDevice(), 2500);
     } catch (err: any) {
-      toast.error(err?.message ?? "Couldn't complete — please try again");
+      cancelRef.current = null;
+      if (isDownloadCancelled(err)) {
+        toast.info("Download cancelled");
+      } else {
+        toast.error(err?.message ?? "Couldn't complete — please try again");
+      }
     } finally {
       setBusy(false);
+      setCancelling(false);
       setProgress(0);
+      cancelRef.current = null;
     }
+  }
+
+  async function cancelDownload() {
+    const cancel = cancelRef.current;
+    if (!cancel) return;
+    setCancelling(true);
+    await cancel();
   }
 
   async function handleInstall() {
@@ -230,7 +263,13 @@ export function InstallButton({
         } catch (e: any) {
           toast.error(e?.message ?? "Android couldn't remove the app");
         }
-        await probeDevice();
+        const stillThere = await probeDevice();
+        if (stillThere !== false) {
+          // The user dismissed Android's uninstall prompt — keep the app in
+          // the library; Android owns the actual removal.
+          toast.message(`${appName} is still on your device — approve the uninstall prompt to remove it`);
+          return;
+        }
       }
       await uninstallApp(user.id, appId);
       setInLibrary(false);
