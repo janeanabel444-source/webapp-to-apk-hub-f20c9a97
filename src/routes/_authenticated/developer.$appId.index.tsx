@@ -16,6 +16,7 @@ import { REVIEW_STATES } from "@/lib/review";
 import { BoostPrompt } from "@/components/BoostPrompt";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "App details — Developer Hub · Niza" },

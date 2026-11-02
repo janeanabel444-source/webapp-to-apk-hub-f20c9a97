@@ -7,6 +7,7 @@ import { createFileRoute } from "@tanstack/react-router";
  * then redirects to the advertised store listing.
  */
 export const Route = createFileRoute("/ad/$campaignId")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       GET: async ({ params, request }) => {

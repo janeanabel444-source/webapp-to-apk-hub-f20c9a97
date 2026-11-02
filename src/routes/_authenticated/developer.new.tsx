@@ -28,6 +28,7 @@ import {
 
 
 export const Route = createFileRoute("/_authenticated/developer/new")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Publish Your Application — Niza Developer Hub" },

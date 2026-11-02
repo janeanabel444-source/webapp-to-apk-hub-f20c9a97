@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { ShareAppButton, getLandingUrl } from "@/components/ShareAppButton";
 
 export const Route = createFileRoute("/welcome")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Niza Mind AI — Apps, Games & AI Image Generation" },

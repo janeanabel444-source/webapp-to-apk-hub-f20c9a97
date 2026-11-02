@@ -23,6 +23,7 @@ function oauthApi() {
 }
 
 export const Route = createFileRoute("/.lovable/oauth/consent")({
+  staticData: { sitemap: false },
   ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({
     authorization_id: typeof s.authorization_id === "string" ? s.authorization_id : "",

@@ -16,6 +16,7 @@ import { parseApkFile, diffPermissions, formatBytes, type ParsedApk } from "@/li
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/update")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Release Update — Developer Hub" }] }),
   component: UpdateAppPage,
 });

@@ -9,6 +9,7 @@ const inputSchema = z.object({
 });
 
 export const Route = createFileRoute("/api/public/ads/serve")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       GET: async ({ request }) => {

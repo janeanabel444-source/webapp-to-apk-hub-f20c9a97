@@ -26,6 +26,7 @@ import { deleteMyReviewReply, replyToReview } from "@/lib/reviews.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/$slug")({
+  staticData: { sitemap: true },
   validateSearch: z.object({ review: z.string().optional() }),
   loader: async ({ params }) => {
     const app = await fetchApp(params.slug);

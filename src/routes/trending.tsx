@@ -5,6 +5,7 @@ import { AppCard, AppCardSkeleton } from "@/components/AppCard";
 import { TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/trending")({
+  staticData: { sitemap: true },
   head: () => ({ meta: [{ title: "Trending — Niza App Store" }] }),
   component: TrendingPage,
 });

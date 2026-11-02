@@ -8,6 +8,7 @@ import { appDownloadUrl } from "@/lib/links";
 import { isDemoApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/library")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: "My library — Niza App Store" },
     { name: "description", content: "Manage your installed Niza apps and games." },

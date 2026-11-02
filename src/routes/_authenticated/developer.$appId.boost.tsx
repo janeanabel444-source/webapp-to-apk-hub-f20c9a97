@@ -11,6 +11,7 @@ import { getMyDeveloperApp } from "@/lib/developer.functions";
 import { createAdCampaign, initCampaignPayment } from "@/lib/ads.functions";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/boost")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Boost your app — Niza Ads" },

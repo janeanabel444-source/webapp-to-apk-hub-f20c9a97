@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getMyAiQuota } from "@/lib/ai-quota.functions";
 
 export const Route = createFileRoute("/_authenticated/ai-tools")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "AI Tools — Niza" }] }),
   component: AiToolsHub,
 });

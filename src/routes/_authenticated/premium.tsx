@@ -8,6 +8,7 @@ import { getMyPremiumStatus } from "@/lib/premium.functions";
 import { initPremiumPayment } from "@/lib/paystack.functions";
 
 export const Route = createFileRoute("/_authenticated/premium")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Go Premium — Niza App Store" }] }),
   component: PremiumPage,
 });

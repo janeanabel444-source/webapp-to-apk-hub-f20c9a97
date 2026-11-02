@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { getMyDeveloperApp, updateDeveloperApp, deleteDeveloperApp } from "@/lib/developer.functions";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/edit")({
+  staticData: { sitemap: false },
   head: () => ({ meta: [{ title: "Edit App — Developer Hub" }] }),
   component: EditAppPage,
 });

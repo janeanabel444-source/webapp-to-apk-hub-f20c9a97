@@ -5,6 +5,7 @@ import { AppCard, AppCardSkeleton } from "@/components/AppCard";
 import { ArrowRight, Gamepad2, LayoutGrid, TrendingUp, Code2, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Niza App Store — Discover apps and games" },

@@ -8,6 +8,7 @@ export const CONTACT_LINKTREE = "https://linktr.ee/paschalsoromtochukwu";
 export const CONTACT_WHATSAPP = CONTACT_LINKTREE;
 
 export const Route = createFileRoute("/contact")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Contact & Support — Niza App Store" },
