@@ -6,8 +6,10 @@
 - [x] Binary permissions + certificate fingerprint lock (zero-tolerance rejection, no admin review)
 - [ ] Expanded developer edit page (banner, icon, screenshots add/delete/reorder, category, tags, links)
 - [ ] InstallButton: cancel button, 500–800ms progress throttle, direct native uninstall
-- [ ] Account settings: photo, display name, email, password; Account navigation
-- [ ] Verify native foreground refresh and package identity across listings
+- [x] Account settings: photo, display name, email, password; Account navigation
+- [x] Native foreground refresh + package identity verified across listings
+- [ ] Google Search Console verification meta + /sitemap.xml + /robots.txt
+- [ ] TUS resumable APK uploads wired into upload + update flows (wake lock, cancel)
 - [x] Niza Hub integration layer (`src/lib/niza-hub.server.ts`): SSO, payments, catalog, webhooks
 - [x] Niza Hub credentials (NIZA_APP_ID / NIZA_APP_SECRET / NIZA_WORKSPACE_ID / NIZA_WEBHOOK_SECRET)
 - [x] Official logo everywhere (header, footer, auth, hero, favicon, PWA icons)
