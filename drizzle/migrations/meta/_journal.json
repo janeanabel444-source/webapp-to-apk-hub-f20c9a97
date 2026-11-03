@@ -22,6 +22,13 @@
       "when": 1793513180270,
       "tag": "0002_vt_queue_analysis_id",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793684593781,
+      "tag": "0003_grant_is_admin_execute",
+      "breakpoints": true
     }
   ]
 }
