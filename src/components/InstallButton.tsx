@@ -29,6 +29,8 @@ type Props = {
   packageName?: string | null;
   initialInstalled: boolean;
   variant?: "default" | "compact";
+  /** Compact slots hide uninstall by default; pass true to expose it (e.g. Library). */
+  showUninstall?: boolean;
   isDemo?: boolean;
   installedVersion?: string | null;
   latestVersion?: string | null;

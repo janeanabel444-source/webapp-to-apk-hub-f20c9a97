@@ -13,6 +13,7 @@ import {
   categoryLabel, isDemoApp, fetchAppVersions, compareVersions,
 } from "@/lib/store";
 import { trackView, fetchSimilarApps } from "@/lib/store-extras";
+import { appDownloadUrl } from "@/lib/links";
 import { formatBytes } from "@/lib/apk-parser";
 import { detectAndroidVersion, compareAndroid } from "@/lib/android-compat";
 import { AppIcon } from "@/components/AppIcon";
@@ -267,7 +268,7 @@ function AppDetail() {
               appName={app.name}
               filePath={app.file_path}
               appUrl={app.app_url}
-              downloadUrl={app.file_path ? `${typeof window !== "undefined" ? window.location.origin : "https://webapp-to-apk-hub.lovable.app"}/download/${app.id}` : null}
+              downloadUrl={app.file_path ? appDownloadUrl(app.id) : null}
               packageName={a.package_name}
               apkSize={a.apk_size}
               license={a.license ?? "free"}
