@@ -8,6 +8,9 @@
 - [x] InstallButton: cancel button, 700ms progress throttle (100%/error instant), direct native uninstall
 - [x] Account settings: photo, display name, email, password; Account navigation
 - [x] Native foreground refresh + package identity verified across listings
+- [x] Domain cleanup: STORE_URL, FALLBACK_ORIGIN, share fallback and app-page download link all point at https://niza-app-store.lovable.app
+- [x] Default og:image / twitter:image share banner (1200x630 at /og-banner.jpg) + twitter:card summary_large_image
+- [x] Library: uninstall action on every library row; "Updates available" counter banner and per-app update badges
 - [x] Google Search Console verification meta + /sitemap.xml + /robots.txt (sitemap serves static pages, live apps and published collections; anon EXECUTE on private.is_admin granted so collections resolve)
 - [x] TUS resumable APK uploads wired into upload + update flows (wake lock, cancel)
 - [x] TypeScript check passes; /sitemap.xml returns 200, robots.txt serves with Sitemap directive
