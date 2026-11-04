@@ -5,7 +5,7 @@
  * signed storage URL — so links keep working across app updates.
  */
 
-export const FALLBACK_ORIGIN = "https://webapp-to-apk-hub.lovable.app";
+export const FALLBACK_ORIGIN = "https://niza-app-store.lovable.app";
 
 export function siteOrigin() {
   if (typeof window === "undefined") return FALLBACK_ORIGIN;

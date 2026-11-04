@@ -7,7 +7,7 @@ const SHARE_TEXT =
   "Try Niza App Store — discover apps, games, and AI image generation in one place. Download now.";
 
 export function getLandingUrl() {
-  if (typeof window === "undefined") return "https://webapp-to-apk-hub.lovable.app/welcome";
+  if (typeof window === "undefined") return "https://niza-app-store.lovable.app/welcome";
   return `${window.location.origin}/welcome`;
 }
 
