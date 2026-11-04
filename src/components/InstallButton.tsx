@@ -57,6 +57,7 @@ export function InstallButton({
   packageName,
   initialInstalled,
   variant = "default",
+  showUninstall = false,
   isDemo = false,
   installedVersion,
   latestVersion,
@@ -364,7 +365,7 @@ export function InstallButton({
               <Download className="h-4 w-4" />
             </Button>
           )}
-          {variant !== "compact" && (
+          {(variant !== "compact" || showUninstall) && (
             <Button
               variant="ghost"
               size="icon"
