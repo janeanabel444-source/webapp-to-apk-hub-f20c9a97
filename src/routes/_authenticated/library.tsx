@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { fetchMyLibrary } from "@/lib/store";
+import { fetchMyLibrary, compareVersions, isDemoApp } from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
 import { appDownloadUrl } from "@/lib/links";
-import { isDemoApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/library")({
   staticData: { sitemap: false },
@@ -15,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/library")({
     { property: "og:title", content: "My library — Niza App Store" },
     { property: "og:description", content: "Manage your installed Niza apps and games." },
     { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
+    { name: "twitter:card", content: "summary_large_image" },
   ] }),
   component: Library,
 });
@@ -28,10 +27,35 @@ function Library() {
     enabled: !!user,
   });
 
+  const rows = data ?? [];
+  /** Installed apps whose listing offers a newer version than the recorded install. */
+  const updates = rows.filter(
+    (r) => r.app && !!r.installed_version && compareVersions(r.app.version, r.installed_version) > 0,
+  );
+  const updateIds = new Set(updates.map((r) => r.app!.id));
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <h1 className="font-display text-3xl font-bold">My library</h1>
       <p className="mt-1 text-muted-foreground">Apps you've installed.</p>
+
+      {updates.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-primary/40 bg-primary/10 p-4">
+          <p className="font-semibold text-primary">Updates available ({updates.length})</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Newer versions are ready for{" "}
+            {updates.map((r, i) => (
+              <span key={r.app!.id}>
+                {i > 0 && ", "}
+                <Link to="/app/$slug" params={{ slug: r.app!.slug }} className="font-medium text-primary underline-offset-2 hover:underline">
+                  {r.app!.name}
+                </Link>
+              </span>
+            ))}
+            . Tap Update on the highlighted apps below.
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 space-y-2">
         {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -58,6 +82,11 @@ function Library() {
                   v{row.installed_version ?? app.version}
                   {app.tagline ? ` · ${app.tagline}` : ""}
                 </p>
+                {updateIds.has(app.id) && (
+                  <span className="mt-1 inline-block rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                    Update available · v{app.version}
+                  </span>
+                )}
               </div>
               <InstallButton
                 appId={app.id}
@@ -71,6 +100,7 @@ function Library() {
                 priceKobo={app.price_kobo}
                 initialInstalled={true}
                 variant="compact"
+                showUninstall
                 installedVersion={row.installed_version}
                 latestVersion={app.version}
               />

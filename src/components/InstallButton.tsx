@@ -29,6 +29,8 @@ type Props = {
   packageName?: string | null;
   initialInstalled: boolean;
   variant?: "default" | "compact";
+  /** Compact slots hide uninstall by default; pass true to expose it (e.g. Library). */
+  showUninstall?: boolean;
   isDemo?: boolean;
   installedVersion?: string | null;
   latestVersion?: string | null;
@@ -55,6 +57,7 @@ export function InstallButton({
   packageName,
   initialInstalled,
   variant = "default",
+  showUninstall = false,
   isDemo = false,
   installedVersion,
   latestVersion,
@@ -362,7 +365,7 @@ export function InstallButton({
               <Download className="h-4 w-4" />
             </Button>
           )}
-          {variant !== "compact" && (
+          {(variant !== "compact" || showUninstall) && (
             <Button
               variant="ghost"
               size="icon"

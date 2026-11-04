@@ -36,5 +36,5 @@ class MainActivity : AppCompatActivity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() { if (webView.canGoBack()) webView.goBack() else super.onBackPressed() }
 
-    companion object { const val STORE_URL = "https://webapp-to-apk-hub.lovable.app" }
+    companion object { const val STORE_URL = "https://niza-app-store.lovable.app" }
 }
