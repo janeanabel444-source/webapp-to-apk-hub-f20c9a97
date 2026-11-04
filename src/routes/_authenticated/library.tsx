@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/library")({
     { property: "og:title", content: "My library — Niza App Store" },
     { property: "og:description", content: "Manage your installed Niza apps and games." },
     { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
+    { name: "twitter:card", content: "summary_large_image" },
   ] }),
   component: Library,
 });
