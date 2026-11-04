@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { fetchMyLibrary } from "@/lib/store";
+import { fetchMyLibrary, compareVersions, isDemoApp } from "@/lib/store";
 import { AppIcon } from "@/components/AppIcon";
 import { InstallButton } from "@/components/InstallButton";
 import { appDownloadUrl } from "@/lib/links";
