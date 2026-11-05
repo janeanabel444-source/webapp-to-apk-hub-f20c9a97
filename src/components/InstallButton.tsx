@@ -21,6 +21,7 @@ import {
   updateActiveDownload,
   setActiveDownloadId,
   clearActiveDownload,
+  getActiveDownload,
   subscribeActiveDownload,
   downloadProgressPct,
   setState as setDownloadState,
@@ -308,32 +309,23 @@ export function InstallButton({
   }
 
   async function doUninstall() {
-    if (!user) return;
     setBusy(true);
     try {
-      // Ask Android to remove the package first when we know it's installed.
+      // Direct native uninstall — Android shows its own confirmation dialog.
       if (confirmedOnDevice && packageName && hasCapability("uninstallPackage")) {
-        try {
-          await nativeBridge.uninstallPackage(packageName);
-        } catch (e: any) {
-          toast.error(e?.message ?? "Android couldn't remove the app");
-        }
-        const stillThere = await probeDevice();
-        if (stillThere !== false) {
-          // The user dismissed Android's uninstall prompt — keep the app in
-          // the library; Android owns the actual removal.
-          toast.message(`${appName} is still on your device — approve the uninstall prompt to remove it`);
-          return;
-        }
+        await nativeBridge.uninstallPackage(packageName);
+        await probeDevice();
       }
-      await uninstallApp(user.id, appId);
-      setInLibrary(false);
-      onChange?.(false);
-      qc.invalidateQueries({ queryKey: ["library"] });
-      qc.invalidateQueries({ queryKey: ["install-state", appId] });
-      toast.message(`${appName} removed`);
-    } catch {
-      toast.error("Couldn't remove");
+      if (inLibrary && user) {
+        await uninstallApp(user.id, appId);
+        setInLibrary(false);
+        onChange?.(false);
+        qc.invalidateQueries({ queryKey: ["library"] });
+        qc.invalidateQueries({ queryKey: ["install-state", appId] });
+        toast.message(`${appName} removed`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't remove");
     } finally {
       setBusy(false);
       setConfirmUninstall(false);
@@ -351,7 +343,7 @@ export function InstallButton({
             <AlertDialogDescription>
               {confirmedOnDevice
                 ? "This removes the app from your device and from your Niza library. Your app data may be deleted."
-                : "This removes the app from your Niza library. If it's still on your device, uninstall it from Android settings."}
+                : "This removes the app from your Niza library."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -491,11 +483,26 @@ export function InstallButton({
         </Button>
       );
     }
+    // Not in the library, but Android says the package is already on the device:
+    // offer Open alongside a direct native Uninstall (no settings detour).
     if (!inLibrary && confirmedOnDevice) {
       return (
-        <Button className={cn("rounded-full font-semibold", sizeCls)} variant="secondary" onClick={handleOpen}>
-          <Check className="mr-1.5 h-4 w-4" /> Open
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button className={cn("rounded-full font-semibold", sizeCls)} variant="secondary" onClick={handleOpen}>
+            <Check className="mr-1.5 h-4 w-4" /> Open
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            onClick={() => void doUninstall()}
+            disabled={busy}
+            aria-label="Uninstall"
+            title="Uninstall from device"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       );
     }
 
