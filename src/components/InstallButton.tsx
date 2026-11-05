@@ -192,7 +192,9 @@ export function InstallButton({
       setProgress(downloadProgressPct(d));
       const nativeCancel =
         d.downloadId && hasCapability("cancelDownload")
-          ? (): Promise<void> => nativeBridge.cancelDownload(d.downloadId!)
+          ? async (): Promise<void> => {
+              await nativeBridge.cancelDownload(d.downloadId!);
+            }
           : null;
       cancelRef.current = d.cancel ?? nativeCancel;
     };
