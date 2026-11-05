@@ -40,7 +40,7 @@ export async function getApkSignedUrl(filePath: string) {
 }
 
 /** Handle that lets the UI cancel an in-flight download. */
-export type DownloadHandle = { cancel: () => Promise<void> };
+export type DownloadHandle = { cancel: () => Promise<void>; downloadId?: string };
 
 /**
  * Downloads an APK. Inside the Niza Android wrapper, hands off to the native
@@ -62,7 +62,7 @@ export async function downloadApkWithProgress(
   if (hasCapability("downloadApk")) {
     const absolute = new URL(signed, window.location.origin).toString();
     const job = nativeDownloadApk({ url: absolute, fileName }, onProgress);
-    onHandle?.({ cancel: () => job.cancel() });
+    onHandle?.({ cancel: () => job.cancel(), downloadId: job.downloadId });
     const done = await job.done;
     let nativeInstalled = false;
     if (hasCapability("installApk")) {
