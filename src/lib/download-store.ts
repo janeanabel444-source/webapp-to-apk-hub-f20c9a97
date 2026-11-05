@@ -118,6 +118,9 @@ export function getActiveDownload(appId?: string): ActiveDownload | null {
 export function subscribeActiveDownload(listener: (d: ActiveDownload | null) => void): () => void {
   hydrate();
   listeners.add(listener);
+  // Emit the current state immediately so components adopt an in-flight
+  // download on mount instead of flashing "Install".
+  listener(current);
   return () => {
     listeners.delete(listener);
   };
