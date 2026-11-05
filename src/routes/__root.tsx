@@ -16,6 +16,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaInstaller } from "@/components/PwaInstaller";
+import { NizaStoreUpdatePrompt } from "@/components/NizaStoreUpdatePrompt";
 
 function NotFoundComponent() {
   return (
@@ -121,6 +122,7 @@ function RootComponent() {
         </div>
         <Toaster position="bottom-center" />
         <PwaInstaller />
+        <NizaStoreUpdatePrompt />
       </AuthProvider>
     </QueryClientProvider>
   );

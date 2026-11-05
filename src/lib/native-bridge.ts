@@ -216,6 +216,7 @@ export const nativeBridge = {
   isAvailable: isNizaAndroid,
   hasCapability,
   installApk: (downloadId: string) => call<{ started: boolean }>("installApk", { downloadId }, 5 * 60_000),
+  cancelDownload: (downloadId: string) => call<{ cancelled: boolean }>("cancelDownload", { downloadId }),
   isPackageInstalled: (packageName: string) => call<PackageInfo>("isPackageInstalled", { packageName }),
   launchPackage: (packageName: string) => call<{ launched: boolean }>("launchPackage", { packageName }),
   uninstallPackage: (packageName: string) =>

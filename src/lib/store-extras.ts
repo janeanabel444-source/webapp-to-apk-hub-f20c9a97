@@ -52,6 +52,7 @@ export async function fetchSimilarApps(app: App, limit = 8): Promise<App[]> {
     .select("*")
     .eq("is_published", true)
     .eq("status", "live")
+    .eq("is_unlisted", false)
     .eq("category", app.category)
     .neq("id", app.id)
     .order("install_count", { ascending: false })
@@ -66,6 +67,7 @@ export async function fetchFeatured(category?: "app" | "game", limit = 8): Promi
     .select("*")
     .eq("is_published", true)
     .eq("status", "live")
+    .eq("is_unlisted", false)
     .eq("is_featured", true)
     .order("featured_at", { ascending: false });
   if (category) q = q.eq("category", category);
@@ -80,6 +82,7 @@ export async function fetchTrending(category?: "app" | "game", limit = 12): Prom
     .select("*")
     .eq("is_published", true)
     .eq("status", "live")
+    .eq("is_unlisted", false)
     .gte("last_updated_at", since)
     .order("download_count", { ascending: false });
   if (category) q = q.eq("category", category);
@@ -93,6 +96,7 @@ export async function fetchTopCharts(category?: "app" | "game", limit = 20): Pro
     .select("*")
     .eq("is_published", true)
     .eq("status", "live")
+    .eq("is_unlisted", false)
     .order("install_count", { ascending: false });
   if (category) q = q.eq("category", category);
   const { data } = await q.limit(limit);
@@ -105,6 +109,7 @@ export async function fetchRecentlyUpdated(limit = 12): Promise<App[]> {
     .select("*")
     .eq("is_published", true)
     .eq("status", "live")
+    .eq("is_unlisted", false)
     .order("last_updated_at", { ascending: false })
     .limit(limit);
   return (data ?? []) as App[];
@@ -142,6 +147,7 @@ export async function fetchCollection(slug: string) {
     .from("collection_apps" as any)
     .select("sort_order, app:apps(*)")
     .eq("collection_id", (col as any).id)
+    .eq("app.is_unlisted", false)
     .order("sort_order");
   return {
     collection: col as any,

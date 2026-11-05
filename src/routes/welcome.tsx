@@ -48,43 +48,16 @@ function detectPlatform(): Platform {
   return "desktop";
 }
 
-function useInstallPrompt() {
-  const [evt, setEvt] = useState<any>(null);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setEvt(e);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-  return {
-    canPrompt: !!evt,
-    prompt: async () => {
-      if (!evt) return false;
-      evt.prompt();
-      const choice = await evt.userChoice;
-      setEvt(null);
-      return choice?.outcome === "accepted";
-    },
-  };
-}
-
 function Welcome() {
   const [platform, setPlatform] = useState<Platform>("desktop");
-  const { canPrompt, prompt } = useInstallPrompt();
   const url = getLandingUrl();
 
   useEffect(() => {
     setPlatform(detectPlatform());
   }, []);
 
-  async function handleInstall() {
-    if (canPrompt) {
-      const ok = await prompt();
-      if (ok) return;
-    }
-    // Fallback: scroll to instructions
+  function handleInstall() {
+    // PWA install prompts are suppressed app-wide — guide to manual install.
     document.getElementById("install-instructions")?.scrollIntoView({ behavior: "smooth" });
   }
 

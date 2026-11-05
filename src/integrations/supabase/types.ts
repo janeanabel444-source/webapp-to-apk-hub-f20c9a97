@@ -389,6 +389,7 @@ export type Database = {
           is_featured: boolean
           is_multiplayer: boolean
           is_published: boolean
+          is_unlisted: boolean
           languages: string[]
           last_updated_at: string
           latest_release_notes: string | null
@@ -461,6 +462,7 @@ export type Database = {
           is_featured?: boolean
           is_multiplayer?: boolean
           is_published?: boolean
+          is_unlisted?: boolean
           languages?: string[]
           last_updated_at?: string
           latest_release_notes?: string | null
@@ -533,6 +535,7 @@ export type Database = {
           is_featured?: boolean
           is_multiplayer?: boolean
           is_published?: boolean
+          is_unlisted?: boolean
           languages?: string[]
           last_updated_at?: string
           latest_release_notes?: string | null

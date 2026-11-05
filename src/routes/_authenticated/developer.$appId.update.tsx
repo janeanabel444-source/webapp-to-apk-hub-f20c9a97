@@ -193,6 +193,9 @@ function UpdateAppPage() {
             <input type="file" className="hidden" accept=".apk,application/vnd.android.package-archive" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} />
           </label>
           {parsing && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Reading APK…</p>}
+          <p className="mt-1 text-xs text-muted-foreground">
+            The new APK's <span className="font-medium text-foreground">version_code and version number must both be higher</span> than the current release — they are read automatically from the binary and Android will refuse an install whose code is not higher.
+          </p>
           {uploadPct !== null && (
             <div className="mt-2">
               <div className="flex items-center justify-between">
@@ -233,7 +236,9 @@ function UpdateAppPage() {
         <div>
           <Label htmlFor="version">New version number</Label>
           <Input id="version" placeholder="e.g. 1.0.1" value={version} onChange={(e) => setVersion(e.target.value)} className="mt-1" required />
-          <p className="mt-1 text-xs text-muted-foreground">Must be greater than {app.version}.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            The updated APK must have a <span className="font-medium text-foreground">higher version_code</span> and a higher version number than the current release ({app.version}) — Android rejects downgrade installs otherwise.
+          </p>
         </div>
 
         <div>

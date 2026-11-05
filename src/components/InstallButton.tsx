@@ -16,6 +16,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { installApp, uninstallApp, markInstalledAppUpdated, compareVersions } from "@/lib/store";
 import { downloadApkWithProgress, isAndroidDevice, isDownloadCancelled } from "@/lib/apk-download";
+import {
+  startActiveDownload,
+  updateActiveDownload,
+  setActiveDownloadId,
+  clearActiveDownload,
+  getActiveDownload,
+  subscribeActiveDownload,
+  downloadProgressPct,
+  setState as setDownloadState,
+} from "@/lib/download-store";
 import { nativeBridge, initNativeBridge, hasCapability } from "@/lib/native-bridge";
 import { formatBytes } from "@/lib/apk-parser";
 import { toast } from "sonner";
@@ -80,6 +90,10 @@ export function InstallButton({
   const [cancelling, setCancelling] = useState(false);
   // Cancel handle for an in-flight download; null when not downloading.
   const cancelRef = useRef<(() => Promise<void>) | null>(null);
+  // Mirrors `busy` for the global download subscriber (closures see stale state).
+  const busyRef = useRef(false);
+  // True while this button is displaying a download it did not start itself.
+  const adoptedRef = useRef(false);
   // Progress is throttled to one React update every 700ms — completion and
   // cancellation render immediately.
   const lastEmitRef = useRef(0);
@@ -152,8 +166,10 @@ export function InstallButton({
   const needsFinish = inLibrary && canProbe && deviceInstalled === false;
 
   /** Push download progress to React at most every 700ms (smooth on budget
-   *  devices); 100% renders immediately on completion. */
+   *  devices); 100% renders immediately on completion. Also feeds the global
+   *  download store so other pages show the same progress. */
   const pushProgress = useCallback((loaded: number, total: number) => {
+    updateActiveDownload(appId, loaded, total);
     const pct = total ? (loaded / total) * 100 : 0;
     if (pct >= 100) {
       lastEmitRef.current = Date.now();
@@ -165,20 +181,51 @@ export function InstallButton({
       lastEmitRef.current = now;
       setProgress(pct);
     }
-  }, []);
+  }, [appId]);
+
+  // Adopt a download that is already running globally (started on another
+  // page, or before a full reload — the native downloader keeps running).
+  useEffect(() => {
+    const adopt = (d: NonNullable<ReturnType<typeof getActiveDownload>>) => {
+      adoptedRef.current = true;
+      setBusy(true);
+      setProgress(downloadProgressPct(d));
+      const nativeCancel =
+        d.downloadId && hasCapability("cancelDownload")
+          ? async (): Promise<void> => {
+              await nativeBridge.cancelDownload(d.downloadId!);
+            }
+          : null;
+      cancelRef.current = d.cancel ?? nativeCancel;
+    };
+    return subscribeActiveDownload((d) => {
+      if (d && d.appId === appId) {
+        if (!busyRef.current) adopt(d);
+      } else if (!d && adoptedRef.current) {
+        adoptedRef.current = false;
+        cancelRef.current = null;
+        setProgress(0);
+        if (!busyRef.current) setBusy(false);
+      }
+    });
+  }, [appId]);
 
   async function runDownloadAndMark(markFn: () => Promise<void>, successMsg: string) {
     setBusy(true);
+    busyRef.current = true;
     setProgress(0);
     lastEmitRef.current = 0;
+    if (filePath) startActiveDownload({ appId, appName, total: apkSize ?? 0 });
     try {
       if (filePath) {
         const result = await downloadApkWithProgress(filePath, appName, pushProgress, downloadUrl ?? undefined, (handle) => {
           cancelRef.current = handle.cancel;
+          setActiveDownloadId(appId, handle.downloadId, handle.cancel);
         });
         cancelRef.current = null;
         setProgress(100);
         if (result.nativeInstalled) {
+          setDownloadState("installing");
           toast.success("Installing via Niza Android…");
         } else if (isAndroidDevice()) {
           setShowHelper(true);
@@ -203,6 +250,11 @@ export function InstallButton({
         toast.error(err?.message ?? "Couldn't complete — please try again");
       }
     } finally {
+      // The download is no longer active — clear the global tracker first so
+      // subscribers see a clean end state, then reset local UI.
+      clearActiveDownload(appId);
+      adoptedRef.current = false;
+      busyRef.current = false;
       setBusy(false);
       setCancelling(false);
       setProgress(0);
@@ -212,7 +264,10 @@ export function InstallButton({
 
   async function cancelDownload() {
     const cancel = cancelRef.current;
-    if (!cancel) return;
+    if (!cancel) {
+      setCancelling(false);
+      return;
+    }
     setCancelling(true);
     await cancel();
   }
@@ -256,32 +311,23 @@ export function InstallButton({
   }
 
   async function doUninstall() {
-    if (!user) return;
     setBusy(true);
     try {
-      // Ask Android to remove the package first when we know it's installed.
+      // Direct native uninstall — Android shows its own confirmation dialog.
       if (confirmedOnDevice && packageName && hasCapability("uninstallPackage")) {
-        try {
-          await nativeBridge.uninstallPackage(packageName);
-        } catch (e: any) {
-          toast.error(e?.message ?? "Android couldn't remove the app");
-        }
-        const stillThere = await probeDevice();
-        if (stillThere !== false) {
-          // The user dismissed Android's uninstall prompt — keep the app in
-          // the library; Android owns the actual removal.
-          toast.message(`${appName} is still on your device — approve the uninstall prompt to remove it`);
-          return;
-        }
+        await nativeBridge.uninstallPackage(packageName);
+        await probeDevice();
       }
-      await uninstallApp(user.id, appId);
-      setInLibrary(false);
-      onChange?.(false);
-      qc.invalidateQueries({ queryKey: ["library"] });
-      qc.invalidateQueries({ queryKey: ["install-state", appId] });
-      toast.message(`${appName} removed`);
-    } catch {
-      toast.error("Couldn't remove");
+      if (inLibrary && user) {
+        await uninstallApp(user.id, appId);
+        setInLibrary(false);
+        onChange?.(false);
+        qc.invalidateQueries({ queryKey: ["library"] });
+        qc.invalidateQueries({ queryKey: ["install-state", appId] });
+        toast.message(`${appName} removed`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't remove");
     } finally {
       setBusy(false);
       setConfirmUninstall(false);
@@ -299,7 +345,7 @@ export function InstallButton({
             <AlertDialogDescription>
               {confirmedOnDevice
                 ? "This removes the app from your device and from your Niza library. Your app data may be deleted."
-                : "This removes the app from your Niza library. If it's still on your device, uninstall it from Android settings."}
+                : "This removes the app from your Niza library."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -439,11 +485,26 @@ export function InstallButton({
         </Button>
       );
     }
+    // Not in the library, but Android says the package is already on the device:
+    // offer Open alongside a direct native Uninstall (no settings detour).
     if (!inLibrary && confirmedOnDevice) {
       return (
-        <Button className={cn("rounded-full font-semibold", sizeCls)} variant="secondary" onClick={handleOpen}>
-          <Check className="mr-1.5 h-4 w-4" /> Open
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button className={cn("rounded-full font-semibold", sizeCls)} variant="secondary" onClick={handleOpen}>
+            <Check className="mr-1.5 h-4 w-4" /> Open
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            onClick={() => void doUninstall()}
+            disabled={busy}
+            aria-label="Uninstall"
+            title="Uninstall from device"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       );
     }
 

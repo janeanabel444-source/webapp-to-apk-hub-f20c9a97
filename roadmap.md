@@ -1,6 +1,15 @@
 # Niza App Store — Roadmap
 
 ## In progress
+- [x] Backfill package_name: Niza Prime AI → com.nizaprime.bridge, Niza Store → com.niza.marketplace (apps + app_versions)
+- [x] Fix TUS 404: endpoint /storage/v1/upload/resumable + resilient fallback to standard signed-URL upload (real byte progress via XHR)
+- [x] Global download progress: active download state persisted via niza:download-progress + localStorage; returning to a page shows the running install (native downloads survive a full reload via downloadId)
+- [x] Direct native uninstall without any fallback prompt (isPackageInstalled → Uninstall button → nativeBridge.uninstallPackage; no Android-settings wording anywhere)
+- [x] Version validation guidance on update forms (higher version_code + version name required)
+- [x] Suppress PWA install prompts permanently (beforeinstallprompt intercepted app-wide; banner removed; welcome page no longer prompts)
+- [x] Hide Niza Store listing from public browsing (apps.is_unlisted flag; filtered from home/trending/charts/search/categories/collections/sitemap/MCP search; Developer Hub + direct links keep working)
+- [x] In-app update prompt for Niza Store when running inside the native APK and a new release is out (niza:foreground re-check, 24h snooze, downloads via native bridge)
+- [x] Social share preview: promo banner recomposed to 1200x630 at /og-banner.jpg (og:image, twitter:image, twitter:card already wired)
 - [x] Allow APK uploads up to 80 MB (TUS resumable upload + Wake Lock — wired into publish wizard and update page, with cancel and progress persistence)
 - [x] VirusTotal 4/min queue, fail-closed "verifying" gate, scan ID/score/permalink on app_versions
 - [x] Binary permissions + certificate fingerprint lock (zero-tolerance rejection, no admin review)

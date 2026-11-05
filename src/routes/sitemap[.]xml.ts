@@ -22,6 +22,7 @@ export const Route = createFileRoute("/sitemap.xml")({
               .select("slug")
               .eq("is_published", true)
               .eq("status", "live")
+              .eq("is_unlisted", false)
               .order("id")
               .range(offset, offset + pageSize - 1);
             if (error) throw new Error(`Sitemap app query failed: ${error.message}`);
