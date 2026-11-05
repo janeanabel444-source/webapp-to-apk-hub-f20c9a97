@@ -91,12 +91,12 @@ function attachBridgeWatcher() {
     onDownloadEvent((e) => {
       if (!current || current.downloadId !== e.downloadId) return;
       if (e.state === "started" || e.state === "progress") {
-        update(e.loaded, e.total);
+        updateActiveDownload(current.appId, e.loaded, e.total);
       } else if (e.state === "completed") {
-        update(e.loaded, e.total || e.loaded);
+        updateActiveDownload(current.appId, e.loaded, e.total || e.loaded);
         setState("installing");
       } else if (e.state === "failed" || e.state === "cancelled") {
-        clear();
+        clearActiveDownload();
       }
     });
   });

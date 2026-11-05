@@ -118,6 +118,7 @@ export function uploadApkResumable(opts: {
 
   let upload: tus.Upload | null = null;
   let fallbackUsed = false;
+  let fallbackXhr: XMLHttpRequest | null = null;
   let cancelled = false;
   let fail: ((e: unknown) => void) | null = null;
   const promise = new Promise<{ path: string }>((resolve, reject) => {
@@ -140,6 +141,8 @@ export function uploadApkResumable(opts: {
       };
 
       // ── Standard fallback upload (signed upload URL, no chunking) ──
+      // The supabase-js signed upload has no progress callback, so the raw
+      // XHR below mirrors the exact same request while reporting real bytes.
       const startFallback = async () => {
         fallbackUsed = true;
         const signed = await supabase.storage.from(APK_BUCKET).createSignedUploadUrl(path);
@@ -148,18 +151,30 @@ export function uploadApkResumable(opts: {
           return;
         }
         try {
-          const res = await supabase.storage
-            .from(APK_BUCKET)
-            .uploadToSignedUrl(path, signed.data.token, file, {
-              onProgress: (e) => {
-                if (cancelled) return;
-                onProgress(e.loaded ?? 0, e.total ?? file.size);
-              },
-            });
-          if (res.error) {
-            reject(new Error(res.error.message));
-            return;
-          }
+          await new Promise<void>((res, rej) => {
+            const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/upload/sign/${APK_BUCKET}/${path}?token=${encodeURIComponent(signed.data!.token)}`;
+            const form = new FormData();
+            form.append("cacheControl", "3600");
+            form.append("", file);
+            const xhr = new XMLHttpRequest();
+            fallbackXhr = xhr;
+            xhr.open("POST", url);
+            xhr.setRequestHeader("authorization", `Bearer ${token}`);
+            const apiKey =
+              (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+              (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined);
+            if (apiKey) xhr.setRequestHeader("apikey", apiKey);
+            xhr.upload.onprogress = (e) => {
+              if (!cancelled) onProgress(e.loaded, e.total);
+            };
+            xhr.onload = () => {
+              if (cancelled) return;
+              if (xhr.status >= 200 && xhr.status < 300) res();
+              else rej(new Error(`Upload failed (${xhr.status}). Please try again.`));
+            };
+            xhr.onerror = () => rej(new Error("Upload failed — network error. Please try again."));
+            xhr.send(form);
+          });
           resolveDone();
         } catch (e) {
           reject(e);
@@ -215,6 +230,11 @@ export function uploadApkResumable(opts: {
       await upload?.abort(true);
     } catch {
       /* already finished or never started */
+    }
+    try {
+      fallbackXhr?.abort();
+    } catch {
+      /* not running */
     }
     clearApkResume(file);
     fail?.(new UploadCancelled());
