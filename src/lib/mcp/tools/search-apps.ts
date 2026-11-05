@@ -21,6 +21,7 @@ export default defineTool({
       .select("id, slug, name, tagline, short_description, category, icon_url, install_count, rating_avg, rating_count, version")
       .eq("is_published", true)
       .eq("status", "live")
+      .eq("is_unlisted", false)
       .order("install_count", { ascending: false })
       .limit(limit ?? 20);
     if (category) q = q.eq("category", category);

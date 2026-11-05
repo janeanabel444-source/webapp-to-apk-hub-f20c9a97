@@ -45,6 +45,7 @@ export async function fetchApps(category?: Category, search?: string, language?:
     .select("*")
     .eq("is_published", true)
     .eq("status", "live")
+    .eq("is_unlisted", false)
     .order("install_count", { ascending: false });
   if (category) q = q.eq("category", category);
   if (language) q = q.contains("languages", [language]);
