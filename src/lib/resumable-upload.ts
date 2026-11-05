@@ -7,6 +7,9 @@
 //   interrupted or dropped upload resumes from the byte where it stopped the
 //   next time the same file is selected (progress persistence).
 // - Cancel is real: the upload is aborted on the server, not just abandoned.
+// - Resilient fallback: if chunked initialization fails (e.g. the storage
+//   TUS route is unavailable), the upload transparently continues with the
+//   standard signed-URL upload instead of failing.
 import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,12 +95,16 @@ export type ResumableUploadHandle = {
   promise: Promise<{ path: string }>;
   /** Aborts the upload on the server and cleans up the resume record. */
   cancel: () => Promise<void>;
+  /** True when chunked upload was unavailable and the standard upload is used. */
+  usingFallback: () => boolean;
 };
 
 /**
  * Upload an APK with the TUS resumable protocol. Progress comes from real
  * byte counts. If the upload fails, the returned promise rejects with an
  * error carrying a `retry()` that continues from the last committed chunk.
+ * When chunked initialization fails (404 on the TUS route, unsupported,
+ * blocked), the upload falls back to the standard signed-URL upload.
  */
 export function uploadApkResumable(opts: {
   userId: string;
@@ -106,9 +113,12 @@ export function uploadApkResumable(opts: {
 }): ResumableUploadHandle {
   const { userId, file, onProgress } = opts;
   const path = `${userId}/${Date.now()}-${crypto.randomUUID()}.apk`;
-  const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/tus`;
+  // Supabase Storage resumable (TUS) endpoint.
+  const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/resumable`;
 
   let upload: tus.Upload | null = null;
+  let fallbackUsed = false;
+  let cancelled = false;
   let fail: ((e: unknown) => void) | null = null;
   const promise = new Promise<{ path: string }>((resolve, reject) => {
     fail = (e) => reject(e);
@@ -119,6 +129,43 @@ export function uploadApkResumable(opts: {
         reject(new Error("Please sign in to upload."));
         return;
       }
+      if (cancelled) {
+        reject(new UploadCancelled());
+        return;
+      }
+
+      const resolveDone = () => {
+        clearApkResume(file);
+        resolve({ path });
+      };
+
+      // ── Standard fallback upload (signed upload URL, no chunking) ──
+      const startFallback = async () => {
+        fallbackUsed = true;
+        const signed = await supabase.storage.from(APK_BUCKET).createSignedUploadUrl(path);
+        if (signed.error || !signed.data) {
+          reject(new Error(signed.error?.message ?? "Upload initialization failed."));
+          return;
+        }
+        try {
+          const res = await supabase.storage
+            .from(APK_BUCKET)
+            .uploadToSignedUrl(path, signed.data.token, file, {
+              onProgress: (e) => {
+                if (cancelled) return;
+                onProgress(e.loaded ?? 0, e.total ?? file.size);
+              },
+            });
+          if (res.error) {
+            reject(new Error(res.error.message));
+            return;
+          }
+          resolveDone();
+        } catch (e) {
+          reject(e);
+        }
+      };
+
       upload = new tus.Upload(file, {
         endpoint,
         uploadSize: file.size,
@@ -142,6 +189,15 @@ export function uploadApkResumable(opts: {
         },
         onError: (error) => {
           if (upload?.url) persistApkResume(file, upload.url);
+          // Chunked initialization failed before a single byte was stored
+          // (route missing / 404 / unsupported) — continue with the standard
+          // upload instead of failing the developer's publish.
+          const msg = (error as Error)?.message ?? "";
+          if (!upload?.url && !fallbackUsed && /creating upload|response code: 4\d\d|not found|unsupported/i.test(msg)) {
+            clearApkResume(file);
+            void startFallback();
+            return;
+          }
           Object.assign(error as Error, {
             retryable: true,
             retry: () => upload?.start(),
@@ -154,6 +210,7 @@ export function uploadApkResumable(opts: {
   });
 
   const cancel = async () => {
+    cancelled = true;
     try {
       await upload?.abort(true);
     } catch {
@@ -163,5 +220,5 @@ export function uploadApkResumable(opts: {
     fail?.(new UploadCancelled());
   };
 
-  return { promise, cancel };
+  return { promise, cancel, usingFallback: () => fallbackUsed };
 }
