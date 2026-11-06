@@ -21,6 +21,8 @@ import { generateAppDescription, generateAppKeywords, generateListingSuggestions
 import { checkPackageVersion } from "@/lib/developer.functions";
 import { AiSuggestionCard, AiChipSuggestion } from "@/components/AiSuggestionCard";
 import { parseApkFileSafe, formatBytes, apiLevelToAndroidVersion, type ParsedApk } from "@/lib/apk-parser";
+import { startPublishProgress, updatePublishProgress, clearPublishProgress, subscribePublishProgress, type PublishProgress } from "@/lib/publish-progress";
+import { PublishProgressPanel } from "@/components/PublishProgressPanel";
 import {
   PLATFORMS, RELEASE_CHANNELS, getPlatform,
   HYBRID_FRAMEWORKS, GAME_CATEGORIES, GAME_TYPES, GAME_ENGINES, GAME_FLAGS, AGE_RATINGS,
@@ -329,6 +331,17 @@ function NewAppPage() {
   const [autosaved, setAutosaved] = useState<Date | null>(null);
   const [result, setResult] = useState<{ id: string; slug: string; shareToken: string; dev: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [sharedProgress, setSharedProgress] = useState<PublishProgress | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setSharedProgress(null);
+      return;
+    }
+    return subscribePublishProgress((value) => {
+      setSharedProgress(value?.userId === user.id ? value : null);
+    });
+  }, [user?.id]);
 
   const spec = getPlatform(form.platform);
 
@@ -626,19 +639,24 @@ function NewAppPage() {
     setErr(null);
     if (!user || !logo) { setErr("An application icon is required."); return; }
     setBusy(true);
+    startPublishProgress(user.id, form.name.trim() || "New app");
     try {
       setProgress({ label: "Uploading icon…", pct: 10 });
+      updatePublishProgress({ label: "Uploading app icon…", percent: 10, status: "uploading" });
       const logoUp = await uploadToBucket("app-logos", user.id, logo);
       let bannerUrl: string | null = null;
       if (banner) {
         setProgress({ label: "Uploading promotional image…", pct: 25 });
+        updatePublishProgress({ label: "Uploading promotional image…", percent: 25, status: "uploading" });
         bannerUrl = (await uploadToBucket("app-screenshots", user.id, banner)).url;
       }
       setProgress({ label: "Uploading screenshots…", pct: 40 });
+      updatePublishProgress({ label: "Uploading screenshots…", percent: 40, status: "uploading" });
       const shots = await Promise.all(screenshots.map((f) => uploadToBucket("app-screenshots", user.id, f)));
       let filePath: string | null = null;
       if (appFile) {
         setProgress({ label: "Uploading APK… 0%", pct: 60 });
+        updatePublishProgress({ label: "Uploading APK… 0%", percent: 60, status: "uploading" });
         // Resumable chunked upload (6 MB chunks, TUS) with a screen wake lock —
         // a dropped connection continues from the last chunk, and the screen
         // stays awake so the upload never dies in the background.
@@ -649,7 +667,10 @@ function NewAppPage() {
             file: appFile,
             onProgress: (loaded, total) => {
               const pct = total ? Math.round((loaded / total) * 100) : 0;
-              setProgress({ label: `Uploading APK… ${pct}%`, pct: 60 + (pct * 0.28) });
+              const label = `Uploading APK… ${pct}%`;
+              const percent = 60 + (pct * 0.28);
+              setProgress({ label, pct: percent });
+              updatePublishProgress({ label, percent, status: "uploading" });
             },
           });
           apkCancelRef.current = job.cancel;
@@ -661,6 +682,7 @@ function NewAppPage() {
         }
       }
       setProgress({ label: "Running security checks & publishing…", pct: 88 });
+      updatePublishProgress({ label: "Running security checks and submitting…", percent: 88, status: "processing" });
       const row: any = await create({
         data: {
           name: form.name.trim(),
@@ -712,6 +734,7 @@ function NewAppPage() {
           release_notes: form.releaseNotes.trim(),
         },
       });
+      updatePublishProgress({ label: "Submission complete", percent: 100, status: "complete", appId: row.id });
       localStorage.removeItem(draftKey(activeType ?? form.contentType));
       setResult({
         id: row.id,
@@ -724,8 +747,10 @@ function NewAppPage() {
       apkCancelRef.current = null;
       if (e instanceof UploadCancelled) {
         if (appFile) clearApkResume(appFile);
+        updatePublishProgress({ label: "Submission cancelled", status: "cancelled", error: "The upload was cancelled." });
         setErr("Upload cancelled — pick your APK again when you're ready.");
       } else {
+        updatePublishProgress({ label: "Submission paused", status: "failed", error: e?.message ?? "Something went wrong while publishing." });
         setErr(e?.message ?? "Something went wrong while publishing.");
       }
     } finally {
@@ -843,6 +868,10 @@ function NewAppPage() {
         </div>
       </div>
     );
+  }
+
+  if (sharedProgress) {
+    return <PublishProgressPanel progress={sharedProgress} onDismiss={() => clearPublishProgress(user?.id)} />;
   }
 
   // ---------------- Wizard ----------------

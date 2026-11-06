@@ -1,6 +1,10 @@
 # Niza App Store — Roadmap
 
-## In progress
+## Current priority
+- [x] Fix APK upload read-back failures: TUS uses `bucketName`, `objectName`, and `contentType`; both TUS and signed-upload fallback verify the saved APK can be read and matches the selected file size before inspection.
+- [x] Persist app submission/review uploads globally so returning to Developer Hub or the new-app page shows the active upload/progress view instead of resetting to the app list; submission continues through navigation.
+
+## Previously completed
 - [x] Backfill package_name: Niza Prime AI → com.nizaprime.bridge, Niza Store → com.niza.marketplace (apps + app_versions)
 - [x] Fix TUS 404: endpoint /storage/v1/upload/resumable + resilient fallback to standard signed-URL upload (real byte progress via XHR)
 - [x] Global download progress: active download state persisted via niza:download-progress + localStorage; returning to a page shows the running install (native downloads survive a full reload via downloadId)

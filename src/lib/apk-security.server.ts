@@ -239,7 +239,19 @@ export function assertNoForbiddenPermissions(permissions: string[]) {
  */
 export async function inspectApkFromStorage(filePath: string): Promise<ApkSecurityReport> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: blob, error } = await supabaseAdmin.storage.from("app-files").download(filePath);
-  if (error || !blob) throw new Error("The uploaded APK could not be read back from storage.");
-  return inspectApkBytes(new Uint8Array(await blob.arrayBuffer()));
+  let lastError = "The uploaded file was not found.";
+  for (const delayMs of [0, 250, 750]) {
+    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    const { data: blob, error } = await supabaseAdmin.storage.from("app-files").download(filePath);
+    if (blob && !error) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      if (bytes.byteLength !== blob.size) {
+        lastError = "The stored file is incomplete.";
+        continue;
+      }
+      return inspectApkBytes(bytes);
+    }
+    lastError = error?.message ?? lastError;
+  }
+  throw new Error(`The uploaded APK could not be read back from the app-files bucket. ${lastError}`);
 }

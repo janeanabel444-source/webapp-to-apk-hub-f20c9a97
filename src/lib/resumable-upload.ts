@@ -66,17 +66,22 @@ function fileFingerprint(file: File): string {
   return `${file.name}:${file.size}:${file.lastModified}`;
 }
 
-function persistApkResume(file: File, url: string) {
+type ApkResumeRecord = { url: string; path: string };
+
+function persistApkResume(file: File, url: string, path: string) {
   try {
-    if (url) localStorage.setItem(RESUME_PREFIX + fileFingerprint(file), url);
+    if (url) localStorage.setItem(RESUME_PREFIX + fileFingerprint(file), JSON.stringify({ url, path } satisfies ApkResumeRecord));
   } catch {
     /* storage full/blocked — resume just won't be available */
   }
 }
 
-function readApkResume(file: File): string | null {
+function readApkResume(file: File): ApkResumeRecord | null {
   try {
-    return localStorage.getItem(RESUME_PREFIX + fileFingerprint(file));
+    const raw = localStorage.getItem(RESUME_PREFIX + fileFingerprint(file));
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<ApkResumeRecord>;
+    return typeof value.url === "string" && typeof value.path === "string" ? { url: value.url, path: value.path } : null;
   } catch {
     return null;
   }
@@ -103,8 +108,9 @@ export type ResumableUploadHandle = {
  * Upload an APK with the TUS resumable protocol. Progress comes from real
  * byte counts. If the upload fails, the returned promise rejects with an
  * error carrying a `retry()` that continues from the last committed chunk.
- * When chunked initialization fails (404 on the TUS route, unsupported,
- * blocked), the upload falls back to the standard signed-URL upload.
+ * When chunked initialization fails, the upload falls back to the standard
+ * signed-URL upload. Both paths read the completed object back from the
+ * private bucket before reporting success.
  */
 export function uploadApkResumable(opts: {
   userId: string;
@@ -112,7 +118,8 @@ export function uploadApkResumable(opts: {
   onProgress: (loaded: number, total: number) => void;
 }): ResumableUploadHandle {
   const { userId, file, onProgress } = opts;
-  const path = `${userId}/${Date.now()}-${crypto.randomUUID()}.apk`;
+  const previous = readApkResume(file);
+  const path = previous?.path ?? `${userId}/${Date.now()}-${crypto.randomUUID()}.apk`;
   // Supabase Storage resumable (TUS) endpoint.
   const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/resumable`;
 
@@ -135,9 +142,20 @@ export function uploadApkResumable(opts: {
         return;
       }
 
-      const resolveDone = () => {
+      const verifyStoredApk = async () => {
+        if (cancelled) throw new UploadCancelled();
+        const { data, error } = await supabase.storage.from(APK_BUCKET).download(path);
+        if (error || !data) {
+          throw new Error(
+            `The APK upload finished, but the file could not be read from app storage. ${error?.message ?? "The uploaded file was not found."}`,
+          );
+        }
+        if (data.size !== file.size) {
+          throw new Error("The APK upload is incomplete: the stored file size does not match the selected APK.");
+        }
+        if (cancelled) throw new UploadCancelled();
         clearApkResume(file);
-        resolve({ path });
+        return { path };
       };
 
       // ── Standard fallback upload (signed upload URL, no chunking) ──
@@ -150,12 +168,16 @@ export function uploadApkResumable(opts: {
           reject(new Error(signed.error?.message ?? "Upload initialization failed."));
           return;
         }
+        if (cancelled) {
+          reject(new UploadCancelled());
+          return;
+        }
         try {
           await new Promise<void>((res, rej) => {
-            const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/upload/sign/${APK_BUCKET}/${path}?token=${encodeURIComponent(signed.data!.token)}`;
+            const url = signed.data.signedUrl;
             const form = new FormData();
             form.append("cacheControl", "3600");
-            form.append("", file);
+            form.append("", file.slice(0, file.size, "application/vnd.android.package-archive"), file.name);
             const xhr = new XMLHttpRequest();
             fallbackXhr = xhr;
             xhr.open("POST", url);
@@ -175,7 +197,7 @@ export function uploadApkResumable(opts: {
             xhr.onerror = () => rej(new Error("Upload failed — network error. Please try again."));
             xhr.send(form);
           });
-          resolveDone();
+          resolve(await verifyStoredApk());
         } catch (e) {
           reject(e);
         }
@@ -187,28 +209,33 @@ export function uploadApkResumable(opts: {
         chunkSize: CHUNK_SIZE,
         retryDelays: RETRY_DELAYS,
         // Resume a previously interrupted upload of this exact file.
-        uploadUrl: readApkResume(file) ?? undefined,
-        headers: { authorization: `Bearer ${token}` },
+        uploadUrl: previous?.url,
+        headers: {
+          authorization: `Bearer ${token}`,
+          ...(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+            ? { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY }
+            : import.meta.env.VITE_SUPABASE_ANON_KEY
+              ? { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY }
+              : {}),
+        },
         metadata: {
-          bucketname: APK_BUCKET,
-          objectname: path,
-          contenttype: "application/vnd.android.package-archive",
+          bucketName: APK_BUCKET,
+          objectName: path,
+          contentType: "application/vnd.android.package-archive",
         },
         onProgress: (bytesUploaded, bytesTotal) => {
-          if (upload?.url) persistApkResume(file, upload.url);
+          if (upload?.url) persistApkResume(file, upload.url, path);
           onProgress(bytesUploaded, bytesTotal);
         },
         onSuccess: () => {
-          clearApkResume(file);
-          resolve({ path });
+          void verifyStoredApk().then(resolve, reject);
         },
         onError: (error) => {
-          if (upload?.url) persistApkResume(file, upload.url);
+          if (upload?.url) persistApkResume(file, upload.url, path);
           // Chunked initialization failed before a single byte was stored
           // (route missing / 404 / unsupported) — continue with the standard
           // upload instead of failing the developer's publish.
-          const msg = (error as Error)?.message ?? "";
-          if (!upload?.url && !fallbackUsed && /creating upload|response code: 4\d\d|not found|unsupported/i.test(msg)) {
+          if (!cancelled && !upload?.url && !fallbackUsed) {
             clearApkResume(file);
             void startFallback();
             return;

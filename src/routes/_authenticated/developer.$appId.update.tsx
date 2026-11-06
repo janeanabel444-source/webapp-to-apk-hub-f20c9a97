@@ -15,6 +15,7 @@ import { generateReleaseNotes } from "@/lib/release-notes.functions";
 import { fetchAppVersions, compareVersions } from "@/lib/store";
 import { parseApkFile, diffPermissions, formatBytes, type ParsedApk } from "@/lib/apk-parser";
 import { toast } from "sonner";
+import { startPublishProgress, updatePublishProgress } from "@/lib/publish-progress";
 
 export const Route = createFileRoute("/_authenticated/developer/$appId/update")({
   staticData: { sitemap: false },
@@ -120,17 +121,23 @@ function UpdateAppPage() {
     if (releaseNotes.trim().length < 3) return setErr("Please describe what changed.");
 
     setBusy(true);
+    startPublishProgress(user.id, app.name, app.id);
     try {
       let filePath: string | null = null;
       if (appFile) {
         // Resumable chunked upload (TUS) with a screen wake lock.
         setUploadPct(0);
+        updatePublishProgress({ label: "Uploading APK… 0%", percent: 0, status: "uploading" });
         const wake = await holdScreenAwake();
         try {
           const job = uploadApkResumable({
             userId: user.id,
             file: appFile,
-            onProgress: (loaded, total) => setUploadPct(total ? Math.round((loaded / total) * 100) : 0),
+            onProgress: (loaded, total) => {
+              const percent = total ? Math.round((loaded / total) * 100) : 0;
+              setUploadPct(percent);
+              updatePublishProgress({ label: `Uploading APK… ${percent}%`, percent, status: "uploading" });
+            },
           });
           apkCancelRef.current = job.cancel;
           filePath = (await job.promise).path;
@@ -141,6 +148,7 @@ function UpdateAppPage() {
           setUploadPct(null);
         }
       }
+      updatePublishProgress({ label: "Publishing update and checking the APK…", percent: 92, status: "processing" });
       await publishFn({
         data: {
           id: app.id,
@@ -153,6 +161,7 @@ function UpdateAppPage() {
           permissions: apkInfo?.permissions ?? [],
         },
       });
+      updatePublishProgress({ label: "Update submitted", percent: 100, status: "complete" });
       await qc.invalidateQueries({ queryKey: ["developer-apps"] });
       await qc.invalidateQueries({ queryKey: ["developer-app", appId] });
       await qc.invalidateQueries({ queryKey: ["app-versions", appId] });
@@ -161,8 +170,10 @@ function UpdateAppPage() {
     } catch (e: any) {
       apkCancelRef.current = null;
       if (e instanceof UploadCancelled) {
+        updatePublishProgress({ label: "Upload cancelled", status: "cancelled", error: "The update upload was cancelled." });
         setErr("Upload cancelled — nothing was published.");
       } else {
+        updatePublishProgress({ label: "Update needs attention", status: "failed", error: e?.message ?? "Update failed" });
         setErr(e?.message ?? "Update failed");
       }
     } finally {
