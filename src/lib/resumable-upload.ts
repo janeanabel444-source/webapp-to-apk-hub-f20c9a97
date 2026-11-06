@@ -66,17 +66,22 @@ function fileFingerprint(file: File): string {
   return `${file.name}:${file.size}:${file.lastModified}`;
 }
 
-function persistApkResume(file: File, url: string) {
+type ApkResumeRecord = { url: string; path: string };
+
+function persistApkResume(file: File, url: string, path: string) {
   try {
-    if (url) localStorage.setItem(RESUME_PREFIX + fileFingerprint(file), url);
+    if (url) localStorage.setItem(RESUME_PREFIX + fileFingerprint(file), JSON.stringify({ url, path } satisfies ApkResumeRecord));
   } catch {
     /* storage full/blocked — resume just won't be available */
   }
 }
 
-function readApkResume(file: File): string | null {
+function readApkResume(file: File): ApkResumeRecord | null {
   try {
-    return localStorage.getItem(RESUME_PREFIX + fileFingerprint(file));
+    const raw = localStorage.getItem(RESUME_PREFIX + fileFingerprint(file));
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<ApkResumeRecord>;
+    return typeof value.url === "string" && typeof value.path === "string" ? { url: value.url, path: value.path } : null;
   } catch {
     return null;
   }
@@ -113,7 +118,8 @@ export function uploadApkResumable(opts: {
   onProgress: (loaded: number, total: number) => void;
 }): ResumableUploadHandle {
   const { userId, file, onProgress } = opts;
-  const path = `${userId}/${Date.now()}-${crypto.randomUUID()}.apk`;
+  const previous = readApkResume(file);
+  const path = previous?.path ?? `${userId}/${Date.now()}-${crypto.randomUUID()}.apk`;
   // Supabase Storage resumable (TUS) endpoint.
   const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/resumable`;
 
@@ -203,22 +209,29 @@ export function uploadApkResumable(opts: {
         chunkSize: CHUNK_SIZE,
         retryDelays: RETRY_DELAYS,
         // Resume a previously interrupted upload of this exact file.
-        uploadUrl: readApkResume(file) ?? undefined,
-        headers: { authorization: `Bearer ${token}` },
+        uploadUrl: previous?.url,
+        headers: {
+          authorization: `Bearer ${token}`,
+          ...(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+            ? { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY }
+            : import.meta.env.VITE_SUPABASE_ANON_KEY
+              ? { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY }
+              : {}),
+        },
         metadata: {
           bucketName: APK_BUCKET,
           objectName: path,
           contentType: "application/vnd.android.package-archive",
         },
         onProgress: (bytesUploaded, bytesTotal) => {
-          if (upload?.url) persistApkResume(file, upload.url);
+          if (upload?.url) persistApkResume(file, upload.url, path);
           onProgress(bytesUploaded, bytesTotal);
         },
         onSuccess: () => {
           void verifyStoredApk().then(resolve, reject);
         },
         onError: (error) => {
-          if (upload?.url) persistApkResume(file, upload.url);
+          if (upload?.url) persistApkResume(file, upload.url, path);
           // Chunked initialization failed before a single byte was stored
           // (route missing / 404 / unsupported) — continue with the standard
           // upload instead of failing the developer's publish.
