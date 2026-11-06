@@ -1,8 +1,8 @@
 # Niza App Store — Roadmap
 
 ## Current priority
-- [ ] Fix APK upload read-back failures: confirm TUS metadata uses `bucketName`, `objectName`, and `contentType`; verify the stored object exists and is readable in `app-files` before APK inspection, with a reliable fallback upload.
-- [ ] Persist app submission/review uploads globally so returning to Developer Hub resumes the active upload/progress view instead of resetting to the app list.
+- [x] Fix APK upload read-back failures: TUS uses `bucketName`, `objectName`, and `contentType`; both TUS and signed-upload fallback verify the saved APK can be read and matches the selected file size before inspection.
+- [x] Persist app submission/review uploads globally so returning to Developer Hub or the new-app page shows the active upload/progress view instead of resetting to the app list; submission continues through navigation.
 
 ## Previously completed
 - [x] Backfill package_name: Niza Prime AI → com.nizaprime.bridge, Niza Store → com.niza.marketplace (apps + app_versions)
