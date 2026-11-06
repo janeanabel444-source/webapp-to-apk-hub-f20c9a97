@@ -21,7 +21,8 @@ import { generateAppDescription, generateAppKeywords, generateListingSuggestions
 import { checkPackageVersion } from "@/lib/developer.functions";
 import { AiSuggestionCard, AiChipSuggestion } from "@/components/AiSuggestionCard";
 import { parseApkFileSafe, formatBytes, apiLevelToAndroidVersion, type ParsedApk } from "@/lib/apk-parser";
-import { startPublishProgress, updatePublishProgress, clearPublishProgress } from "@/lib/publish-progress";
+import { startPublishProgress, updatePublishProgress, clearPublishProgress, subscribePublishProgress, type PublishProgress } from "@/lib/publish-progress";
+import { PublishProgressPanel } from "@/components/PublishProgressPanel";
 import {
   PLATFORMS, RELEASE_CHANNELS, getPlatform,
   HYBRID_FRAMEWORKS, GAME_CATEGORIES, GAME_TYPES, GAME_ENGINES, GAME_FLAGS, AGE_RATINGS,
@@ -330,6 +331,17 @@ function NewAppPage() {
   const [autosaved, setAutosaved] = useState<Date | null>(null);
   const [result, setResult] = useState<{ id: string; slug: string; shareToken: string; dev: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [sharedProgress, setSharedProgress] = useState<PublishProgress | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setSharedProgress(null);
+      return;
+    }
+    return subscribePublishProgress((value) => {
+      setSharedProgress(value?.userId === user.id ? value : null);
+    });
+  }, [user?.id]);
 
   const spec = getPlatform(form.platform);
 
@@ -858,9 +870,8 @@ function NewAppPage() {
     );
   }
 
-  const sharedProgress = user ? getPublishProgress(user.id) : null;
-  if (sharedProgress && ["uploading", "processing"].includes(sharedProgress.status)) {
-    return <SubmissionProgressView progress={sharedProgress} />;
+  if (sharedProgress) {
+    return <PublishProgressPanel progress={sharedProgress} onDismiss={() => clearPublishProgress(user?.id)} />;
   }
 
   // ---------------- Wizard ----------------

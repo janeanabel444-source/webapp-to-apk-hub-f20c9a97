@@ -60,7 +60,7 @@ export function subscribePublishProgress(listener: (value: PublishProgress | nul
   return () => listeners.delete(listener);
 }
 
-export function startPublishProgress(userId: string, appName: string) {
+export function startPublishProgress(userId: string, appName: string, appId?: string) {
   hydrate();
   current = {
     userId,
@@ -68,6 +68,7 @@ export function startPublishProgress(userId: string, appName: string) {
     label: "Preparing your submission…",
     percent: 0,
     status: "uploading",
+    appId,
     updatedAt: Date.now(),
   };
   emit();

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Plus, Code2, Download, LogIn, Copy, RefreshCw, FlaskConical } from "lucide-react";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { listMyDeveloperApps, resubmitForReview } from "@/lib/developer.functions";
 import { REVIEW_STATES } from "@/lib/review";
+import { clearPublishProgress, subscribePublishProgress, type PublishProgress } from "@/lib/publish-progress";
+import { PublishProgressPanel } from "@/components/PublishProgressPanel";
 
 export const Route = createFileRoute("/_authenticated/developer/")({
   staticData: { sitemap: false },
@@ -24,6 +27,16 @@ const toneCls: Record<string, string> = {
 
 function DeveloperHome() {
   const { user } = useAuth();
+  const [publishProgress, setPublishProgress] = useState<PublishProgress | null>(null);
+  useEffect(() => {
+    if (!user) {
+      setPublishProgress(null);
+      return;
+    }
+    return subscribePublishProgress((value) => {
+      setPublishProgress(value?.userId === user.id ? value : null);
+    });
+  }, [user?.id]);
   const listFn = useServerFn(listMyDeveloperApps);
   
   const { data: apps, isLoading } = useQuery({
@@ -42,6 +55,10 @@ function DeveloperHome() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not resubmit"),
   });
+
+  if (publishProgress) {
+    return <PublishProgressPanel progress={publishProgress} onDismiss={() => clearPublishProgress(user?.id)} />;
+  }
 
 
   return (
