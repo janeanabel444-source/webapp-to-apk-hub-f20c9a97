@@ -162,6 +162,10 @@ export function uploadApkResumable(opts: {
           reject(new Error(signed.error?.message ?? "Upload initialization failed."));
           return;
         }
+        if (cancelled) {
+          reject(new UploadCancelled());
+          return;
+        }
         try {
           await new Promise<void>((res, rej) => {
             const url = signed.data.signedUrl;
