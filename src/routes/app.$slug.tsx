@@ -287,7 +287,7 @@ function AppDetail() {
             />
             <div className="mt-3 flex flex-wrap gap-2">
               <Button asChild variant="outline" className="rounded-full">
-                <a href={`intent://niza-app-store.lovable.app/app/${encodeURIComponent(app.slug)}#Intent;scheme=https;package=com.niza.marketplace;S.browser_fallback_url=https%3A%2F%2Fniza-app-store.lovable.app%2Fapp%2F${encodeURIComponent(app.slug)};end`}>
+                <a href={`intent://niza-app-store.lovable.app/app/${app.slug}#Intent;scheme=https;package=com.niza.marketplace;S.browser_fallback_url=https%3A%2F%2Fniza-app-store.lovable.app%2Fapp%2F${app.slug};end`}>
                   <ArrowUpRight className="mr-1.5 h-4 w-4" /> Open in Niza Store
                 </a>
               </Button>

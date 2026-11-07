@@ -150,10 +150,7 @@ async function scanRequired(userId: string, email: string | undefined): Promise<
   return !(await isTrustedPublisher(userId, email));
 }
 
-/**
- * Attaches the freshly queued VirusTotal scan and runs one throttle-aware
- * drain pass so known files get their verdict immediately.
- */
+/** Enqueue the scan before returning, then let the throttled queue drain in the background. */
 async function queueScanInBackground(opts: {
   appId: string;
   appVersionId?: string | null;

@@ -1363,7 +1363,8 @@ function NewAppPage() {
               <dl className="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-secondary/30 p-4 text-xs">
                 <div><dt className="text-muted-foreground">App name</dt><dd className="truncate">{apkInfo.appName ?? "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Package</dt><dd className="truncate">{apkInfo.packageName ?? "—"}</dd></div>
-                <div><dt className="text-muted-foreground">Version</dt><dd>{apkInfo.versionName ?? "—"}{apkInfo.versionCode ? ` (${apkInfo.versionCode})` : ""}</dd></div>
+                <div><dt className="text-muted-foreground">Version name</dt><dd>{apkInfo.versionName ?? "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Version code</dt><dd>{apkInfo.versionCode ?? "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Size</dt><dd>{formatBytes(apkInfo.apkSize)}</dd></div>
                 <div><dt className="text-muted-foreground">Min SDK</dt><dd>{apkInfo.minSdk ? `${apkInfo.minSdk} (Android ${apiLevelToAndroidVersion(apkInfo.minSdk)})` : "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Target SDK</dt><dd>{apkInfo.targetSdk ? `${apkInfo.targetSdk} (Android ${apiLevelToAndroidVersion(apkInfo.targetSdk)})` : "—"}</dd></div>
