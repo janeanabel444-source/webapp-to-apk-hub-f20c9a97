@@ -19,6 +19,7 @@ import { detectAndroidVersion, compareAndroid } from "@/lib/android-compat";
 import { AppIcon } from "@/components/AppIcon";
 import { AppCard } from "@/components/AppCard";
 import { InstallButton } from "@/components/InstallButton";
+import { nativeBridge, initNativeBridge, hasCapability } from "@/lib/native-bridge";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ReportAppDialog } from "@/components/ReportAppDialog";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,17 @@ function AppDetail() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [nativeStoreInstalled, setNativeStoreInstalled] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void initNativeBridge().then(async () => {
+      if (!hasCapability("isPackageInstalled")) return;
+      const result = await nativeBridge.isPackageInstalled("com.niza.marketplace").catch(() => null);
+      if (active) setNativeStoreInstalled(result?.installed === true);
+    });
+    return () => { active = false; };
+  }, []);
 
   const { data: installState } = useQuery({
     queryKey: ["install-state", app.id, user?.id],
@@ -286,17 +298,21 @@ function AppDetail() {
               latestVersion={app.version}
             />
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button asChild variant="outline" className="rounded-full">
-                <a href={`intent://niza-app-store.lovable.app/app/${app.slug}#Intent;scheme=https;package=com.niza.marketplace;S.browser_fallback_url=https%3A%2F%2Fniza-app-store.lovable.app%2Fapp%2F${app.slug};end`}>
-                  <ArrowUpRight className="mr-1.5 h-4 w-4" /> Open in Niza Store
-                </a>
-              </Button>
+              {nativeStoreInstalled && (
+                <Button asChild variant="outline" className="rounded-full">
+                  <a href={`intent://niza-app-store.lovable.app/app/${app.slug}#Intent;scheme=https;package=com.niza.marketplace;S.browser_fallback_url=https%3A%2F%2Fniza-app-store.lovable.app%2Fapp%2F${app.slug};end`}>
+                    <ArrowUpRight className="mr-1.5 h-4 w-4" /> Open in Niza Store
+                  </a>
+                </Button>
+              )}
               <Button asChild variant="ghost" className="rounded-full">
                 <a href="/download/c8261fad-30f4-40a0-baa5-fa22ab76e08a">Get the Niza Store app</a>
               </Button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              On Android, open this listing in Niza Store. Browsing on the web? Download the companion app to install apps directly.
+              {nativeStoreInstalled
+                ? "Open this listing in the Niza Store app installed on your device."
+                : "Browsing on the web? Download the Niza Store companion app to install apps directly."}
             </p>
             {isDemoApp(app) && (
               <p className="mt-2 text-xs text-muted-foreground">
