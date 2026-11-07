@@ -236,9 +236,18 @@ function UpdateAppPage() {
               <div className="flex items-center gap-1 font-semibold"><Package className="h-3.5 w-3.5" /> Detected</div>
               <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-muted-foreground">
                 <dt>Package</dt><dd className="truncate text-foreground">{apkInfo.packageName ?? "—"}</dd>
-                <dt>Version</dt><dd className="text-foreground">{apkInfo.versionName ?? "—"} ({apkInfo.versionCode ?? "—"})</dd>
+                <dt>Version name</dt><dd className="text-foreground">{apkInfo.versionName ?? "—"}</dd>
+                <dt>Version code</dt><dd className="text-foreground">{apkInfo.versionCode ?? "—"}</dd>
                 <dt>Size</dt><dd className="text-foreground">{formatBytes(app.apk_size)} → {formatBytes(apkInfo.apkSize)}</dd>
-                <dt>Permissions</dt><dd className="text-foreground">+{diff?.added.length ?? 0} / −{diff?.removed.length ?? 0}</dd>
+                <dt>Permission changes</dt><dd className="text-foreground">+{diff?.added.length ?? 0} / −{diff?.removed.length ?? 0}</dd>
+                <dt className="col-span-2 mt-1">Requested permissions ({apkInfo.permissions.length})</dt>
+                <dd className="col-span-2 flex flex-wrap gap-1.5">
+                  {apkInfo.permissions.length ? apkInfo.permissions.map((permission) => (
+                    <span key={permission} className="rounded-full bg-secondary px-2 py-1 font-mono text-[11px] text-foreground">
+                      {permission.replace(/^android\.permission\./, "")}
+                    </span>
+                  )) : <span className="text-muted-foreground">None</span>}
+                </dd>
               </dl>
             </div>
           )}

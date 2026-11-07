@@ -1369,7 +1369,16 @@ function NewAppPage() {
                 <div><dt className="text-muted-foreground">Target SDK</dt><dd>{apkInfo.targetSdk ? `${apkInfo.targetSdk} (Android ${apiLevelToAndroidVersion(apkInfo.targetSdk)})` : "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Architectures</dt><dd className="truncate">{apkInfo.abis.length ? apkInfo.abis.join(", ") : "Universal"}</dd></div>
                 <div><dt className="text-muted-foreground">Signed</dt><dd>{apkInfo.certificate?.schemes?.length ? `Yes (${apkInfo.certificate.schemes.join(", ")})` : "Not detected"}</dd></div>
-                <div className="col-span-2"><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
+                <div className="col-span-2">
+                  <dt className="text-muted-foreground">Requested permissions ({apkInfo.permissions.length})</dt>
+                  <dd className="mt-1 flex flex-wrap gap-1.5">
+                    {apkInfo.permissions.length ? apkInfo.permissions.map((permission) => (
+                      <span key={permission} className="rounded-full bg-secondary px-2 py-1 font-mono text-[11px] text-foreground">
+                        {permission.replace(/^android\.permission\./, "")}
+                      </span>
+                    )) : <span>None</span>}
+                  </dd>
+                </div>
               </dl>
             )}
 

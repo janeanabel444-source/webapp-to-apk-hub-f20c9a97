@@ -217,13 +217,20 @@ export async function inspectApkBytes(bytes: Uint8Array): Promise<ApkSecurityRep
   };
 }
 
-export function findForbiddenPermissions(permissions: string[]): string[] {
-  return permissions.filter((p) => (FORBIDDEN_PERMISSIONS as readonly string[]).includes(p));
+export function findForbiddenPermissions(permissions: string[], packageName?: string | null): string[] {
+  const allowedForNizaStore = packageName === "com.niza.marketplace"
+    ? new Set(["android.permission.REQUEST_INSTALL_PACKAGES"])
+    : new Set<string>();
+  return permissions.filter(
+    (permission) =>
+      (FORBIDDEN_PERMISSIONS as readonly string[]).includes(permission) &&
+      !allowedForNizaStore.has(permission),
+  );
 }
 
 /** Throws a clear, developer-facing error when a forbidden permission is present. */
-export function assertNoForbiddenPermissions(permissions: string[]) {
-  const hit = findForbiddenPermissions(permissions);
+export function assertNoForbiddenPermissions(permissions: string[], packageName?: string | null) {
+  const hit = findForbiddenPermissions(permissions, packageName);
   if (hit.length) {
     throw new ForbiddenPermissionError(
       `Your APK requests the forbidden permission ${hit[0]}. ` +
