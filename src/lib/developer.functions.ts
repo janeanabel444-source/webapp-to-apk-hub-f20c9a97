@@ -112,7 +112,7 @@ async function gateApkBinary(opts: {
 }): Promise<ApkSecurityReport> {
   const { inspectApkFromStorage, assertNoForbiddenPermissions } = await import("@/lib/apk-security.server");
   const report = await inspectApkFromStorage(opts.filePath);
-  assertNoForbiddenPermissions(report.permissions);
+  assertNoForbiddenPermissions(report.permissions, report.packageName);
 
   if (opts.previousFingerprint && report.certFingerprintSha256) {
     if (report.certFingerprintSha256 !== opts.previousFingerprint) {
@@ -150,11 +150,8 @@ async function scanRequired(userId: string, email: string | undefined): Promise<
   return !(await isTrustedPublisher(userId, email));
 }
 
-/**
- * Attaches the freshly queued VirusTotal scan and runs one throttle-aware
- * drain pass so known files get their verdict immediately.
- */
-async function queueScanAndDrain(opts: {
+/** Enqueue the scan before returning, then let the throttled queue drain in the background. */
+async function queueScanInBackground(opts: {
   appId: string;
   appVersionId?: string | null;
   filePath: string;
@@ -168,11 +165,9 @@ async function queueScanAndDrain(opts: {
     sha256: opts.report.sha256,
     sizeBytes: opts.report.sizeBytes,
   });
-  try {
-    await drainVtScanQueue();
-  } catch {
-    // A throttle/unavailable outcome keeps the app in the verifying state.
-  }
+  void drainVtScanQueue().catch((error) => {
+    console.error("[VirusTotal] Background scan queue failed", error);
+  });
 }
 
 
@@ -424,7 +419,7 @@ export const createDeveloperApp = createServerFn({ method: "POST" })
       // already rejected before, roll the whole listing back.
       if (scanning && apkReport && data.file_path) {
         try {
-          await queueScanAndDrain({
+          await queueScanInBackground({
             appId: row.id,
             appVersionId: versionRow.id,
             filePath: data.file_path,
@@ -563,7 +558,7 @@ export const updateDeveloperApp = createServerFn({ method: "POST" })
         await supabaseAdmin.from("apps").update({ status: "verifying", is_published: false, scan_status: "verifying" }).eq("id", id);
       }
       try {
-        await queueScanAndDrain({ appId: id, filePath: patch.file_path!, report: swapReport });
+        await queueScanInBackground({ appId: id, filePath: patch.file_path!, report: swapReport });
       } catch {
         if (wasLive) {
           await supabaseAdmin.from("apps").update({ status: "live", is_published: true }).eq("id", id);
@@ -680,7 +675,7 @@ export const publishAppUpdate = createServerFn({ method: "POST" })
 
     if (scanning && apkReport && data.file_path) {
       try {
-        await queueScanAndDrain({
+        await queueScanInBackground({
           appId: data.id,
           appVersionId: versionRow.id,
           filePath: data.file_path,

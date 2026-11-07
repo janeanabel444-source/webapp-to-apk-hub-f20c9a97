@@ -1363,13 +1363,23 @@ function NewAppPage() {
               <dl className="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-secondary/30 p-4 text-xs">
                 <div><dt className="text-muted-foreground">App name</dt><dd className="truncate">{apkInfo.appName ?? "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Package</dt><dd className="truncate">{apkInfo.packageName ?? "—"}</dd></div>
-                <div><dt className="text-muted-foreground">Version</dt><dd>{apkInfo.versionName ?? "—"}{apkInfo.versionCode ? ` (${apkInfo.versionCode})` : ""}</dd></div>
+                <div><dt className="text-muted-foreground">Version name</dt><dd>{apkInfo.versionName ?? "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Version code</dt><dd>{apkInfo.versionCode ?? "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Size</dt><dd>{formatBytes(apkInfo.apkSize)}</dd></div>
                 <div><dt className="text-muted-foreground">Min SDK</dt><dd>{apkInfo.minSdk ? `${apkInfo.minSdk} (Android ${apiLevelToAndroidVersion(apkInfo.minSdk)})` : "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Target SDK</dt><dd>{apkInfo.targetSdk ? `${apkInfo.targetSdk} (Android ${apiLevelToAndroidVersion(apkInfo.targetSdk)})` : "—"}</dd></div>
                 <div><dt className="text-muted-foreground">Architectures</dt><dd className="truncate">{apkInfo.abis.length ? apkInfo.abis.join(", ") : "Universal"}</dd></div>
                 <div><dt className="text-muted-foreground">Signed</dt><dd>{apkInfo.certificate?.schemes?.length ? `Yes (${apkInfo.certificate.schemes.join(", ")})` : "Not detected"}</dd></div>
-                <div className="col-span-2"><dt className="text-muted-foreground">Permissions</dt><dd>{apkInfo.permissions.length}</dd></div>
+                <div className="col-span-2">
+                  <dt className="text-muted-foreground">Requested permissions ({apkInfo.permissions.length})</dt>
+                  <dd className="mt-1 flex flex-wrap gap-1.5">
+                    {apkInfo.permissions.length ? apkInfo.permissions.map((permission) => (
+                      <span key={permission} className="rounded-full bg-secondary px-2 py-1 font-mono text-[11px] text-foreground">
+                        {permission.replace(/^android\.permission\./, "")}
+                      </span>
+                    )) : <span>None</span>}
+                  </dd>
+                </div>
               </dl>
             )}
 

@@ -12,3 +12,4 @@
 - Account settings use owner-scoped profile updates and private photo storage with signed display URLs; this keeps uploaded photos private under workspace policy.
 - Account is a protected route separate from Library, and both share the cached profile query so navigation reflects saved changes.
 - APK submissions use camelCase TUS metadata and verify the private `app-files` object before inspection; publish progress is stored in a browser-scoped shared store so route changes do not hide an active submission.
+- Android App Links for the store use a public `/.well-known/assetlinks.json` route matched to the Android manifest's verified HTTPS host and package.

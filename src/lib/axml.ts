@@ -110,7 +110,7 @@ export function parseAxml(input: ArrayBuffer | Uint8Array): AxmlElement[] {
       const attrCount = view.getUint16(pos + 28, true);
       const el: AxmlElement = { name: strings[nameIdx] ?? "", attrs: {} };
       for (let i = 0; i < attrCount; i++) {
-        const a = pos + attrStart + i * attrSize;
+        const a = pos + 16 + attrStart + i * attrSize;
         if (a + 20 > pos + size) break;
         const aName = strings[view.getUint32(a + 4, true)] ?? "";
         const rawIdx = view.getUint32(a + 8, true);

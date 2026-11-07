@@ -1,6 +1,17 @@
 # Niza App Store — Roadmap
 
-## Current priority
+## Critical / Urgent
+- [x] Correct binary AndroidManifest.xml attribute offsets and add regression coverage for package, version, and permissions parsing.
+- [x] Show extracted APK package name, version name/code, and requested permissions in both new-app and update upload forms.
+- [x] Permit `REQUEST_INSTALL_PACKAGES` only for Niza Store (`com.niza.marketplace`); continue rejecting it for all other packages.
+- [x] Make VirusTotal queue draining asynchronous so publishing returns promptly while the listing remains verifying until scan completion.
+
+## Workflow & Deep Links
+- [x] Serve Android App Links verification for `com.niza.marketplace` at `/.well-known/assetlinks.json`.
+- [x] Add public `/docs` explaining Niza App Store, companion APK installation, and direct Niza Store download.
+- [x] Add an installed-user “Open in Niza Store” deep link on app pages and companion-download guidance for web visitors.
+
+## Recently completed
 - [x] Fix APK upload read-back failures: TUS uses `bucketName`, `objectName`, and `contentType`; both TUS and signed-upload fallback verify the saved APK can be read and matches the selected file size before inspection.
 - [x] Persist app submission/review uploads globally so returning to Developer Hub or the new-app page shows the active upload/progress view instead of resetting to the app list; submission continues through navigation.
 
