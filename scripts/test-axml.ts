@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { parseAxml } from "../src/lib/axml";
+import { findForbiddenPermissions } from "../src/lib/apk-security.server";
 
 function utf8Length(value: number) {
   if (value < 0x80) return [value];
@@ -87,4 +88,12 @@ assert.equal(root?.attrs.package?.value, "com.example.parser");
 assert.equal(root?.attrs.versionName?.value, "2.4.1");
 assert.equal(root?.attrs.versionCode?.raw, 2401);
 assert.equal(permission?.attrs.name?.value, "android.permission.CAMERA");
-console.log("AXML manifest parsing regression checks passed.");
+assert.deepEqual(
+  findForbiddenPermissions(["android.permission.REQUEST_INSTALL_PACKAGES"], "com.niza.marketplace"),
+  [],
+);
+assert.deepEqual(
+  findForbiddenPermissions(["android.permission.REQUEST_INSTALL_PACKAGES"], "com.example.other"),
+  ["android.permission.REQUEST_INSTALL_PACKAGES"],
+);
+console.log("AXML parsing and Niza Store permission-gate checks passed.");
